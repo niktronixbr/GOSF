@@ -57,6 +57,12 @@ enum PlanStatus {
   ARCHIVED
 }
 
+enum GoalStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+}
+
 enum EnrollmentStatus {
   ACTIVE
   INACTIVE
@@ -169,6 +175,7 @@ model Student {
   evaluationsGiven    TeacherEvaluation[] @relation("evaluator")
   evaluationsReceived StudentEvaluation[] @relation("evaluated")
   plans               StudentPlan[]
+  goals               StudentGoal[]
 
   @@map("students")
 }
@@ -352,6 +359,25 @@ model StudentEvaluation {
   @@unique([cycleId, teacherId, studentId])
   @@index([cycleId, studentId])
   @@map("student_evaluations")
+}
+
+// ─── Student Goals ───────────────────────────────────────────────────────────
+
+model StudentGoal {
+  id          String     @id @default(cuid())
+  studentId   String
+  title       String
+  description String?
+  status      GoalStatus @default(PENDING)
+  dueDate     DateTime?
+  completedAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId])
+  @@map("student_goals")
 }
 
 // ─── Analytics ────────────────────────────────────────────────────────────────

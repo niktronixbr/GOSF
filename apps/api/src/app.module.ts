@@ -11,6 +11,7 @@ import { AiModule } from "./modules/ai/ai.module";
 import { NotificationsModule } from "./modules/notifications/notifications.module";
 import { PrivacyModule } from "./modules/privacy/privacy.module";
 import { AuditModule } from "./modules/audit/audit.module";
+import { GoalsModule } from "./modules/goals/goals.module";
 import { DatabaseModule } from "./common/database/database.module";
 
 @Module({
@@ -28,6 +29,7 @@ import { DatabaseModule } from "./common/database/database.module";
     NotificationsModule,
     PrivacyModule,
     AuditModule,
+    GoalsModule,
   ],
 })
 export class AppModule {}
