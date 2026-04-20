@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Home,
   BookOpen,
@@ -13,6 +13,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { clsx } from "clsx";
+import { useAuthStore } from "@/store/auth.store";
 
 type NavItem = { href: string; label: string; icon: React.ElementType };
 
@@ -36,24 +37,31 @@ const coordinatorNav: NavItem[] = [
   { href: "/coordinator", label: "Visão geral", icon: Home },
   { href: "/coordinator/classes", label: "Turmas", icon: BookOpen },
   { href: "/coordinator/teachers", label: "Professores", icon: Users },
-  { href: "/coordinator/cycles", label: "Ciclos", icon: Target },
+  { href: "/coordinator/cycles", label: "Ciclos de avaliação", icon: Target },
   { href: "/coordinator/reports", label: "Relatórios", icon: BarChart2 },
   { href: "/coordinator/settings", label: "Configurações", icon: Settings },
 ];
 
 const navByRole: Record<string, NavItem[]> = {
-  student: studentNav,
-  teacher: teacherNav,
-  coordinator: coordinatorNav,
-  admin: coordinatorNav,
+  STUDENT: studentNav,
+  TEACHER: teacherNav,
+  COORDINATOR: coordinatorNav,
+  ADMIN: coordinatorNav,
 };
 
-export function Sidebar({ role }: { role: string }) {
+export function Sidebar() {
   const pathname = usePathname();
-  const items = navByRole[role] ?? studentNav;
+  const router = useRouter();
+  const { user, logout } = useAuthStore();
+  const items = navByRole[user?.role ?? "STUDENT"] ?? studentNav;
+
+  async function handleLogout() {
+    await logout();
+    router.push("/login");
+  }
 
   return (
-    <aside className="flex h-full w-60 flex-col border-r border-border bg-card">
+    <aside className="flex h-full w-60 flex-col border-r border-border bg-card shrink-0">
       <div className="flex h-16 items-center px-6 border-b border-border">
         <span className="text-xl font-bold tracking-tight">GOSF</span>
       </div>
@@ -76,7 +84,13 @@ export function Sidebar({ role }: { role: string }) {
         ))}
       </nav>
 
-      <div className="border-t border-border p-4">
+      <div className="border-t border-border p-4 space-y-1">
+        {user && (
+          <div className="px-3 py-2 mb-2">
+            <p className="text-sm font-medium text-foreground truncate">{user.fullName}</p>
+            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+          </div>
+        )}
         <Link
           href="/settings/privacy"
           className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
@@ -84,7 +98,10 @@ export function Sidebar({ role }: { role: string }) {
           <Settings size={18} />
           Privacidade
         </Link>
-        <button className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors">
+        <button
+          onClick={handleLogout}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+        >
           <LogOut size={18} />
           Sair
         </button>

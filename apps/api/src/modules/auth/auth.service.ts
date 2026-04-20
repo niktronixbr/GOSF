@@ -1,17 +1,16 @@
 import {
   Injectable,
   UnauthorizedException,
-  ConflictException,
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 import * as bcrypt from "bcryptjs";
 import { DatabaseService } from "../../common/database/database.service";
-import { LoginDto } from "./dto/login.dto";
 
 export interface JwtPayload {
   sub: string;
   email: string;
+  fullName: string;
   role: string;
   institutionId: string;
 }
@@ -47,13 +46,21 @@ export class AuthService {
       data: { lastLoginAt: new Date() },
     });
 
-    return user;
+    return {
+      id: user.id,
+      email: user.email,
+      fullName: user.fullName,
+      role: user.role,
+      institutionId: user.institutionId,
+      status: user.status,
+    };
   }
 
-  async login(user: { id: string; email: string; role: string; institutionId: string }) {
+  async login(user: { id: string; email: string; fullName: string; role: string; institutionId: string }) {
     const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
+      fullName: user.fullName,
       role: user.role,
       institutionId: user.institutionId,
     };
@@ -93,7 +100,13 @@ export class AuthService {
       data: { revokedAt: new Date() },
     });
 
-    return this.login(stored.user);
+    return this.login({
+      id: stored.user.id,
+      email: stored.user.email,
+      fullName: stored.user.fullName,
+      role: stored.user.role,
+      institutionId: stored.user.institutionId,
+    });
   }
 
   async logout(token: string) {

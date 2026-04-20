@@ -2,35 +2,38 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginSchema, LoginFormValues } from "@/lib/schemas/auth.schema";
-import { api } from "@/lib/api/client";
+import { api, ApiError } from "@/lib/api/client";
+import { useAuthStore } from "@/store/auth.store";
 import { toast } from "sonner";
 
 export function LoginForm() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const login = useAuthStore((s) => s.login);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { institutionSlug: "", email: "", password: "" },
   });
 
+  const { isSubmitting } = form.formState;
+
   async function onSubmit(values: LoginFormValues) {
-    setIsLoading(true);
     try {
       const res = await api.post<{ accessToken: string; refreshToken: string }>(
         "/auth/login",
-        values
+        values,
+        true
       );
-      localStorage.setItem("accessToken", res.accessToken);
-      localStorage.setItem("refreshToken", res.refreshToken);
-      router.push("/dashboard");
-    } catch {
-      toast.error("E-mail ou senha incorretos. Verifique e tente novamente.");
-    } finally {
-      setIsLoading(false);
+      const redirectTo = login(res.accessToken, res.refreshToken);
+      router.push(redirectTo);
+    } catch (err) {
+      const message =
+        err instanceof ApiError && err.status === 401
+          ? "E-mail ou senha incorretos."
+          : "Erro ao conectar. Tente novamente.";
+      toast.error(message);
     }
   }
 
@@ -43,7 +46,8 @@ export function LoginForm() {
         <input
           {...form.register("institutionSlug")}
           placeholder="ex: escola-demo"
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          autoComplete="organization"
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
         />
         {form.formState.errors.institutionSlug && (
           <p className="mt-1 text-xs text-destructive">
@@ -60,7 +64,8 @@ export function LoginForm() {
           {...form.register("email")}
           type="email"
           placeholder="voce@escola.com"
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          autoComplete="email"
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
         />
         {form.formState.errors.email && (
           <p className="mt-1 text-xs text-destructive">
@@ -77,7 +82,8 @@ export function LoginForm() {
           {...form.register("password")}
           type="password"
           placeholder="••••••••"
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          autoComplete="current-password"
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
         />
         {form.formState.errors.password && (
           <p className="mt-1 text-xs text-destructive">
@@ -88,10 +94,10 @@ export function LoginForm() {
 
       <button
         type="submit"
-        disabled={isLoading}
+        disabled={isSubmitting}
         className="w-full rounded-md bg-primary py-2 text-sm font-semibold text-primary-foreground shadow hover:opacity-90 disabled:opacity-50 transition-opacity"
       >
-        {isLoading ? "Entrando..." : "Entrar"}
+        {isSubmitting ? "Entrando..." : "Entrar"}
       </button>
     </form>
   );

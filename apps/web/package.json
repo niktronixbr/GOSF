@@ -26,7 +26,8 @@
     "class-variance-authority": "^0.7.1",
     "recharts": "^2.15.0",
     "next-auth": "^5.0.0-beta.25",
-    "sonner": "^1.7.3"
+    "sonner": "^1.7.3",
+    "zustand": "^5.0.3"
   },
   "devDependencies": {
     "@types/react": "^19.0.2",

@@ -1,10 +1,7 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
+import { getValidAccessToken } from "@/lib/auth/session";
 
-type RequestOptions = {
-  method?: string;
-  body?: unknown;
-  token?: string;
-};
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
 
 export class ApiError extends Error {
   constructor(
@@ -12,25 +9,27 @@ export class ApiError extends Error {
     message: string
   ) {
     super(message);
+    this.name = "ApiError";
   }
 }
 
-async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = "GET", body, token } = options;
+async function request<T>(
+  path: string,
+  options: RequestInit & { skipAuth?: boolean } = {}
+): Promise<T> {
+  const { skipAuth, ...init } = options;
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    ...(init.headers as Record<string, string>),
   };
 
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+  if (!skipAuth) {
+    const token = await getValidAccessToken();
+    if (token) headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${API_URL}${path}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  const res = await fetch(`${API_URL}${path}`, { ...init, headers });
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ message: "Request failed" }));
@@ -42,11 +41,16 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 }
 
 export const api = {
-  get: <T>(path: string, token?: string) => request<T>(path, { token }),
-  post: <T>(path: string, body: unknown, token?: string) =>
-    request<T>(path, { method: "POST", body, token }),
-  patch: <T>(path: string, body: unknown, token?: string) =>
-    request<T>(path, { method: "PATCH", body, token }),
-  delete: <T>(path: string, token?: string) =>
-    request<T>(path, { method: "DELETE", token }),
+  get: <T>(path: string) => request<T>(path),
+  post: <T>(path: string, body: unknown, skipAuth = false) =>
+    request<T>(path, {
+      method: "POST",
+      body: JSON.stringify(body),
+      skipAuth,
+    }),
+  patch: <T>(path: string, body: unknown) =>
+    request<T>(path, { method: "PATCH", body: JSON.stringify(body) }),
+  put: <T>(path: string, body: unknown) =>
+    request<T>(path, { method: "PUT", body: JSON.stringify(body) }),
+  delete: <T>(path: string) => request<T>(path, { method: "DELETE" }),
 };

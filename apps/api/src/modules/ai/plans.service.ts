@@ -1,0 +1,148 @@
+import { Injectable, NotFoundException, Logger } from "@nestjs/common";
+import { DatabaseService } from "../../common/database/database.service";
+import { AiProviderService } from "./ai-provider.service";
+import { STUDENT_PLAN_SYSTEM, TEACHER_PLAN_SYSTEM } from "./prompts";
+import { PlanStatus } from "@gosf/database";
+
+@Injectable()
+export class PlansService {
+  private readonly logger = new Logger(PlansService.name);
+
+  constructor(
+    private db: DatabaseService,
+    private ai: AiProviderService
+  ) {}
+
+  async generateStudentPlan(studentUserId: string, cycleId: string, institutionId: string) {
+    const student = await this.db.student.findUnique({
+      where: { userId: studentUserId },
+      include: { user: { select: { fullName: true } } },
+    });
+    if (!student) throw new NotFoundException("Student not found");
+
+    const scores = await this.db.scoreAggregate.findMany({
+      where: { targetId: student.id, cycleId, targetType: "STUDENT" },
+    });
+
+    const evaluations = await this.db.studentEvaluation.findMany({
+      where: { studentId: student.id, cycleId },
+      select: { comment: true, submittedAt: true },
+    });
+
+    const snapshot = {
+      studentName: student.user.fullName,
+      cycleId,
+      scores: scores.map((s) => ({ dimension: s.dimension, score: s.score })),
+      comments: evaluations.filter((e) => e.comment).map((e) => e.comment),
+      totalEvaluations: evaluations.length,
+    };
+
+    const plan = await this.db.studentPlan.create({
+      data: {
+        studentId: student.id,
+        cycleId,
+        inputSnapshotJson: snapshot,
+        status: PlanStatus.GENERATING,
+      },
+    });
+
+    try {
+      const output = await this.ai.generateJson(
+        STUDENT_PLAN_SYSTEM,
+        `Dados do aluno para geração do plano:\n\`\`\`json\n${JSON.stringify(snapshot, null, 2)}\n\`\`\``
+      );
+
+      return this.db.studentPlan.update({
+        where: { id: plan.id },
+        data: {
+          aiOutputJson: output as any,
+          status: PlanStatus.READY,
+          generatedAt: new Date(),
+        },
+      });
+    } catch (err) {
+      this.logger.error("Failed to generate student plan", err);
+      await this.db.studentPlan.update({
+        where: { id: plan.id },
+        data: { status: PlanStatus.FAILED },
+      });
+      throw err;
+    }
+  }
+
+  async generateTeacherPlan(teacherUserId: string, cycleId: string, institutionId: string) {
+    const teacher = await this.db.teacher.findUnique({
+      where: { userId: teacherUserId },
+      include: { user: { select: { fullName: true } } },
+    });
+    if (!teacher) throw new NotFoundException("Teacher not found");
+
+    const scores = await this.db.scoreAggregate.findMany({
+      where: { targetId: teacher.id, cycleId, targetType: "TEACHER" },
+    });
+
+    const evaluations = await this.db.teacherEvaluation.findMany({
+      where: { teacherId: teacher.id, cycleId },
+      select: { comment: true, submittedAt: true },
+    });
+
+    const snapshot = {
+      teacherName: teacher.user.fullName,
+      department: teacher.department,
+      cycleId,
+      scores: scores.map((s) => ({ dimension: s.dimension, score: s.score })),
+      comments: evaluations.filter((e) => e.comment).map((e) => e.comment),
+      totalEvaluations: evaluations.length,
+    };
+
+    const plan = await this.db.teacherDevelopmentPlan.create({
+      data: {
+        teacherId: teacher.id,
+        cycleId,
+        inputSnapshotJson: snapshot,
+        status: PlanStatus.GENERATING,
+      },
+    });
+
+    try {
+      const output = await this.ai.generateJson(
+        TEACHER_PLAN_SYSTEM,
+        `Dados do professor para geração do plano:\n\`\`\`json\n${JSON.stringify(snapshot, null, 2)}\n\`\`\``
+      );
+
+      return this.db.teacherDevelopmentPlan.update({
+        where: { id: plan.id },
+        data: {
+          aiOutputJson: output as any,
+          status: PlanStatus.READY,
+          generatedAt: new Date(),
+        },
+      });
+    } catch (err) {
+      this.logger.error("Failed to generate teacher plan", err);
+      await this.db.teacherDevelopmentPlan.update({
+        where: { id: plan.id },
+        data: { status: PlanStatus.FAILED },
+      });
+      throw err;
+    }
+  }
+
+  async getStudentPlan(studentUserId: string, cycleId: string) {
+    const student = await this.db.student.findUnique({ where: { userId: studentUserId } });
+    if (!student) return null;
+    return this.db.studentPlan.findFirst({
+      where: { studentId: student.id, cycleId, status: PlanStatus.READY },
+      orderBy: { version: "desc" },
+    });
+  }
+
+  async getTeacherPlan(teacherUserId: string, cycleId: string) {
+    const teacher = await this.db.teacher.findUnique({ where: { userId: teacherUserId } });
+    if (!teacher) return null;
+    return this.db.teacherDevelopmentPlan.findFirst({
+      where: { teacherId: teacher.id, cycleId, status: PlanStatus.READY },
+      orderBy: { version: "desc" },
+    });
+  }
+}
