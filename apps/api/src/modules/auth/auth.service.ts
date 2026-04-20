@@ -9,6 +9,7 @@ import * as bcrypt from "bcryptjs";
 import * as crypto from "crypto";
 import { DatabaseService } from "../../common/database/database.service";
 import { MailService } from "../../common/mail/mail.service";
+import { AuditService } from "../audit/audit.service";
 
 export interface JwtPayload {
   sub: string;
@@ -25,6 +26,7 @@ export class AuthService {
     private jwt: JwtService,
     private config: ConfigService,
     private mail: MailService,
+    private audit: AuditService,
   ) {}
 
   async validateUser(email: string, password: string, institutionSlug: string) {
@@ -81,6 +83,10 @@ export class AuthService {
     await this.db.refreshToken.create({
       data: { userId: user.id, token: refreshToken, expiresAt },
     });
+
+    this.audit
+      .log(user.institutionId, "LOGIN", "User", { actorUserId: user.id, resourceId: user.id })
+      .catch(() => {});
 
     return { accessToken, refreshToken };
   }

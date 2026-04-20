@@ -7,6 +7,7 @@ import { AuthService } from "./auth.service";
 import { JwtStrategy } from "./strategies/jwt.strategy";
 import { LocalStrategy } from "./strategies/local.strategy";
 import { MailModule } from "../../common/mail/mail.module";
+import { AuditModule } from "../audit/audit.module";
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { MailModule } from "../../common/mail/mail.module";
       }),
     }),
     MailModule,
+    AuditModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, LocalStrategy],

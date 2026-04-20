@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, ConflictException, BadRequestException, 
 import * as bcrypt from "bcryptjs";
 import { UserRole, UserStatus } from "@gosf/database";
 import { DatabaseService } from "../../common/database/database.service";
+import { AuditService } from "../audit/audit.service";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { ChangePasswordDto } from "./dto/change-password.dto";
@@ -19,7 +20,10 @@ const userSelect = {
 
 @Injectable()
 export class UsersService {
-  constructor(private db: DatabaseService) {}
+  constructor(
+    private db: DatabaseService,
+    private audit: AuditService,
+  ) {}
 
   async findById(id: string) {
     const user = await this.db.user.findUnique({
@@ -64,6 +68,10 @@ export class UsersService {
       await this.db.teacher.create({ data: { userId: user.id } });
     }
 
+    this.audit
+      .log(institutionId, "CREATE_USER", "User", { resourceId: user.id })
+      .catch(() => {});
+
     return user;
   }
 
@@ -100,10 +108,16 @@ export class UsersService {
     const user = await this.db.user.findUnique({ where: { id, institutionId } });
     if (!user) throw new NotFoundException("Usuário não encontrado");
     const next = user.status === UserStatus.ACTIVE ? UserStatus.INACTIVE : UserStatus.ACTIVE;
-    return this.db.user.update({
+    const updated = await this.db.user.update({
       where: { id },
       data: { status: next },
-      select: userSelect,
+      select: { ...userSelect, institutionId: true },
     });
+
+    this.audit
+      .log(updated.institutionId, `USER_${next}`, "User", { resourceId: id })
+      .catch(() => {});
+
+    return updated;
   }
 }
