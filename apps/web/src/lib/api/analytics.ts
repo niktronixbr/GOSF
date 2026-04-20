@@ -71,7 +71,16 @@ export interface CycleScores {
   scores: ScoreAggregate[];
 }
 
+export interface StudentInsight {
+  studentId: string;
+  fullName: string;
+  avgScore: number | null;
+  atRisk: boolean;
+  scores: ScoreAggregate[];
+}
+
 export const analyticsApi = {
+  teacherStudentInsights: () => api.get<StudentInsight[]>("/analytics/teacher/students"),
   studentHistory: () => api.get<CycleScores[]>("/analytics/student/history"),
   studentFeedbacks: () => api.get<FeedbackEntry[]>("/analytics/student/feedbacks"),
   studentDashboard: () => api.get<StudentDashboard>("/analytics/dashboard/student"),

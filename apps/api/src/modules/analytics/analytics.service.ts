@@ -276,6 +276,48 @@ export class AnalyticsService {
     return Array.from(cycleMap.values());
   }
 
+  async getTeacherStudentInsights(userId: string, institutionId: string) {
+    const teacher = await this.db.teacher.findUnique({ where: { userId } });
+    if (!teacher) return [];
+
+    const cycle = await this.db.evaluationCycle.findFirst({
+      where: { institutionId, status: "OPEN" },
+      orderBy: { startsAt: "desc" },
+    });
+
+    const evaluations = await this.db.studentEvaluation.findMany({
+      where: { teacherId: teacher.id },
+      include: {
+        student: { include: { user: { select: { id: true, fullName: true } } } },
+      },
+      distinct: ["studentId"],
+    });
+
+    const studentIds = evaluations.map((e) => e.studentId);
+
+    const scores = cycle
+      ? await this.db.scoreAggregate.findMany({
+          where: { targetId: { in: studentIds }, cycleId: cycle.id, targetType: TargetType.STUDENT },
+        })
+      : [];
+
+    return evaluations.map((e) => {
+      const studentScores = scores.filter((s) => s.targetId === e.studentId);
+      const avg =
+        studentScores.length
+          ? Math.round((studentScores.reduce((a, s) => a + s.score, 0) / studentScores.length) * 10) / 10
+          : null;
+      const atRisk = avg !== null && avg < 50;
+      return {
+        studentId: e.studentId,
+        fullName: e.student.user.fullName,
+        avgScore: avg,
+        atRisk,
+        scores: studentScores.map((s) => ({ dimension: s.dimension, score: s.score })),
+      };
+    });
+  }
+
   async getDashboardTeacher(userId: string, institutionId: string) {
     const teacher = await this.db.teacher.findUnique({ where: { userId } });
     if (!teacher) return null;

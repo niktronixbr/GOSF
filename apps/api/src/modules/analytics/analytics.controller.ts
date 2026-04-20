@@ -23,6 +23,12 @@ export class AnalyticsController {
     return this.analytics.getDashboardTeacher(user.id, user.institutionId);
   }
 
+  @Get("teacher/students")
+  @Roles(UserRole.TEACHER)
+  getTeacherStudentInsights(@CurrentUser() user: any) {
+    return this.analytics.getTeacherStudentInsights(user.id, user.institutionId);
+  }
+
   @Get("student/history")
   @Roles(UserRole.STUDENT)
   getStudentHistory(@CurrentUser() user: any) {

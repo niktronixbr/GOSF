@@ -18,7 +18,7 @@ async function main() {
 
   const passwordHash = await bcrypt.hash("Admin@1234", 12);
 
-  const admin = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { institutionId_email: { institutionId: institution.id, email: "admin@escolademo.com" } },
     update: {},
     create: {
@@ -32,7 +32,7 @@ async function main() {
     },
   });
 
-  const coordinator = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { institutionId_email: { institutionId: institution.id, email: "coord@escolademo.com" } },
     update: {},
     create: {
