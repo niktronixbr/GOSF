@@ -144,4 +144,5 @@ export const coordinatorApi = {
   getSubjects: () => api.get<SubjectInfo[]>("/subjects"),
   createSubject: (data: { name: string; code?: string }) =>
     api.post<SubjectInfo>("/subjects", data),
+  deleteSubject: (id: string) => api.delete<{ deleted: boolean }>(`/subjects/${id}`),
 };

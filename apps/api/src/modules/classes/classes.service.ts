@@ -142,6 +142,13 @@ export class ClassesService {
     });
   }
 
+  async deleteSubject(institutionId: string, subjectId: string) {
+    const subject = await this.db.subject.findFirst({ where: { id: subjectId, institutionId } });
+    if (!subject) throw new NotFoundException("Disciplina não encontrada.");
+    await this.db.subject.delete({ where: { id: subjectId } });
+    return { deleted: true };
+  }
+
   async listStudents(institutionId: string) {
     return this.db.student.findMany({
       where: { user: { institutionId } },

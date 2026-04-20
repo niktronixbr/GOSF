@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
   Param,
   Post,
   UseGuards,
@@ -115,5 +116,12 @@ export class SubjectsController {
   @Roles(UserRole.COORDINATOR, UserRole.ADMIN)
   createSubject(@CurrentUser() user: any, @Body() dto: CreateSubjectDto) {
     return this.classes.createSubject(user.institutionId, dto);
+  }
+
+  @Delete(":id")
+  @Roles(UserRole.COORDINATOR, UserRole.ADMIN)
+  @HttpCode(200)
+  deleteSubject(@CurrentUser() user: any, @Param("id") id: string) {
+    return this.classes.deleteSubject(user.institutionId, id);
   }
 }

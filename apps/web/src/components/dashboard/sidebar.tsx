@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Home,
   BookOpen,
+  BookMarked,
   BarChart2,
   MessageSquare,
   Target,
@@ -36,6 +37,7 @@ const teacherNav: NavItem[] = [
 const coordinatorNav: NavItem[] = [
   { href: "/coordinator", label: "Visão geral", icon: Home },
   { href: "/coordinator/classes", label: "Turmas", icon: BookOpen },
+  { href: "/coordinator/subjects", label: "Disciplinas", icon: BookMarked },
   { href: "/coordinator/teachers", label: "Professores", icon: Users },
   { href: "/coordinator/cycles", label: "Ciclos de avaliação", icon: Target },
   { href: "/coordinator/reports", label: "Relatórios", icon: BarChart2 },
