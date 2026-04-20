@@ -127,6 +127,50 @@ export class AnalyticsService {
     });
   }
 
+  async getTeachersWithScores(institutionId: string, cycleId: string) {
+    const teachers = await this.db.teacher.findMany({
+      where: { user: { institutionId } },
+      include: {
+        user: { select: { id: true, fullName: true, email: true, status: true } },
+        developmentPlans: {
+          where: { cycleId },
+          orderBy: { version: "desc" },
+          take: 1,
+          select: { status: true },
+        },
+      },
+      orderBy: { user: { fullName: "asc" } },
+    });
+
+    const scores = cycleId
+      ? await this.db.scoreAggregate.findMany({
+          where: { institutionId, cycleId, targetType: TargetType.TEACHER },
+        })
+      : [];
+
+    return teachers.map((t) => {
+      const teacherScores = scores.filter((s) => s.targetId === t.id);
+      const avg =
+        teacherScores.length
+          ? Math.round(
+              (teacherScores.reduce((a, s) => a + s.score, 0) / teacherScores.length) * 10
+            ) / 10
+          : null;
+      return {
+        id: t.id,
+        userId: t.user.id,
+        fullName: t.user.fullName,
+        email: t.user.email,
+        status: t.user.status,
+        department: t.department,
+        specialty: t.specialty,
+        planStatus: t.developmentPlans[0]?.status ?? null,
+        avgScore: avg,
+        scores: teacherScores.map((s) => ({ dimension: s.dimension, score: s.score })),
+      };
+    });
+  }
+
   async getInstitutionOverview(institutionId: string, cycleId: string) {
     const [teacherScores, studentScores] = await Promise.all([
       this.db.scoreAggregate.findMany({

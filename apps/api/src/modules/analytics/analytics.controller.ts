@@ -29,6 +29,15 @@ export class AnalyticsController {
     return this.analytics.getInstitutionOverview(user.institutionId, cycleId);
   }
 
+  @Get("teachers")
+  @Roles(UserRole.COORDINATOR, UserRole.ADMIN)
+  getTeachersWithScores(
+    @CurrentUser() user: any,
+    @Query("cycleId") cycleId: string
+  ) {
+    return this.analytics.getTeachersWithScores(user.institutionId, cycleId ?? "");
+  }
+
   @Post("compute/teacher/:teacherId/cycle/:cycleId")
   @Roles(UserRole.COORDINATOR, UserRole.ADMIN)
   computeTeacher(
