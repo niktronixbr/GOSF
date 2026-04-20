@@ -23,6 +23,18 @@ export class AnalyticsController {
     return this.analytics.getDashboardTeacher(user.id, user.institutionId);
   }
 
+  @Get("student/history")
+  @Roles(UserRole.STUDENT)
+  getStudentHistory(@CurrentUser() user: any) {
+    return this.analytics.getStudentHistory(user.id);
+  }
+
+  @Get("student/feedbacks")
+  @Roles(UserRole.STUDENT)
+  getStudentFeedbacks(@CurrentUser() user: any) {
+    return this.analytics.getStudentFeedbacks(user.id);
+  }
+
   @Get("overview")
   @Roles(UserRole.COORDINATOR, UserRole.ADMIN)
   getOverview(@CurrentUser() user: any, @Query("cycleId") cycleId: string) {

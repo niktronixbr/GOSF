@@ -54,7 +54,26 @@ export interface TeacherDashboard {
   plan: TeacherPlan | null;
 }
 
+export interface FeedbackEntry {
+  id: string;
+  cycleId: string;
+  cycleTitle: string;
+  submittedAt: string;
+  teacherName: string;
+  comment: string | null;
+  dimensions: { dimension: string; score: number }[];
+}
+
+export interface CycleScores {
+  cycleId: string;
+  cycleTitle: string;
+  startsAt: string;
+  scores: ScoreAggregate[];
+}
+
 export const analyticsApi = {
+  studentHistory: () => api.get<CycleScores[]>("/analytics/student/history"),
+  studentFeedbacks: () => api.get<FeedbackEntry[]>("/analytics/student/feedbacks"),
   studentDashboard: () => api.get<StudentDashboard>("/analytics/dashboard/student"),
   teacherDashboard: () => api.get<TeacherDashboard>("/analytics/dashboard/teacher"),
   getStudentPlan: (cycleId: string) =>

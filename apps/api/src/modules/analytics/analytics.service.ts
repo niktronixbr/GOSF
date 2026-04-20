@@ -208,6 +208,74 @@ export class AnalyticsService {
     return { student, cycle, scores, plan };
   }
 
+  async getStudentFeedbacks(userId: string) {
+    const student = await this.db.student.findUnique({ where: { userId } });
+    if (!student) return [];
+
+    const evaluations = await this.db.studentEvaluation.findMany({
+      where: { studentId: student.id },
+      include: {
+        cycle: { select: { id: true, title: true, startsAt: true } },
+        teacher: { include: { user: { select: { fullName: true } } } },
+        form: { include: { questions: { select: { id: true, dimension: true, questionText: true } } } },
+      },
+      orderBy: { submittedAt: "desc" },
+    });
+
+    return evaluations.map((ev) => {
+      const answers = ev.answersJson as Record<string, number>;
+      const dimensionScores: Record<string, number[]> = {};
+      for (const q of ev.form.questions) {
+        const val = answers[q.id];
+        if (typeof val === "number") {
+          if (!dimensionScores[q.dimension]) dimensionScores[q.dimension] = [];
+          dimensionScores[q.dimension].push((val / 5) * 100);
+        }
+      }
+      const dimensions = Object.entries(dimensionScores).map(([dim, vals]) => ({
+        dimension: dim,
+        score: Math.round(vals.reduce((a, v) => a + v, 0) / vals.length),
+      }));
+
+      return {
+        id: ev.id,
+        cycleId: ev.cycleId,
+        cycleTitle: ev.cycle.title,
+        submittedAt: ev.submittedAt,
+        teacherName: ev.teacher.user.fullName,
+        comment: ev.comment ?? null,
+        dimensions,
+      };
+    });
+  }
+
+  async getStudentHistory(userId: string) {
+    const student = await this.db.student.findUnique({ where: { userId } });
+    if (!student) return [];
+
+    const aggregates = await this.db.scoreAggregate.findMany({
+      where: { targetId: student.id, targetType: TargetType.STUDENT },
+      include: { cycle: { select: { id: true, title: true, startsAt: true } } },
+      orderBy: { cycle: { startsAt: "asc" } },
+    });
+
+    const cycleMap = new Map<string, { cycleId: string; cycleTitle: string; startsAt: Date; scores: { dimension: string; score: number }[] }>();
+
+    for (const agg of aggregates) {
+      if (!cycleMap.has(agg.cycleId)) {
+        cycleMap.set(agg.cycleId, {
+          cycleId: agg.cycleId,
+          cycleTitle: agg.cycle.title,
+          startsAt: agg.cycle.startsAt,
+          scores: [],
+        });
+      }
+      cycleMap.get(agg.cycleId)!.scores.push({ dimension: agg.dimension, score: agg.score });
+    }
+
+    return Array.from(cycleMap.values());
+  }
+
   async getDashboardTeacher(userId: string, institutionId: string) {
     const teacher = await this.db.teacher.findUnique({ where: { userId } });
     if (!teacher) return null;
