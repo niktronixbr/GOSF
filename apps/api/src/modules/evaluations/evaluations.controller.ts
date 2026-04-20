@@ -18,6 +18,7 @@ import { UserRole, TargetType } from "@gosf/database";
 import { CyclesService } from "./cycles.service";
 import { FormsService } from "./forms.service";
 import { SubmissionsService } from "./submissions.service";
+import { TargetsService } from "./targets.service";
 import { CreateCycleDto } from "./dto/create-cycle.dto";
 import { CreateFormDto } from "./dto/create-form.dto";
 import { SubmitEvaluationDto } from "./dto/submit-evaluation.dto";
@@ -28,7 +29,8 @@ export class EvaluationsController {
   constructor(
     private cycles: CyclesService,
     private forms: FormsService,
-    private submissions: SubmissionsService
+    private submissions: SubmissionsService,
+    private targets: TargetsService
   ) {}
 
   // ─── Cycles ───────────────────────────────────────────────
@@ -126,5 +128,19 @@ export class EvaluationsController {
     @Query("cycleId") cycleId: string
   ) {
     return this.submissions.getMyStudentEvaluations(user.id, cycleId);
+  }
+
+  // ─── Targets ──────────────────────────────────────────────
+
+  @Get("targets/teachers")
+  @Roles(UserRole.STUDENT)
+  getTeachersForStudent(@CurrentUser() user: any) {
+    return this.targets.getTeachersForStudent(user.id, user.institutionId);
+  }
+
+  @Get("targets/students")
+  @Roles(UserRole.TEACHER)
+  getStudentsForTeacher(@CurrentUser() user: any) {
+    return this.targets.getStudentsForTeacher(user.id, user.institutionId);
   }
 }
