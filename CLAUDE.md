@@ -14,7 +14,7 @@ Não encerrar a tarefa sem commitar e fazer push. Confirmar o push ao final da r
 
 ## Stack
 
-- Frontend: Next.js 15 + React 19 + TypeScript + Tailwind + shadcn/ui (porta 3002)
+- Frontend: Next.js 15 + React 19 + TypeScript + Tailwind (porta 3002) — **sem shadcn/ui**
 - Backend: NestJS (Fastify) + Prisma + PostgreSQL (porta 3001)
 - DB: PostgreSQL Docker porta 5434
 - Redis Docker porta 6379
@@ -53,6 +53,11 @@ pnpm docker:up
 pnpm docker:down
 ```
 
+## Notas de ambiente
+
+- `node` pode não estar no PATH do terminal bash; usar `export PATH="/c/Program Files/nodejs:$PATH"` antes de `npx` se necessário
+- Migrations Prisma: `export PATH="/c/Program Files/nodejs:$PATH" && npx prisma migrate dev --name <nome>` rodado na raiz do monorepo
+
 ## Arquitetura
 
 ### Estrutura do monorepo
@@ -69,35 +74,53 @@ packages/
 ### Frontend (`apps/web/src`)
 
 **Roteamento por papel** via App Router:
-- `/(auth)` — login
+- `/(auth)` — login, forgot-password, reset-password
 - `/(student)/student/*` — aluno: avaliações, metas, progresso, feedback, plano
 - `/(teacher)/teacher/*` — professor: avaliações, desenvolvimento, turmas, insights
 - `/(coordinator)/coordinator/*` — coordenador: ciclos, professores, turmas, relatórios, configurações
+- `/(admin)/admin` — gestão de usuários
+
+**Layout padrão** (student/teacher/coordinator/admin):
+```tsx
+<div className="flex h-screen overflow-hidden">
+  <Sidebar />
+  <div className="flex flex-1 flex-col overflow-hidden">
+    <TopBar />
+    <main className="flex-1 overflow-y-auto p-6 bg-muted/20">{children}</main>
+  </div>
+</div>
+```
 
 **Camadas principais:**
-- `lib/api/client.ts` — cliente HTTP base (Bearer token de cookie, auto-refresh, classe `ApiError`)
-- `lib/api/` — wrappers por domínio (evaluations, analytics, coordinator)
+- `lib/api/client.ts` — cliente HTTP base (Bearer token, auto-refresh, classe `ApiError`)
+- `lib/api/` — wrappers por domínio: analytics, evaluations, coordinator, goals, notifications, admin
 - `lib/auth/` — gerenciamento de sessão e tokens JWT
 - `store/` — estado global com Zustand (auth)
 - `features/` — componentes de feature (login-form, evaluation-form…)
-- `components/` — UI reutilizável (sidebar, providers)
+- `components/dashboard/` — sidebar, top-bar, notifications-bell
 
 **Regra:** `"use client"` somente quando necessário.
 
 ### Backend (`apps/api/src`)
 
-Módulos NestJS:
-- `auth` — JWT + Passport (access 15 min / refresh 7 dias)
-- `users` / `institutions` — multi-tenancy por `institutionId`
+Módulos NestJS implementados:
+- `auth` — JWT + Passport (access 15 min / refresh 7 dias) + forgot/reset password via e-mail
+- `users` — CRUD completo (create cria perfil Student/Teacher automaticamente)
+- `institutions` — multi-tenancy por `institutionId`
 - `classes` — ClassGroup, Subject, Enrollment, ClassAssignment
-- `evaluations` — ciclos (DRAFT→OPEN→CLOSED→ARCHIVED), formulários, submissões, targets
+- `evaluations` — ciclos (DRAFT→OPEN→CLOSED→ARCHIVED), formulários, submissões
 - `analytics` — ScoreAggregate por dimensão/ciclo
 - `ai` — planos gerados pelo Claude (Anthropic SDK)
-- `notifications` — Bull queue + Redis
-- `privacy` — LGPD (ConsentRecord, DataRequest)
-- `audit` — AuditLog por instituição
+- `goals` — StudentGoal CRUD
+- `notifications` — CRUD de notificações in-app (findAll, countUnread, markRead, markAllRead, create)
+- `privacy` — stub LGPD
+- `audit` — stub AuditLog
 
-Infraestrutura comum: `common/guards/` (JwtAuthGuard, RolesGuard), `common/decorators/` (@CurrentUser, @Roles), `common/filters/`.
+Infraestrutura comum:
+- `common/guards/` — JwtAuthGuard, RolesGuard
+- `common/decorators/` — @CurrentUser, @Roles
+- `common/filters/`
+- `common/mail/` — MailService (nodemailer SMTP; vars: SMTP_HOST/PORT/SECURE/USER/PASS/FROM, APP_URL)
 
 ### Modelo de dados (Prisma)
 
@@ -109,10 +132,13 @@ Entidades principais:
 - `TeacherEvaluation` (aluno avalia professor) / `StudentEvaluation` (professor avalia aluno)
 - `ScoreAggregate` — analytics computados
 - `StudentPlan` / `TeacherDevelopmentPlan` — JSON gerados por IA
-- `Notification`, `ConsentRecord`, `DataRequest`, `AuditLog`
+- `Notification` — notificações in-app por usuário
+- `RefreshToken`, `PasswordResetToken` — auth tokens
+- `ConsentRecord`, `DataRequest`, `AuditLog`
 
 ## Padrões de código
 
+- **Sem shadcn/ui** — HTML nativo + Tailwind puro. Ver `apps/web/src/app/(student)/student/goals/page.tsx` como referência
 - Sem comentários desnecessários
 - Sem abstrações prematuras
 - `"use client"` apenas quando necessário
