@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException, ConflictException } from "@nestjs/common";
+import { Injectable, NotFoundException, ConflictException, BadRequestException, UnauthorizedException } from "@nestjs/common";
 import * as bcrypt from "bcryptjs";
 import { UserRole, UserStatus } from "@gosf/database";
 import { DatabaseService } from "../../common/database/database.service";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
+import { ChangePasswordDto } from "./dto/change-password.dto";
 
 const userSelect = {
   id: true,
@@ -77,6 +78,22 @@ export class UsersService {
       },
       select: userSelect,
     });
+  }
+
+  async changePassword(id: string, dto: ChangePasswordDto) {
+    const user = await this.db.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException("Usuário não encontrado");
+
+    const valid = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    if (!valid) throw new UnauthorizedException("Senha atual incorreta");
+
+    if (dto.currentPassword === dto.newPassword) {
+      throw new BadRequestException("A nova senha deve ser diferente da senha atual");
+    }
+
+    const passwordHash = await bcrypt.hash(dto.newPassword, 10);
+    await this.db.user.update({ where: { id }, data: { passwordHash } });
+    await this.db.refreshToken.deleteMany({ where: { userId: id } });
   }
 
   async toggleStatus(id: string, institutionId: string) {

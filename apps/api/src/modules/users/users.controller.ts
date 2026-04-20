@@ -17,6 +17,7 @@ import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { UserRole } from "@gosf/database";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
+import { ChangePasswordDto } from "./dto/change-password.dto";
 
 @Controller("users")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -26,6 +27,12 @@ export class UsersController {
   @Get("me")
   getMe(@CurrentUser() user: any) {
     return this.usersService.findById(user.id);
+  }
+
+  @Patch("me/password")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  changePassword(@CurrentUser() user: any, @Body() dto: ChangePasswordDto) {
+    return this.usersService.changePassword(user.id, dto);
   }
 
   @Get()
