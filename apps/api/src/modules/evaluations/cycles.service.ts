@@ -2,17 +2,22 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from "@nestjs/common";
 import { DatabaseService } from "../../common/database/database.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { AnalyticsService } from "../analytics/analytics.service";
 import { CreateCycleDto } from "./dto/create-cycle.dto";
 import { EvaluationCycleStatus, NotificationType } from "@gosf/database";
 
 @Injectable()
 export class CyclesService {
+  private readonly logger = new Logger(CyclesService.name);
+
   constructor(
     private db: DatabaseService,
     private notifications: NotificationsService,
+    private analytics: AnalyticsService,
   ) {}
 
   async findAll(institutionId: string) {
@@ -64,11 +69,46 @@ export class CyclesService {
       where: { id },
       data: { status: EvaluationCycleStatus.CLOSED },
     });
+
     await this.notifyInstitution(institutionId, NotificationType.SYSTEM,
       `Ciclo encerrado: ${cycle.title}`,
       "O ciclo de avaliação foi encerrado. Verifique seus resultados.",
     );
+
+    await this.computeScoresForCycle(id, institutionId);
+
     return updated;
+  }
+
+  private async computeScoresForCycle(cycleId: string, institutionId: string) {
+    const [teacherEvals, studentEvals] = await Promise.all([
+      this.db.teacherEvaluation.findMany({
+        where: { cycleId },
+        select: { teacherId: true },
+        distinct: ["teacherId"],
+      }),
+      this.db.studentEvaluation.findMany({
+        where: { cycleId },
+        select: { studentId: true },
+        distinct: ["studentId"],
+      }),
+    ]);
+
+    for (const { teacherId } of teacherEvals) {
+      try {
+        await this.analytics.computeTeacherScores(teacherId, cycleId, institutionId);
+      } catch (err) {
+        this.logger.error(`Erro ao computar scores do professor ${teacherId}: ${err}`);
+      }
+    }
+
+    for (const { studentId } of studentEvals) {
+      try {
+        await this.analytics.computeStudentScores(studentId, cycleId, institutionId);
+      } catch (err) {
+        this.logger.error(`Erro ao computar scores do aluno ${studentId}: ${err}`);
+      }
+    }
   }
 
   private async notifyInstitution(
