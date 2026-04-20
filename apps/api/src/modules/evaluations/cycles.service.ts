@@ -78,7 +78,7 @@ export class CyclesService {
     body: string,
   ) {
     const users = await this.db.user.findMany({
-      where: { institutionId, isActive: true },
+      where: { institutionId, status: "ACTIVE" },
       select: { id: true },
     });
     await Promise.all(

@@ -58,9 +58,9 @@ export class UsersService {
     });
 
     if (dto.role === UserRole.STUDENT) {
-      await this.db.student.create({ data: { userId: user.id, institutionId } });
+      await this.db.student.create({ data: { userId: user.id } });
     } else if (dto.role === UserRole.TEACHER) {
-      await this.db.teacher.create({ data: { userId: user.id, institutionId } });
+      await this.db.teacher.create({ data: { userId: user.id } });
     }
 
     return user;

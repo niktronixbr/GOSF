@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { NotificationType } from "@gosf/database";
+import { NotificationType, Prisma } from "@gosf/database";
 import { DatabaseService } from "../../common/database/database.service";
 
 @Injectable()
@@ -43,7 +43,7 @@ export class NotificationsService {
     data?: Record<string, unknown>,
   ) {
     return this.db.notification.create({
-      data: { userId, type, title, body, data },
+      data: { userId, type, title, body, data: data as Prisma.InputJsonValue },
     });
   }
 }
