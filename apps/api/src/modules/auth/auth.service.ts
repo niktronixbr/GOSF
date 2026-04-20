@@ -1,11 +1,14 @@
 import {
   Injectable,
   UnauthorizedException,
+  BadRequestException,
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 import * as bcrypt from "bcryptjs";
+import * as crypto from "crypto";
 import { DatabaseService } from "../../common/database/database.service";
+import { MailService } from "../../common/mail/mail.service";
 
 export interface JwtPayload {
   sub: string;
@@ -20,7 +23,8 @@ export class AuthService {
   constructor(
     private db: DatabaseService,
     private jwt: JwtService,
-    private config: ConfigService
+    private config: ConfigService,
+    private mail: MailService,
   ) {}
 
   async validateUser(email: string, password: string, institutionSlug: string) {
@@ -75,11 +79,7 @@ export class AuthService {
     expiresAt.setDate(expiresAt.getDate() + 7);
 
     await this.db.refreshToken.create({
-      data: {
-        userId: user.id,
-        token: refreshToken,
-        expiresAt,
-      },
+      data: { userId: user.id, token: refreshToken, expiresAt },
     });
 
     return { accessToken, refreshToken };
@@ -114,5 +114,73 @@ export class AuthService {
       where: { token },
       data: { revokedAt: new Date() },
     });
+  }
+
+  async forgotPassword(email: string, institutionSlug: string) {
+    const institution = await this.db.institution.findUnique({
+      where: { slug: institutionSlug },
+    });
+
+    // Resposta genérica — não revela se o e-mail existe
+    if (!institution) return { message: "Se o e-mail existir, você receberá as instruções." };
+
+    const user = await this.db.user.findUnique({
+      where: { institutionId_email: { institutionId: institution.id, email } },
+    });
+
+    if (!user || user.status !== "ACTIVE") {
+      return { message: "Se o e-mail existir, você receberá as instruções." };
+    }
+
+    // Invalida tokens anteriores não utilizados
+    await this.db.passwordResetToken.updateMany({
+      where: { userId: user.id, usedAt: null },
+      data: { usedAt: new Date() },
+    });
+
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+
+    await this.db.passwordResetToken.create({
+      data: { userId: user.id, token, expiresAt },
+    });
+
+    const appUrl = this.config.get("APP_URL", "http://localhost:3002");
+    const resetUrl = `${appUrl}/reset-password?token=${token}`;
+
+    await this.mail.sendPasswordReset(user.email, user.fullName, resetUrl);
+
+    return { message: "Se o e-mail existir, você receberá as instruções." };
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    const record = await this.db.passwordResetToken.findUnique({
+      where: { token },
+      include: { user: true },
+    });
+
+    if (!record || record.usedAt || record.expiresAt < new Date()) {
+      throw new BadRequestException("Token inválido ou expirado");
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+
+    await this.db.$transaction([
+      this.db.user.update({
+        where: { id: record.userId },
+        data: { passwordHash },
+      }),
+      this.db.passwordResetToken.update({
+        where: { id: record.id },
+        data: { usedAt: new Date() },
+      }),
+      // Revoga todos os refresh tokens do usuário
+      this.db.refreshToken.updateMany({
+        where: { userId: record.userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      }),
+    ]);
+
+    return { message: "Senha redefinida com sucesso" };
   }
 }

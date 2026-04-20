@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -90,6 +91,15 @@ export function LoginForm() {
             {form.formState.errors.password.message}
           </p>
         )}
+      </div>
+
+      <div className="flex justify-end">
+        <Link
+          href="/forgot-password"
+          className="text-xs text-muted-foreground hover:text-primary transition-colors"
+        >
+          Esqueci minha senha
+        </Link>
       </div>
 
       <button
