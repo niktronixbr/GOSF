@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException, Logger } from "@nestjs/common";
 import { DatabaseService } from "../../common/database/database.service";
 import { AiProviderService } from "./ai-provider.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { STUDENT_PLAN_SYSTEM, TEACHER_PLAN_SYSTEM } from "./prompts";
-import { PlanStatus } from "@gosf/database";
+import { PlanStatus, NotificationType } from "@gosf/database";
 
 @Injectable()
 export class PlansService {
@@ -10,7 +11,8 @@ export class PlansService {
 
   constructor(
     private db: DatabaseService,
-    private ai: AiProviderService
+    private ai: AiProviderService,
+    private notifications: NotificationsService,
   ) {}
 
   async generateStudentPlan(studentUserId: string, cycleId: string, institutionId: string) {
@@ -52,7 +54,7 @@ export class PlansService {
         `Dados do aluno para geração do plano:\n\`\`\`json\n${JSON.stringify(snapshot, null, 2)}\n\`\`\``
       );
 
-      return this.db.studentPlan.update({
+      const ready = await this.db.studentPlan.update({
         where: { id: plan.id },
         data: {
           aiOutputJson: output as any,
@@ -60,6 +62,13 @@ export class PlansService {
           generatedAt: new Date(),
         },
       });
+      await this.notifications.create(
+        studentUserId,
+        NotificationType.PLAN_READY,
+        "Seu plano de estudo está pronto",
+        "A IA gerou seu plano personalizado. Acesse Plano de Estudo para visualizar.",
+      );
+      return ready;
     } catch (err) {
       this.logger.error("Failed to generate student plan", err);
       await this.db.studentPlan.update({
@@ -110,7 +119,7 @@ export class PlansService {
         `Dados do professor para geração do plano:\n\`\`\`json\n${JSON.stringify(snapshot, null, 2)}\n\`\`\``
       );
 
-      return this.db.teacherDevelopmentPlan.update({
+      const ready = await this.db.teacherDevelopmentPlan.update({
         where: { id: plan.id },
         data: {
           aiOutputJson: output as any,
@@ -118,6 +127,13 @@ export class PlansService {
           generatedAt: new Date(),
         },
       });
+      await this.notifications.create(
+        teacherUserId,
+        NotificationType.PLAN_READY,
+        "Seu plano de desenvolvimento está pronto",
+        "A IA gerou seu plano de desenvolvimento profissional. Acesse Desenvolvimento para visualizar.",
+      );
+      return ready;
     } catch (err) {
       this.logger.error("Failed to generate teacher plan", err);
       await this.db.teacherDevelopmentPlan.update({

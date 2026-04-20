@@ -4,12 +4,16 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { DatabaseService } from "../../common/database/database.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { CreateCycleDto } from "./dto/create-cycle.dto";
-import { EvaluationCycleStatus } from "@gosf/database";
+import { EvaluationCycleStatus, NotificationType } from "@gosf/database";
 
 @Injectable()
 export class CyclesService {
-  constructor(private db: DatabaseService) {}
+  constructor(
+    private db: DatabaseService,
+    private notifications: NotificationsService,
+  ) {}
 
   async findAll(institutionId: string) {
     return this.db.evaluationCycle.findMany({
@@ -42,19 +46,44 @@ export class CyclesService {
   }
 
   async open(id: string, institutionId: string) {
-    await this.findOne(id, institutionId);
-    return this.db.evaluationCycle.update({
+    const cycle = await this.findOne(id, institutionId);
+    const updated = await this.db.evaluationCycle.update({
       where: { id },
       data: { status: EvaluationCycleStatus.OPEN },
     });
+    await this.notifyInstitution(institutionId, NotificationType.EVALUATION_OPEN,
+      `Ciclo aberto: ${cycle.title}`,
+      "Um novo ciclo de avaliação está disponível. Acesse para registrar suas avaliações.",
+    );
+    return updated;
   }
 
   async close(id: string, institutionId: string) {
-    await this.findOne(id, institutionId);
-    return this.db.evaluationCycle.update({
+    const cycle = await this.findOne(id, institutionId);
+    const updated = await this.db.evaluationCycle.update({
       where: { id },
       data: { status: EvaluationCycleStatus.CLOSED },
     });
+    await this.notifyInstitution(institutionId, NotificationType.SYSTEM,
+      `Ciclo encerrado: ${cycle.title}`,
+      "O ciclo de avaliação foi encerrado. Verifique seus resultados.",
+    );
+    return updated;
+  }
+
+  private async notifyInstitution(
+    institutionId: string,
+    type: NotificationType,
+    title: string,
+    body: string,
+  ) {
+    const users = await this.db.user.findMany({
+      where: { institutionId, isActive: true },
+      select: { id: true },
+    });
+    await Promise.all(
+      users.map((u) => this.notifications.create(u.id, type, title, body)),
+    );
   }
 
   async getActiveCycle(institutionId: string) {
