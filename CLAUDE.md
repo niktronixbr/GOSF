@@ -57,6 +57,8 @@ pnpm docker:down
 
 - `node` pode não estar no PATH do terminal bash; usar `export PATH="/c/Program Files/nodejs:$PATH"` antes de `npx` se necessário
 - Migrations Prisma: `export PATH="/c/Program Files/nodejs:$PATH" && npx prisma migrate dev --name <nome>` rodado na raiz do monorepo
+- `pnpm dev` via Turbo pode falhar com "cannot find binary path" — usar `pnpm --filter api dev` e `pnpm --filter web dev` separadamente
+- Prisma Client instalado é **6.19.x** (^6.2.1 no package.json resolveu para versão maior) — tipos mais estritos que 6.2.1
 
 ## Arquitetura
 
