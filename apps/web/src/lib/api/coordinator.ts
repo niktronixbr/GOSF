@@ -1,6 +1,13 @@
 import { api } from "./client";
 import { EvaluationCycle } from "./evaluations";
 
+export interface InstitutionSettings {
+  id: string;
+  name: string;
+  slug: string;
+  status: string;
+}
+
 export interface TeacherWithScores {
   id: string;
   userId: string;
@@ -47,4 +54,9 @@ export const coordinatorApi = {
     ),
   getReports: (cycleId: string) =>
     api.get<ReportEntry[]>(`/analytics/reports?cycleId=${cycleId}`),
+
+  // Institution settings
+  getInstitution: () => api.get<InstitutionSettings>("/institutions/me"),
+  updateInstitution: (data: { name?: string; status?: string }) =>
+    api.patch<InstitutionSettings>("/institutions/me", data),
 };
