@@ -9,4 +9,3 @@ build
 *.log
 coverage
 .DS_Store
-prisma/migrations

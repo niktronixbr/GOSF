@@ -1,0 +1,5 @@
+# Shell scripts devem manter LF (Unix) para funcionar em Linux/Docker
+*.sh text eol=lf
+
+# Dockerfiles também
+Dockerfile* text eol=lf

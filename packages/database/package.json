@@ -4,6 +4,7 @@
   "private": true,
   "main": "./src/index.ts",
   "scripts": {
+    "build": "tsc",
     "generate": "node node_modules/prisma/build/index.js generate",
     "migrate:dev": "node node_modules/prisma/build/index.js migrate dev",
     "db:push": "node node_modules/prisma/build/index.js db push",

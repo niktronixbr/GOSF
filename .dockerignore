@@ -1,0 +1,30 @@
+# Dependências — reinstaladas dentro do Docker
+node_modules
+apps/*/node_modules
+packages/*/node_modules
+
+# Build outputs do host — recompilados dentro do Docker
+apps/web/.next
+apps/api/dist
+packages/database/dist
+.turbo
+
+# Variáveis de ambiente sensíveis
+.env
+.env.local
+.env.production
+.env.*.local
+GOSF-API-KEY.txt
+
+# Arquivos de desenvolvimento
+**/*.log
+coverage
+.DS_Store
+*.pptx
+*.png
+*.md
+!README.md
+
+# Git
+.git
+.gitignore

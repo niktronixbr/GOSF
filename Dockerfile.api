@@ -1,0 +1,71 @@
+# ─── Stage 1: base ────────────────────────────────────────────────────────────
+FROM node:20-alpine AS base
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
+
+# ─── Stage 2: deps — instala todas as dependências no Linux ───────────────────
+FROM base AS deps
+WORKDIR /app
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/api/package.json                ./apps/api/
+COPY packages/database/package.json       ./packages/database/
+COPY packages/shared/package.json         ./packages/shared/
+
+RUN pnpm install --frozen-lockfile
+
+# ─── Stage 3: builder — compila database package + API ────────────────────────
+FROM base AS builder
+WORKDIR /app
+
+# Copia node_modules instalados no Linux (symlinks corretos)
+COPY --from=deps /app/node_modules                      ./node_modules
+COPY --from=deps /app/apps/api/node_modules             ./apps/api/node_modules
+COPY --from=deps /app/packages/database/node_modules    ./packages/database/node_modules
+
+# Copia código-fonte (node_modules excluídos via .dockerignore)
+COPY tsconfig.base.json                   ./
+COPY package.json pnpm-workspace.yaml     ./
+COPY apps/api                             ./apps/api
+COPY packages/database                    ./packages/database
+COPY packages/shared                      ./packages/shared
+
+# 1. Compila o packages/database de TS → JS
+RUN node_modules/.bin/tsc --project packages/database/tsconfig.json
+
+# Aponta main para o JS compilado (somente no contexto Docker)
+RUN node -e "\
+  const p = require('./packages/database/package.json'); \
+  p.main = './dist/index.js'; \
+  require('fs').writeFileSync('./packages/database/package.json', JSON.stringify(p, null, 2)); \
+"
+
+# 2. Gera o Prisma Client
+RUN packages/database/node_modules/.bin/prisma generate \
+    --schema packages/database/prisma/schema.prisma
+
+# 3. Compila a API NestJS
+RUN apps/api/node_modules/.bin/nest build \
+    --config apps/api/nest-cli.json
+
+# ─── Stage 4: runner — imagem final de produção ───────────────────────────────
+FROM node:20-alpine AS runner
+ENV NODE_ENV=production
+WORKDIR /app
+
+# Preserva estrutura do monorepo para que os symlinks do pnpm funcionem
+COPY --from=builder /app/node_modules                       ./node_modules
+COPY --from=builder /app/apps/api/node_modules              ./apps/api/node_modules
+COPY --from=builder /app/apps/api/dist                      ./apps/api/dist
+COPY --from=builder /app/apps/api/package.json              ./apps/api/package.json
+COPY --from=builder /app/packages/database                  ./packages/database
+COPY --from=builder /app/packages/shared                    ./packages/shared
+
+# Script de entrada (roda migrations depois inicia a API)
+COPY apps/api/entrypoint.sh ./apps/api/entrypoint.sh
+RUN chmod +x ./apps/api/entrypoint.sh
+
+WORKDIR /app/apps/api
+EXPOSE 3001
+ENTRYPOINT ["./entrypoint.sh"]
