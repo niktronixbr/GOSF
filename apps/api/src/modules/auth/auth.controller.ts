@@ -7,6 +7,7 @@ import {
   HttpStatus,
 } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
+import { Throttle } from "@nestjs/throttler";
 import { AuthService } from "./auth.service";
 import { LoginDto } from "./dto/login.dto";
 import { RefreshDto } from "./dto/refresh.dto";
@@ -18,6 +19,7 @@ import { CurrentUser } from "../../common/decorators/current-user.decorator";
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  @Throttle({ default: { ttl: 60000, limit: 10 } })
   @UseGuards(AuthGuard("local"))
   @Post("login")
   @HttpCode(HttpStatus.OK)
@@ -37,6 +39,7 @@ export class AuthController {
     return this.authService.logout(dto.refreshToken);
   }
 
+  @Throttle({ default: { ttl: 60000, limit: 5 } })
   @Post("forgot-password")
   @HttpCode(HttpStatus.OK)
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
