@@ -41,6 +41,15 @@ export class AnalyticsController {
     return this.analytics.getStudentFeedbacks(user.id);
   }
 
+  @Get("reports")
+  @Roles(UserRole.COORDINATOR, UserRole.ADMIN)
+  getReports(
+    @CurrentUser() user: any,
+    @Query("cycleId") cycleId: string
+  ) {
+    return this.analytics.getReports(user.institutionId, cycleId ?? "");
+  }
+
   @Get("overview")
   @Roles(UserRole.COORDINATOR, UserRole.ADMIN)
   getOverview(@CurrentUser() user: any, @Query("cycleId") cycleId: string) {

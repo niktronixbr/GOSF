@@ -21,6 +21,15 @@ export interface InstitutionOverview {
   atRiskStudents: { id: string; targetId: string; dimension: string; score: number }[];
 }
 
+export interface ReportEntry {
+  type: "STUDENT" | "TEACHER";
+  id: string;
+  fullName: string;
+  avgScore: number | null;
+  atRisk: boolean;
+  scores: { dimension: string; score: number }[];
+}
+
 export const coordinatorApi = {
   // Cycles
   getCycles: () => api.get<EvaluationCycle[]>("/evaluations/cycles"),
@@ -36,4 +45,6 @@ export const coordinatorApi = {
     api.get<TeacherWithScores[]>(
       `/analytics/teachers${cycleId ? `?cycleId=${cycleId}` : ""}`
     ),
+  getReports: (cycleId: string) =>
+    api.get<ReportEntry[]>(`/analytics/reports?cycleId=${cycleId}`),
 };

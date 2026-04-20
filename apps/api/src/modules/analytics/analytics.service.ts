@@ -276,6 +276,49 @@ export class AnalyticsService {
     return Array.from(cycleMap.values());
   }
 
+  async getReports(institutionId: string, cycleId: string) {
+    const [students, teachers, scores] = await Promise.all([
+      this.db.student.findMany({
+        where: { user: { institutionId } },
+        include: { user: { select: { fullName: true } } },
+        orderBy: { user: { fullName: "asc" } },
+      }),
+      this.db.teacher.findMany({
+        where: { user: { institutionId } },
+        include: { user: { select: { fullName: true } } },
+        orderBy: { user: { fullName: "asc" } },
+      }),
+      cycleId
+        ? this.db.scoreAggregate.findMany({ where: { institutionId, cycleId } })
+        : Promise.resolve([]),
+    ]);
+
+    const buildEntry = (
+      type: "STUDENT" | "TEACHER",
+      id: string,
+      fullName: string
+    ) => {
+      const entityScores = scores.filter((s) => s.targetId === id);
+      const avg =
+        entityScores.length
+          ? Math.round((entityScores.reduce((a, s) => a + s.score, 0) / entityScores.length) * 10) / 10
+          : null;
+      return {
+        type,
+        id,
+        fullName,
+        avgScore: avg,
+        atRisk: avg !== null && avg < 50,
+        scores: entityScores.map((s) => ({ dimension: s.dimension, score: s.score })),
+      };
+    };
+
+    return [
+      ...students.map((s) => buildEntry("STUDENT", s.id, s.user.fullName)),
+      ...teachers.map((t) => buildEntry("TEACHER", t.id, t.user.fullName)),
+    ];
+  }
+
   async getTeacherStudentInsights(userId: string, institutionId: string) {
     const teacher = await this.db.teacher.findUnique({ where: { userId } });
     if (!teacher) return [];
