@@ -1,0 +1,23 @@
+{
+  "name": "@gosf/database",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./src/index.ts",
+  "scripts": {
+    "generate": "node node_modules/prisma/build/index.js generate",
+    "migrate:dev": "node node_modules/prisma/build/index.js migrate dev",
+    "db:push": "node node_modules/prisma/build/index.js db push",
+    "studio": "node node_modules/prisma/build/index.js studio",
+    "seed": "node -r ts-node/register prisma/seed.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.2.1"
+  },
+  "devDependencies": {
+    "prisma": "^6.2.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2",
+    "@types/node": "^22.10.2"
+  }
+}

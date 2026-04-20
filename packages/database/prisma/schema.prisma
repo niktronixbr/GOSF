@@ -1,0 +1,492 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  STUDENT
+  TEACHER
+  COORDINATOR
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+enum InstitutionStatus {
+  ACTIVE
+  INACTIVE
+  TRIAL
+  SUSPENDED
+}
+
+enum EvaluationCycleStatus {
+  DRAFT
+  OPEN
+  CLOSED
+  ARCHIVED
+}
+
+enum ResponseType {
+  SCALE
+  BOOLEAN
+  TEXT
+  MULTIPLE
+}
+
+enum TargetType {
+  STUDENT
+  TEACHER
+}
+
+enum PlanStatus {
+  PENDING
+  GENERATING
+  READY
+  FAILED
+  ARCHIVED
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  INACTIVE
+  TRANSFERRED
+}
+
+enum DataRequestType {
+  ACCESS
+  CORRECTION
+  DELETION
+  PORTABILITY
+  OPPOSITION
+}
+
+enum DataRequestStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  REJECTED
+}
+
+enum NotificationType {
+  EVALUATION_OPEN
+  EVALUATION_REMINDER
+  PLAN_READY
+  FEEDBACK_RECEIVED
+  SYSTEM
+}
+
+// ─── Institution ─────────────────────────────────────────────────────────────
+
+model Institution {
+  id        String            @id @default(cuid())
+  name      String
+  slug      String            @unique
+  logoUrl   String?
+  status    InstitutionStatus @default(TRIAL)
+  settings  Json              @default("{}")
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  users            User[]
+  classGroups      ClassGroup[]
+  subjects         Subject[]
+  evaluationCycles EvaluationCycle[]
+  evaluationForms  EvaluationForm[]
+  scoreAggregates  ScoreAggregate[]
+  auditLogs        AuditLog[]
+  consentRecords   ConsentRecord[]
+  dataRequests     DataRequest[]
+
+  @@map("institutions")
+}
+
+// ─── User ─────────────────────────────────────────────────────────────────────
+
+model User {
+  id              String     @id @default(cuid())
+  institutionId   String
+  email           String
+  passwordHash    String
+  fullName        String
+  role            UserRole
+  status          UserStatus @default(PENDING_VERIFICATION)
+  avatarUrl       String?
+  lastLoginAt     DateTime?
+  emailVerifiedAt DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  institution    Institution     @relation(fields: [institutionId], references: [id])
+  student        Student?
+  teacher        Teacher?
+  notifications  Notification[]
+  auditLogs      AuditLog[]      @relation("actor")
+  consentRecords ConsentRecord[]
+  dataRequests   DataRequest[]
+  refreshTokens  RefreshToken[]
+
+  @@unique([institutionId, email])
+  @@index([institutionId])
+  @@index([email])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// ─── Student ──────────────────────────────────────────────────────────────────
+
+model Student {
+  id               String  @id @default(cuid())
+  userId           String  @unique
+  registrationCode String?
+  gradeLevel       String?
+
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollments         Enrollment[]
+  evaluationsGiven    TeacherEvaluation[] @relation("evaluator")
+  evaluationsReceived StudentEvaluation[] @relation("evaluated")
+  plans               StudentPlan[]
+
+  @@map("students")
+}
+
+// ─── Teacher ──────────────────────────────────────────────────────────────────
+
+model Teacher {
+  id         String  @id @default(cuid())
+  userId     String  @unique
+  department String?
+  specialty  String?
+
+  user                User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  classAssignments    ClassAssignment[]
+  evaluationsGiven    StudentEvaluation[]      @relation("evaluator")
+  evaluationsReceived TeacherEvaluation[]      @relation("evaluated")
+  developmentPlans    TeacherDevelopmentPlan[]
+
+  @@map("teachers")
+}
+
+// ─── Class & Subject ──────────────────────────────────────────────────────────
+
+model ClassGroup {
+  id             String   @id @default(cuid())
+  institutionId  String
+  name           String
+  academicPeriod String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  institution      Institution       @relation(fields: [institutionId], references: [id])
+  enrollments      Enrollment[]
+  classAssignments ClassAssignment[]
+
+  @@index([institutionId])
+  @@map("class_groups")
+}
+
+model Subject {
+  id            String   @id @default(cuid())
+  institutionId String
+  name          String
+  code          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  institution      Institution       @relation(fields: [institutionId], references: [id])
+  classAssignments ClassAssignment[]
+
+  @@index([institutionId])
+  @@map("subjects")
+}
+
+model Enrollment {
+  id           String           @id @default(cuid())
+  classGroupId String
+  studentId    String
+  status       EnrollmentStatus @default(ACTIVE)
+  enrolledAt   DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  classGroup ClassGroup @relation(fields: [classGroupId], references: [id])
+  student    Student    @relation(fields: [studentId], references: [id])
+
+  @@unique([classGroupId, studentId])
+  @@index([studentId])
+  @@map("enrollments")
+}
+
+model ClassAssignment {
+  id           String   @id @default(cuid())
+  classGroupId String
+  teacherId    String
+  subjectId    String
+  createdAt    DateTime @default(now())
+
+  classGroup ClassGroup @relation(fields: [classGroupId], references: [id])
+  teacher    Teacher    @relation(fields: [teacherId], references: [id])
+  subject    Subject    @relation(fields: [subjectId], references: [id])
+
+  @@unique([classGroupId, teacherId, subjectId])
+  @@map("class_assignments")
+}
+
+// ─── Evaluation ───────────────────────────────────────────────────────────────
+
+model EvaluationCycle {
+  id            String                @id @default(cuid())
+  institutionId String
+  title         String
+  startsAt      DateTime
+  endsAt        DateTime
+  status        EvaluationCycleStatus @default(DRAFT)
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  institution       Institution              @relation(fields: [institutionId], references: [id])
+  teacherEvaluations TeacherEvaluation[]
+  studentEvaluations StudentEvaluation[]
+  scoreAggregates   ScoreAggregate[]
+  studentPlans      StudentPlan[]
+  teacherDevPlans   TeacherDevelopmentPlan[]
+
+  @@index([institutionId])
+  @@map("evaluation_cycles")
+}
+
+model EvaluationForm {
+  id            String     @id @default(cuid())
+  institutionId String
+  targetType    TargetType
+  title         String
+  description   String?
+  version       Int        @default(1)
+  isActive      Boolean    @default(true)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  institution        Institution          @relation(fields: [institutionId], references: [id])
+  questions          EvaluationQuestion[]
+  teacherEvaluations TeacherEvaluation[]
+  studentEvaluations StudentEvaluation[]
+
+  @@index([institutionId, targetType])
+  @@map("evaluation_forms")
+}
+
+model EvaluationQuestion {
+  id           String       @id @default(cuid())
+  formId       String
+  dimension    String
+  questionText String
+  responseType ResponseType @default(SCALE)
+  weight       Float        @default(1.0)
+  options      Json?
+  order        Int          @default(0)
+  isRequired   Boolean      @default(true)
+
+  form EvaluationForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@index([formId])
+  @@map("evaluation_questions")
+}
+
+model TeacherEvaluation {
+  id          String   @id @default(cuid())
+  cycleId     String
+  formId      String
+  studentId   String
+  teacherId   String
+  answersJson Json
+  comment     String?
+  submittedAt DateTime @default(now())
+
+  cycle   EvaluationCycle @relation(fields: [cycleId], references: [id])
+  form    EvaluationForm  @relation(fields: [formId], references: [id])
+  student Student         @relation("evaluator", fields: [studentId], references: [id])
+  teacher Teacher         @relation("evaluated", fields: [teacherId], references: [id])
+
+  @@unique([cycleId, studentId, teacherId])
+  @@index([cycleId, teacherId])
+  @@map("teacher_evaluations")
+}
+
+model StudentEvaluation {
+  id          String   @id @default(cuid())
+  cycleId     String
+  formId      String
+  teacherId   String
+  studentId   String
+  answersJson Json
+  comment     String?
+  submittedAt DateTime @default(now())
+
+  cycle   EvaluationCycle @relation(fields: [cycleId], references: [id])
+  form    EvaluationForm  @relation(fields: [formId], references: [id])
+  teacher Teacher         @relation("evaluator", fields: [teacherId], references: [id])
+  student Student         @relation("evaluated", fields: [studentId], references: [id])
+
+  @@unique([cycleId, teacherId, studentId])
+  @@index([cycleId, studentId])
+  @@map("student_evaluations")
+}
+
+// ─── Analytics ────────────────────────────────────────────────────────────────
+
+model ScoreAggregate {
+  id            String     @id @default(cuid())
+  institutionId String
+  targetType    TargetType
+  targetId      String
+  cycleId       String
+  dimension     String
+  score         Float
+  trend         Float?
+  computedAt    DateTime   @default(now())
+
+  institution Institution     @relation(fields: [institutionId], references: [id])
+  cycle       EvaluationCycle @relation(fields: [cycleId], references: [id])
+
+  @@unique([targetId, cycleId, dimension])
+  @@index([institutionId, targetType])
+  @@index([cycleId])
+  @@map("score_aggregates")
+}
+
+// ─── AI Plans ────────────────────────────────────────────────────────────────
+
+model StudentPlan {
+  id                String     @id @default(cuid())
+  studentId         String
+  cycleId           String
+  version           Int        @default(1)
+  inputSnapshotJson Json
+  aiOutputJson      Json?
+  status            PlanStatus @default(PENDING)
+  generatedAt       DateTime?
+  createdAt         DateTime   @default(now())
+
+  student Student         @relation(fields: [studentId], references: [id])
+  cycle   EvaluationCycle @relation(fields: [cycleId], references: [id])
+
+  @@index([studentId, cycleId])
+  @@map("student_plans")
+}
+
+model TeacherDevelopmentPlan {
+  id                String     @id @default(cuid())
+  teacherId         String
+  cycleId           String
+  version           Int        @default(1)
+  inputSnapshotJson Json
+  aiOutputJson      Json?
+  status            PlanStatus @default(PENDING)
+  generatedAt       DateTime?
+  createdAt         DateTime   @default(now())
+
+  teacher Teacher         @relation(fields: [teacherId], references: [id])
+  cycle   EvaluationCycle @relation(fields: [cycleId], references: [id])
+
+  @@index([teacherId, cycleId])
+  @@map("teacher_development_plans")
+}
+
+// ─── Notifications ───────────────────────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String
+  data      Json?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+// ─── LGPD / Privacy ──────────────────────────────────────────────────────────
+
+model ConsentRecord {
+  id            String   @id @default(cuid())
+  userId        String
+  institutionId String
+  purpose       String
+  version       String
+  accepted      Boolean
+  ipAddress     String?
+  userAgent     String?
+  recordedAt    DateTime @default(now())
+
+  user        User        @relation(fields: [userId], references: [id])
+  institution Institution @relation(fields: [institutionId], references: [id])
+
+  @@index([userId])
+  @@map("consent_records")
+}
+
+model DataRequest {
+  id            String            @id @default(cuid())
+  userId        String
+  institutionId String
+  type          DataRequestType
+  status        DataRequestStatus @default(PENDING)
+  details       String?
+  resolvedAt    DateTime?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id])
+  institution Institution @relation(fields: [institutionId], references: [id])
+
+  @@index([userId])
+  @@map("data_requests")
+}
+
+// ─── Audit ────────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id            String   @id @default(cuid())
+  institutionId String
+  actorUserId   String?
+  action        String
+  resourceType  String
+  resourceId    String?
+  metadataJson  Json?
+  ipAddress     String?
+  createdAt     DateTime @default(now())
+
+  institution Institution @relation(fields: [institutionId], references: [id])
+  actor       User?       @relation("actor", fields: [actorUserId], references: [id])
+
+  @@index([institutionId, createdAt])
+  @@index([actorUserId])
+  @@map("audit_logs")
+}
