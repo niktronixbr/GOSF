@@ -12,6 +12,7 @@ import {
   Users,
   Settings,
   LogOut,
+  ShieldCheck,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useAuthStore } from "@/store/auth.store";
@@ -44,11 +45,16 @@ const coordinatorNav: NavItem[] = [
   { href: "/coordinator/settings", label: "Configurações", icon: Settings },
 ];
 
+const adminNav: NavItem[] = [
+  { href: "/admin", label: "Usuários", icon: ShieldCheck },
+  ...coordinatorNav,
+];
+
 const navByRole: Record<string, NavItem[]> = {
   STUDENT: studentNav,
   TEACHER: teacherNav,
   COORDINATOR: coordinatorNav,
-  ADMIN: coordinatorNav,
+  ADMIN: adminNav,
 };
 
 export function Sidebar() {

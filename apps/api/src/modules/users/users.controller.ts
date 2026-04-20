@@ -1,10 +1,22 @@
-import { Controller, Get, Param, UseGuards } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Param,
+  Body,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+} from "@nestjs/common";
 import { UsersService } from "./users.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { UserRole } from "@gosf/database";
+import { CreateUserDto } from "./dto/create-user.dto";
+import { UpdateUserDto } from "./dto/update-user.dto";
 
 @Controller("users")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -22,9 +34,33 @@ export class UsersController {
     return this.usersService.findByInstitution(user.institutionId);
   }
 
+  @Post()
+  @Roles(UserRole.ADMIN)
+  @HttpCode(HttpStatus.CREATED)
+  create(@CurrentUser() user: any, @Body() dto: CreateUserDto) {
+    return this.usersService.create(user.institutionId, dto);
+  }
+
   @Get(":id")
   @Roles(UserRole.ADMIN, UserRole.COORDINATOR)
   findOne(@Param("id") id: string) {
     return this.usersService.findById(id);
+  }
+
+  @Patch(":id")
+  @Roles(UserRole.ADMIN)
+  update(
+    @Param("id") id: string,
+    @CurrentUser() user: any,
+    @Body() dto: UpdateUserDto,
+  ) {
+    return this.usersService.update(id, user.institutionId, dto);
+  }
+
+  @Patch(":id/toggle-status")
+  @Roles(UserRole.ADMIN)
+  @HttpCode(HttpStatus.OK)
+  toggleStatus(@Param("id") id: string, @CurrentUser() user: any) {
+    return this.usersService.toggleStatus(id, user.institutionId);
   }
 }
