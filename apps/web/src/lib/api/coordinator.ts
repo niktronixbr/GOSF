@@ -100,6 +100,15 @@ export interface ReportEntry {
   scores: { dimension: string; score: number }[];
 }
 
+export interface ClassBenchmark {
+  classId: string;
+  className: string;
+  academicPeriod: string;
+  studentCount: number;
+  avgScore: number | null;
+  dimensions: { dimension: string; avg: number }[];
+}
+
 export const coordinatorApi = {
   // Cycles
   getCycles: () => api.get<EvaluationCycle[]>("/evaluations/cycles"),
@@ -117,6 +126,8 @@ export const coordinatorApi = {
     ),
   getReports: (cycleId: string) =>
     api.get<ReportEntry[]>(`/analytics/reports?cycleId=${cycleId}`),
+  getBenchmarking: (cycleId?: string) =>
+    api.get<ClassBenchmark[]>(`/analytics/benchmarking${cycleId ? `?cycleId=${cycleId}` : ""}`),
 
   // Institution settings
   getInstitution: () => api.get<InstitutionSettings>("/institutions/me"),

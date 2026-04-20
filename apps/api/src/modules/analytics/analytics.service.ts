@@ -319,6 +319,62 @@ export class AnalyticsService {
     ];
   }
 
+  async getBenchmarking(institutionId: string, cycleId: string) {
+    const classes = await this.db.classGroup.findMany({
+      where: { institutionId },
+      include: { enrollments: { select: { studentId: true } } },
+      orderBy: { name: "asc" },
+    });
+
+    if (!cycleId) {
+      return classes.map((c) => ({
+        classId: c.id,
+        className: c.name,
+        academicPeriod: c.academicPeriod,
+        studentCount: c.enrollments.length,
+        avgScore: null,
+        dimensions: [] as { dimension: string; avg: number }[],
+      }));
+    }
+
+    const allStudentIds = classes.flatMap((c) => c.enrollments.map((e) => e.studentId));
+    const scores =
+      allStudentIds.length > 0
+        ? await this.db.scoreAggregate.findMany({
+            where: { targetId: { in: allStudentIds }, cycleId, targetType: TargetType.STUDENT },
+          })
+        : [];
+
+    return classes.map((c) => {
+      const enrolled = new Set(c.enrollments.map((e) => e.studentId));
+      const classScores = scores.filter((s) => enrolled.has(s.targetId));
+
+      const avgScore =
+        classScores.length
+          ? Math.round((classScores.reduce((a, s) => a + s.score, 0) / classScores.length) * 10) / 10
+          : null;
+
+      const dimMap: Record<string, number[]> = {};
+      for (const s of classScores) {
+        if (!dimMap[s.dimension]) dimMap[s.dimension] = [];
+        dimMap[s.dimension].push(s.score);
+      }
+      const dimensions = Object.entries(dimMap).map(([dimension, vals]) => ({
+        dimension,
+        avg: Math.round((vals.reduce((a, v) => a + v, 0) / vals.length) * 10) / 10,
+      }));
+
+      return {
+        classId: c.id,
+        className: c.name,
+        academicPeriod: c.academicPeriod,
+        studentCount: c.enrollments.length,
+        avgScore,
+        dimensions,
+      };
+    });
+  }
+
   async getTeacherStudentInsights(userId: string, institutionId: string) {
     const teacher = await this.db.teacher.findUnique({ where: { userId } });
     if (!teacher) return [];

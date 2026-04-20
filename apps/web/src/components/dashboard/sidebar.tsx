@@ -13,6 +13,7 @@ import {
   Settings,
   LogOut,
   ShieldCheck,
+  GitCompare,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useAuthStore } from "@/store/auth.store";
@@ -41,6 +42,7 @@ const coordinatorNav: NavItem[] = [
   { href: "/coordinator/subjects", label: "Disciplinas", icon: BookMarked },
   { href: "/coordinator/teachers", label: "Professores", icon: Users },
   { href: "/coordinator/cycles", label: "Ciclos de avaliação", icon: Target },
+  { href: "/coordinator/benchmarking", label: "Benchmarking", icon: GitCompare },
   { href: "/coordinator/reports", label: "Relatórios", icon: BarChart2 },
   { href: "/coordinator/settings", label: "Configurações", icon: Settings },
 ];
