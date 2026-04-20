@@ -1,9 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { evaluationsApi } from "@/lib/api/evaluations";
 import { coordinatorApi, TeacherWithScores } from "@/lib/api/coordinator";
-import { BarChart2, User } from "lucide-react";
+import { BarChart2, User, ChevronRight } from "lucide-react";
 
 function ScoreBadge({ score }: { score: number | null }) {
   if (score === null) return <span className="text-xs text-muted-foreground">Sem dados</span>;
@@ -25,7 +26,10 @@ function PlanBadge({ status }: { status: string | null }) {
 
 function TeacherRow({ teacher }: { teacher: TeacherWithScores }) {
   return (
-    <div className="flex items-center gap-4 py-3 border-b border-border last:border-0">
+    <Link
+      href={`/coordinator/teachers/${teacher.id}`}
+      className="flex items-center gap-4 py-3 border-b border-border last:border-0 hover:bg-muted/30 transition-colors -mx-5 px-5"
+    >
       <div className="h-9 w-9 rounded-full bg-muted flex items-center justify-center shrink-0">
         <User size={16} className="text-muted-foreground" />
       </div>
@@ -42,7 +46,8 @@ function TeacherRow({ teacher }: { teacher: TeacherWithScores }) {
         </div>
         <PlanBadge status={teacher.planStatus} />
       </div>
-    </div>
+      <ChevronRight size={16} className="text-muted-foreground shrink-0" />
+    </Link>
   );
 }
 

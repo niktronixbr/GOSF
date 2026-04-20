@@ -56,6 +56,15 @@ export class AnalyticsController {
     return this.analytics.getInstitutionOverview(user.institutionId, cycleId);
   }
 
+  @Get("teachers/:teacherId/profile")
+  @Roles(UserRole.COORDINATOR, UserRole.ADMIN)
+  getTeacherProfile(
+    @Param("teacherId") teacherId: string,
+    @CurrentUser() user: any
+  ) {
+    return this.analytics.getTeacherProfile(teacherId, user.institutionId);
+  }
+
   @Get("benchmarking")
   @Roles(UserRole.COORDINATOR, UserRole.ADMIN)
   getBenchmarking(

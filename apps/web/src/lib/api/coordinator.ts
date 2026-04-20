@@ -100,6 +100,41 @@ export interface ReportEntry {
   scores: { dimension: string; score: number }[];
 }
 
+export interface TeacherCycleEntry {
+  cycleId: string;
+  cycleTitle: string;
+  startsAt: string;
+  endsAt: string | null;
+  avg: number;
+  scores: { dimension: string; score: number }[];
+}
+
+export interface TeacherProfile {
+  id: string;
+  userId: string;
+  fullName: string;
+  email: string;
+  status: string;
+  createdAt: string;
+  department: string | null;
+  specialty: string | null;
+  evaluationCount: number;
+  classAssignments: {
+    id: string;
+    classGroup: { id: string; name: string; academicPeriod: string };
+    subject: { id: string; name: string; code: string | null };
+  }[];
+  developmentPlans: {
+    id: string;
+    cycleId: string;
+    status: string;
+    version: number;
+    createdAt: string;
+    cycle: { title: string };
+  }[];
+  cycleHistory: TeacherCycleEntry[];
+}
+
 export interface ClassBenchmark {
   classId: string;
   className: string;
@@ -126,6 +161,8 @@ export const coordinatorApi = {
     ),
   getReports: (cycleId: string) =>
     api.get<ReportEntry[]>(`/analytics/reports?cycleId=${cycleId}`),
+  getTeacherProfile: (teacherId: string) =>
+    api.get<TeacherProfile>(`/analytics/teachers/${teacherId}/profile`),
   getBenchmarking: (cycleId?: string) =>
     api.get<ClassBenchmark[]>(`/analytics/benchmarking${cycleId ? `?cycleId=${cycleId}` : ""}`),
 

@@ -319,6 +319,86 @@ export class AnalyticsService {
     ];
   }
 
+  async getTeacherProfile(teacherId: string, institutionId: string) {
+    const teacher = await this.db.teacher.findFirst({
+      where: { id: teacherId, user: { institutionId } },
+      include: {
+        user: { select: { id: true, fullName: true, email: true, status: true, createdAt: true } },
+        classAssignments: {
+          include: {
+            classGroup: { select: { id: true, name: true, academicPeriod: true } },
+            subject: { select: { id: true, name: true, code: true } },
+          },
+          orderBy: { createdAt: "desc" },
+        },
+        developmentPlans: {
+          orderBy: [{ version: "desc" }],
+          select: {
+            id: true,
+            cycleId: true,
+            status: true,
+            version: true,
+            createdAt: true,
+            cycle: { select: { title: true } },
+          },
+        },
+      },
+    });
+    if (!teacher) return null;
+
+    const aggregates = await this.db.scoreAggregate.findMany({
+      where: { targetId: teacherId, targetType: TargetType.TEACHER },
+      include: { cycle: { select: { id: true, title: true, startsAt: true, endsAt: true } } },
+      orderBy: { cycle: { startsAt: "asc" } },
+    });
+
+    const cycleMap = new Map<
+      string,
+      { cycleId: string; cycleTitle: string; startsAt: Date; endsAt: Date | null; scores: { dimension: string; score: number }[]; avg: number }
+    >();
+
+    for (const agg of aggregates) {
+      if (!cycleMap.has(agg.cycleId)) {
+        cycleMap.set(agg.cycleId, {
+          cycleId: agg.cycleId,
+          cycleTitle: agg.cycle.title,
+          startsAt: agg.cycle.startsAt,
+          endsAt: agg.cycle.endsAt,
+          scores: [],
+          avg: 0,
+        });
+      }
+      cycleMap.get(agg.cycleId)!.scores.push({ dimension: agg.dimension, score: agg.score });
+    }
+
+    const cycleHistory = Array.from(cycleMap.values()).map((c) => ({
+      ...c,
+      avg:
+        c.scores.length
+          ? Math.round((c.scores.reduce((a, s) => a + s.score, 0) / c.scores.length) * 10) / 10
+          : 0,
+    }));
+
+    const evaluationCount = await this.db.teacherEvaluation.count({
+      where: { teacherId },
+    });
+
+    return {
+      id: teacher.id,
+      userId: teacher.user.id,
+      fullName: teacher.user.fullName,
+      email: teacher.user.email,
+      status: teacher.user.status,
+      createdAt: teacher.user.createdAt,
+      department: teacher.department,
+      specialty: teacher.specialty,
+      evaluationCount,
+      classAssignments: teacher.classAssignments,
+      developmentPlans: teacher.developmentPlans,
+      cycleHistory,
+    };
+  }
+
   async getBenchmarking(institutionId: string, cycleId: string) {
     const classes = await this.db.classGroup.findMany({
       where: { institutionId },
