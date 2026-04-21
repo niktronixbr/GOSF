@@ -84,7 +84,7 @@ export default function EvaluateTeacherPage() {
       <EvaluationFormComponent
         form={form}
         targetName={teacher.fullName}
-        onSubmit={(answers, comment) => mutation.mutateAsync({ answers, comment })}
+        onSubmit={(answers, comment) => mutation.mutateAsync({ answers, comment }) as Promise<void>}
         onCancel={() => router.push("/student/evaluations")}
       />
     </div>

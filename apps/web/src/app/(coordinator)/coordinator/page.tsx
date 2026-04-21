@@ -18,7 +18,7 @@ export default function CoordinatorHomePage() {
 
   const { data: teachers } = useQuery({
     queryKey: ["coordinator-teachers", cycle?.id],
-    queryFn: () => coordinatorApi.getTeachers(cycle?.id),
+    queryFn: () => coordinatorApi.getTeachers({ cycleId: cycle?.id }),
     enabled: !!cycle?.id,
   });
 
@@ -27,13 +27,13 @@ export default function CoordinatorHomePage() {
     queryFn: () => coordinatorApi.getCycles(),
   });
 
-  const totalTeachers = teachers?.length ?? 0;
-  const atRisk = teachers?.filter((t) => t.avgScore !== null && t.avgScore < 50) ?? [];
-  const topTeachers = [...(teachers ?? [])]
+  const totalTeachers = teachers?.data?.length ?? 0;
+  const atRisk = teachers?.data?.filter((t) => t.avgScore !== null && t.avgScore < 50) ?? [];
+  const topTeachers = [...(teachers?.data ?? [])]
     .filter((t) => t.avgScore !== null)
     .sort((a, b) => (b.avgScore ?? 0) - (a.avgScore ?? 0))
     .slice(0, 5);
-  const lowTeachers = [...(teachers ?? [])]
+  const lowTeachers = [...(teachers?.data ?? [])]
     .filter((t) => t.avgScore !== null && t.avgScore < 70)
     .sort((a, b) => (a.avgScore ?? 0) - (b.avgScore ?? 0))
     .slice(0, 5);
