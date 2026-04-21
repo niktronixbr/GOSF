@@ -42,7 +42,7 @@ export async function loginAs(
   const res = await app.inject({
     method: "POST",
     url: "/api/v1/auth/login",
-    payload: creds,
+    payload: { ...creds, institutionSlug: SEED.institutionSlug },
   });
   if (res.statusCode !== 200) {
     throw new Error(`Login falhou para ${role}: ${res.statusCode} ${res.body}`);

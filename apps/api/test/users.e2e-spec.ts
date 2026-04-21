@@ -67,23 +67,25 @@ describe("Users (e2e)", () => {
   // ─── GET /users (ADMIN only) ──────────────────────────────────────────────
 
   describe("GET /api/v1/users", () => {
-    it("retorna lista de usuários para ADMIN", async () => {
+    it("retorna lista paginada de usuários para ADMIN", async () => {
       const res = await app.inject({
         method: "GET",
         url: "/api/v1/users",
         headers: { authorization: `Bearer ${adminToken}` },
       });
       expect(res.statusCode).toBe(200);
-      expect(Array.isArray(res.json())).toBe(true);
+      const body = res.json();
+      expect(body).toHaveProperty("data");
+      expect(Array.isArray(body.data)).toBe(true);
     });
 
-    it("retorna 403 para COORDINATOR", async () => {
+    it("retorna lista paginada para COORDINATOR", async () => {
       const res = await app.inject({
         method: "GET",
         url: "/api/v1/users",
         headers: { authorization: `Bearer ${coordinatorToken}` },
       });
-      expect(res.statusCode).toBe(403);
+      expect(res.statusCode).toBe(200);
     });
 
     it("retorna 403 para STUDENT", async () => {

@@ -9,11 +9,12 @@
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "strictPropertyInitialization": false,
-        "skipLibCheck": true
+        "skipLibCheck": true,
+        "types": ["jest", "node"]
       }
     }]
   },
   "testEnvironment": "node",
   "testTimeout": 30000,
-  "runInBand": true
+  "maxWorkers": 1
 }

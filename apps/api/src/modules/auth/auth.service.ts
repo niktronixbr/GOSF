@@ -71,11 +71,15 @@ export class AuthService {
       institutionId: user.institutionId,
     };
 
-    const accessToken = this.jwt.sign(payload);
-    const refreshToken = this.jwt.sign(payload, {
-      secret: this.config.getOrThrow("JWT_REFRESH_SECRET"),
-      expiresIn: this.config.get("JWT_REFRESH_EXPIRES_IN", "7d"),
-    });
+    const jti = crypto.randomBytes(16).toString("hex");
+    const accessToken = this.jwt.sign({ ...payload, jti });
+    const refreshToken = this.jwt.sign(
+      { ...payload, jti: crypto.randomBytes(16).toString("hex") },
+      {
+        secret: this.config.getOrThrow("JWT_REFRESH_SECRET"),
+        expiresIn: this.config.get("JWT_REFRESH_EXPIRES_IN", "7d"),
+      },
+    );
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);

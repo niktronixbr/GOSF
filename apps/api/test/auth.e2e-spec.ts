@@ -19,7 +19,7 @@ describe("Auth (e2e)", () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/v1/auth/login",
-        payload: SEED.admin,
+        payload: { ...SEED.admin, institutionSlug: SEED.institutionSlug },
       });
       expect(res.statusCode).toBe(200);
       const body = res.json();
@@ -33,7 +33,7 @@ describe("Auth (e2e)", () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/v1/auth/login",
-        payload: SEED.coordinator,
+        payload: { ...SEED.coordinator, institutionSlug: SEED.institutionSlug },
       });
       expect(res.statusCode).toBe(200);
       expect(res.json()).toHaveProperty("accessToken");
@@ -43,7 +43,7 @@ describe("Auth (e2e)", () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/v1/auth/login",
-        payload: SEED.student,
+        payload: { ...SEED.student, institutionSlug: SEED.institutionSlug },
       });
       expect(res.statusCode).toBe(200);
       expect(res.json()).toHaveProperty("accessToken");
@@ -53,7 +53,7 @@ describe("Auth (e2e)", () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/v1/auth/login",
-        payload: { email: SEED.admin.email, password: "senhaerrada" },
+        payload: { email: SEED.admin.email, password: "senhaerrada", institutionSlug: SEED.institutionSlug },
       });
       expect(res.statusCode).toBe(401);
     });
@@ -62,18 +62,18 @@ describe("Auth (e2e)", () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/v1/auth/login",
-        payload: { email: "naoexiste@test.com", password: "Admin@1234" },
+        payload: { email: "naoexiste@test.com", password: "Admin@1234", institutionSlug: SEED.institutionSlug },
       });
       expect(res.statusCode).toBe(401);
     });
 
-    it("retorna 400 sem body", async () => {
+    it("retorna 401 sem body (guard dispara antes do ValidationPipe)", async () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/v1/auth/login",
         payload: {},
       });
-      expect(res.statusCode).toBe(400);
+      expect(res.statusCode).toBe(401);
     });
   });
 

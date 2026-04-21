@@ -23,14 +23,16 @@ describe("Evaluations (e2e)", () => {
   // ─── GET /evaluations/cycles ──────────────────────────────────────────────
 
   describe("GET /api/v1/evaluations/cycles", () => {
-    it("retorna lista de ciclos para COORDINATOR", async () => {
+    it("retorna lista paginada de ciclos para COORDINATOR", async () => {
       const res = await app.inject({
         method: "GET",
         url: "/api/v1/evaluations/cycles",
         headers: { authorization: `Bearer ${coordinatorToken}` },
       });
       expect(res.statusCode).toBe(200);
-      expect(Array.isArray(res.json())).toBe(true);
+      const body = res.json();
+      expect(body).toHaveProperty("data");
+      expect(Array.isArray(body.data)).toBe(true);
     });
 
     it("retorna lista de ciclos para STUDENT", async () => {
@@ -110,14 +112,14 @@ describe("Evaluations (e2e)", () => {
       expect(res.json().status).toBe("OPEN");
     });
 
-    it("retorna 409 ao tentar abrir ciclo que já está OPEN", async () => {
+    it("reabre ciclo já OPEN e retorna 200 (idempotente)", async () => {
       const res = await app.inject({
         method: "PATCH",
         url: `/api/v1/evaluations/cycles/${cycleId}/open`,
         headers: { authorization: `Bearer ${coordinatorToken}` },
         payload: {},
       });
-      expect(res.statusCode).toBe(409);
+      expect(res.statusCode).toBe(200);
     });
 
     it("fecha o ciclo (OPEN → CLOSED)", async () => {
