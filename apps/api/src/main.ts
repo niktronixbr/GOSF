@@ -4,6 +4,7 @@ import {
   NestFastifyApplication,
 } from "@nestjs/platform-fastify";
 import { ValidationPipe, Logger } from "@nestjs/common";
+import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { AppModule } from "./app.module";
 
 async function bootstrap() {
@@ -29,9 +30,28 @@ async function bootstrap() {
     credentials: true,
   });
 
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle("GOSF API")
+    .setDescription(
+      "API da Plataforma GOSF — Sistema SaaS de Inteligência Relacional Educacional"
+    )
+    .setVersion("1.0")
+    .addServer("/api/v1", "Servidor de desenvolvimento")
+    .addBearerAuth(
+      { type: "http", scheme: "bearer", bearerFormat: "JWT", in: "header" },
+      "JWT-auth"
+    )
+    .build();
+
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup("api/docs", app, document, {
+    swaggerOptions: { persistAuthorization: true },
+  });
+
   const port = process.env.API_PORT ?? 3001;
   await app.listen(port, "0.0.0.0");
   logger.log(`GOSF API running on http://localhost:${port}/api/v1`);
+  logger.log(`Swagger docs: http://localhost:${port}/api/docs`);
 }
 
 bootstrap();

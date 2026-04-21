@@ -2,13 +2,13 @@
 FROM node:20-alpine AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
+RUN npm install -g pnpm@10.33.0
 
 # ─── Stage 2: deps — instala todas as dependências no Linux ───────────────────
 FROM base AS deps
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY apps/api/package.json                ./apps/api/
 COPY packages/database/package.json       ./packages/database/
 COPY packages/shared/package.json         ./packages/shared/
