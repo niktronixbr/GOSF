@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { coordinatorApi, ReportEntry } from "@/lib/api/coordinator";
 import { Download, AlertTriangle, Users, GraduationCap, ChevronDown } from "lucide-react";
 import { clsx } from "clsx";
+import { ExportPdfButton } from "@/components/reports/ExportPdfButton";
 
 type FilterType = "ALL" | "STUDENT" | "TEACHER";
 
@@ -89,14 +90,25 @@ export default function CoordinatorReportsPage() {
           </p>
         </div>
 
-        <button
-          onClick={() => report && selectedCycle && exportCsv(filtered, selectedCycle.title)}
-          disabled={!report || filtered.length === 0}
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-40 transition-opacity shrink-0"
-        >
-          <Download size={15} />
-          Exportar CSV
-        </button>
+        <div className="flex items-center gap-2">
+          <ExportPdfButton
+            rows={filtered}
+            allDimensions={allDimensions}
+            cycleTitle={selectedCycle?.title ?? "relatorio"}
+            studentCount={studentCount}
+            teacherCount={teacherCount}
+            atRiskCount={atRiskCount}
+            disabled={!report || filtered.length === 0}
+          />
+          <button
+            onClick={() => report && selectedCycle && exportCsv(filtered, selectedCycle.title)}
+            disabled={!report || filtered.length === 0}
+            className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-accent disabled:opacity-40 transition-colors shrink-0"
+          >
+            <Download size={15} />
+            Exportar CSV
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-3">
