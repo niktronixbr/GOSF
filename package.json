@@ -11,6 +11,7 @@
     "test": "turbo test",
     "db:generate": "pnpm --filter @gosf/database generate",
     "db:migrate": "pnpm --filter @gosf/database migrate:dev",
+    "db:migrate:deploy": "pnpm --filter @gosf/database migrate:deploy",
     "db:push": "pnpm --filter @gosf/database db:push",
     "db:studio": "pnpm --filter @gosf/database studio",
     "db:seed": "pnpm --filter @gosf/database seed",

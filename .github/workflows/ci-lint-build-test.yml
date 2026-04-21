@@ -9,6 +9,7 @@ on:
 jobs:
   lint-build-test:
     runs-on: ubuntu-latest
+
     services:
       postgres:
         image: postgres:16
@@ -32,32 +33,46 @@ jobs:
         ports:
           - 6379:6379
 
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gosf_test
+      REDIS_URL: redis://localhost:6379
+      JWT_SECRET: ci_jwt_secret_must_be_at_least_32_chars_long
+      JWT_REFRESH_SECRET: ci_refresh_secret_must_be_at_least_32_chars
+      JWT_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 7d
+      NODE_ENV: test
+      APP_URL: http://localhost:3001
+      WEB_URL: http://localhost:3002
+
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
+
+      - uses: pnpm/action-setup@v4
         with:
-          version: 8
+          version: 10
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
-      
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      
+
+      - name: Generate Prisma Client
+        run: pnpm db:generate
+
       - name: Lint
         run: pnpm lint
-      
+
       - name: Build
         run: pnpm build
-      
-      - name: Generate Prisma Client
-        run: pnpm --filter database build && pnpm --filter api exec prisma generate
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gosf_test
-      
+
+      - name: Apply migrations
+        run: pnpm db:migrate:deploy
+
+      - name: Seed database
+        run: pnpm db:seed
+
       - name: Run e2e tests
         run: pnpm --filter api test:e2e
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gosf_test
-          REDIS_URL: redis://localhost:6379
