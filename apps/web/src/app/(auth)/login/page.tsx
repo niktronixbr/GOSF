@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { LoginForm } from "@/features/auth/login-form";
 
 export const metadata: Metadata = { title: "Entrar" };
@@ -20,6 +21,13 @@ export default function LoginPage() {
           </h2>
           <LoginForm />
         </div>
+
+        <p className="mt-4 text-center text-sm text-muted-foreground">
+          Sua escola ainda não está cadastrada?{" "}
+          <Link href="/register" className="text-primary hover:underline font-medium">
+            Cadastrar nova escola
+          </Link>
+        </p>
       </div>
     </div>
   );
