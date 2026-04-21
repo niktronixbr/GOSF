@@ -1,11 +1,15 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Bell, Check, CheckCheck, X } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { notificationsApi, type Notification } from "@/lib/api/notifications";
+import { getValidAccessToken } from "@/lib/auth/session";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
 
 const typeLabels: Record<string, string> = {
   EVALUATION_OPEN: "Avaliação aberta",
@@ -15,15 +19,78 @@ const typeLabels: Record<string, string> = {
   SYSTEM: "Sistema",
 };
 
+function useNotificationStream(onNotification: (n: Notification) => void) {
+  const cbRef = useRef(onNotification);
+  useEffect(() => {
+    cbRef.current = onNotification;
+  });
+
+  useEffect(() => {
+    let active = true;
+    let abort: AbortController | null = null;
+
+    async function connect() {
+      if (!active) return;
+      abort = new AbortController();
+      try {
+        const token = await getValidAccessToken();
+        if (!token || !active) return;
+
+        const res = await fetch(`${API_URL}/notifications/stream`, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: abort.signal,
+        });
+
+        if (!res.ok || !res.body) throw new Error("stream failed");
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (active) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              try {
+                cbRef.current(JSON.parse(line.slice(6)) as Notification);
+              } catch {}
+            }
+          }
+        }
+      } catch {
+        // reconecta após 5s se ainda ativo
+      }
+      if (active) setTimeout(connect, 5_000);
+    }
+
+    connect();
+    return () => {
+      active = false;
+      abort?.abort();
+    };
+  }, []);
+}
+
 export function NotificationsBell() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const qc = useQueryClient();
 
+  const handleNotification = useCallback(() => {
+    qc.invalidateQueries({ queryKey: ["notifications-unread"] });
+    qc.invalidateQueries({ queryKey: ["notifications"] });
+  }, [qc]);
+
+  useNotificationStream(handleNotification);
+
   const { data: unreadData } = useQuery({
     queryKey: ["notifications-unread"],
     queryFn: notificationsApi.countUnread,
-    refetchInterval: 30_000,
+    refetchInterval: 60_000,
   });
 
   const { data: notifications, isLoading } = useQuery({
