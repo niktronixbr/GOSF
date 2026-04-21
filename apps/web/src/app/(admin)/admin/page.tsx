@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,6 +17,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { adminApi, type AdminUser, type UserRole, type UserStatus } from "@/lib/api/admin";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -99,13 +100,7 @@ function Modal({
 
 // ─── Create Modal ─────────────────────────────────────────────────────────────
 
-function CreateUserModal({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
+function CreateUserModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const qc = useQueryClient();
   const {
     register,
@@ -205,13 +200,7 @@ function CreateUserModal({
 
 // ─── Edit Modal ───────────────────────────────────────────────────────────────
 
-function EditUserModal({
-  user,
-  onClose,
-}: {
-  user: AdminUser | null;
-  onClose: () => void;
-}) {
+function EditUserModal({ user, onClose }: { user: AdminUser | null; onClose: () => void }) {
   const qc = useQueryClient();
   const {
     register,
@@ -306,46 +295,59 @@ function EditUserModal({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+const LIMIT = 20;
+
 export default function AdminPage() {
   const qc = useQueryClient();
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<UserRole | "ALL">("ALL");
+  const [page, setPage] = useState(1);
   const [showCreate, setShowCreate] = useState(false);
   const [editUser, setEditUser] = useState<AdminUser | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { data: users = [], isLoading } = useQuery({
-    queryKey: ["admin-users"],
-    queryFn: adminApi.listUsers,
+  function handleSearchChange(value: string) {
+    setSearchInput(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setSearch(value);
+      setPage(1);
+    }, 350);
+  }
+
+  useEffect(() => {
+    setPage(1);
+  }, [roleFilter]);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-users", { page, search, role: roleFilter }],
+    queryFn: () =>
+      adminApi.listUsers({ page, limit: LIMIT, search: search || undefined, role: roleFilter }),
+    placeholderData: (prev) => prev,
   });
+
+  const users = data?.data ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = data?.totalPages ?? 1;
 
   const toggleStatus = useMutation({
     mutationFn: (id: string) => adminApi.toggleStatus(id),
     onSuccess: (updated) => {
-      toast.success(
-        updated.status === "ACTIVE" ? "Usuário ativado" : "Usuário desativado",
-      );
+      toast.success(updated.status === "ACTIVE" ? "Usuário ativado" : "Usuário desativado");
       qc.invalidateQueries({ queryKey: ["admin-users"] });
     },
     onError: () => toast.error("Erro ao alterar status"),
   });
 
-  const filtered = useMemo(() => {
-    const q = search.toLowerCase();
-    return users.filter(
-      (u) =>
-        (roleFilter === "ALL" || u.role === roleFilter) &&
-        (u.fullName.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)),
-    );
-  }, [users, search, roleFilter]);
-
   const counts = useMemo(
     () => ({
-      total: users.length,
+      total: data?.total ?? 0,
       active: users.filter((u) => u.status === "ACTIVE").length,
       students: users.filter((u) => u.role === "STUDENT").length,
       teachers: users.filter((u) => u.role === "TEACHER").length,
     }),
-    [users],
+    [data, users],
   );
 
   return (
@@ -373,10 +375,10 @@ export default function AdminPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {[
-          { label: "Total", value: counts.total, color: "text-foreground" },
-          { label: "Ativos", value: counts.active, color: "text-emerald-600" },
-          { label: "Alunos", value: counts.students, color: "text-blue-600" },
-          { label: "Professores", value: counts.teachers, color: "text-green-600" },
+          { label: "Total", value: total, color: "text-foreground" },
+          { label: "Ativos (pág.)", value: counts.active, color: "text-emerald-600" },
+          { label: "Alunos (pág.)", value: counts.students, color: "text-blue-600" },
+          { label: "Professores (pág.)", value: counts.teachers, color: "text-green-600" },
         ].map(({ label, value, color }) => (
           <div key={label} className="rounded-xl border border-border bg-card p-4">
             <p className="text-xs text-muted-foreground">{label}</p>
@@ -393,8 +395,8 @@ export default function AdminPage() {
             className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
           />
           <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={searchInput}
+            onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Buscar por nome ou e-mail..."
             className="w-full rounded-lg border border-border bg-background py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
@@ -416,7 +418,7 @@ export default function AdminPage() {
       <div className="rounded-xl border border-border bg-card overflow-hidden">
         {isLoading ? (
           <div className="p-8 text-center text-sm text-muted-foreground">Carregando...</div>
-        ) : filtered.length === 0 ? (
+        ) : users.length === 0 ? (
           <div className="p-8 text-center text-sm text-muted-foreground">
             Nenhum usuário encontrado
           </div>
@@ -434,7 +436,7 @@ export default function AdminPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {filtered.map((user) => (
+              {users.map((user) => (
                 <tr key={user.id} className="hover:bg-muted/20 transition-colors">
                   <td className="px-4 py-3">
                     <p className="font-medium text-foreground">{user.fullName}</p>
@@ -486,6 +488,15 @@ export default function AdminPage() {
           </table>
         )}
       </div>
+
+      {/* Pagination */}
+      <PaginationControls
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        limit={LIMIT}
+        onPage={setPage}
+      />
 
       <CreateUserModal open={showCreate} onClose={() => setShowCreate(false)} />
       <EditUserModal user={editUser} onClose={() => setEditUser(null)} />

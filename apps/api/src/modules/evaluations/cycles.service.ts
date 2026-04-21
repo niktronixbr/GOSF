@@ -9,6 +9,7 @@ import { NotificationsService } from "../notifications/notifications.service";
 import { AnalyticsService } from "../analytics/analytics.service";
 import { CreateCycleDto } from "./dto/create-cycle.dto";
 import { EvaluationCycleStatus, NotificationType } from "@gosf/database";
+import { paginate, PaginationQueryDto } from "../../common/dto/pagination.dto";
 
 @Injectable()
 export class CyclesService {
@@ -20,11 +21,18 @@ export class CyclesService {
     private analytics: AnalyticsService,
   ) {}
 
-  async findAll(institutionId: string) {
-    return this.db.evaluationCycle.findMany({
-      where: { institutionId },
-      orderBy: { startsAt: "desc" },
-    });
+  async findAll(institutionId: string, dto: Partial<PaginationQueryDto> = {}) {
+    const page = dto.page ?? 1;
+    const limit = dto.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    const where = { institutionId };
+    const [data, total] = await Promise.all([
+      this.db.evaluationCycle.findMany({ where, orderBy: { startsAt: "desc" }, skip, take: limit }),
+      this.db.evaluationCycle.count({ where }),
+    ]);
+
+    return paginate(data, total, page, limit);
   }
 
   async findOne(id: string, institutionId: string) {

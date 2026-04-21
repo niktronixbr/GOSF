@@ -22,6 +22,7 @@ import { TargetsService } from "./targets.service";
 import { CreateCycleDto } from "./dto/create-cycle.dto";
 import { CreateFormDto } from "./dto/create-form.dto";
 import { SubmitEvaluationDto } from "./dto/submit-evaluation.dto";
+import { PaginationQueryDto } from "../../common/dto/pagination.dto";
 
 @Controller("evaluations")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -36,8 +37,8 @@ export class EvaluationsController {
   // ─── Cycles ───────────────────────────────────────────────
 
   @Get("cycles")
-  getCycles(@CurrentUser() user: any) {
-    return this.cycles.findAll(user.institutionId);
+  getCycles(@CurrentUser() user: any, @Query() query: PaginationQueryDto) {
+    return this.cycles.findAll(user.institutionId, query);
   }
 
   @Get("cycles/active")

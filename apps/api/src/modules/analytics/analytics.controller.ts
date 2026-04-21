@@ -78,9 +78,18 @@ export class AnalyticsController {
   @Roles(UserRole.COORDINATOR, UserRole.ADMIN)
   getTeachersWithScores(
     @CurrentUser() user: any,
-    @Query("cycleId") cycleId: string
+    @Query("cycleId") cycleId: string,
+    @Query("page") page: string,
+    @Query("limit") limit: string,
+    @Query("search") search: string,
   ) {
-    return this.analytics.getTeachersWithScores(user.institutionId, cycleId ?? "");
+    return this.analytics.getTeachersWithScores(
+      user.institutionId,
+      cycleId ?? "",
+      page ? Number(page) : 1,
+      limit ? Number(limit) : 20,
+      search || undefined,
+    );
   }
 
   @Post("compute/teacher/:teacherId/cycle/:cycleId")

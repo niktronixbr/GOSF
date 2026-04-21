@@ -6,6 +6,9 @@ import { coordinatorApi } from "@/lib/api/coordinator";
 import { EvaluationCycle } from "@/lib/api/evaluations";
 import { Plus, Play, Square, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
+import { PaginationControls } from "@/components/ui/pagination-controls";
+
+const LIMIT = 20;
 
 function statusLabel(status: string) {
   if (status === "OPEN") return { label: "Aberto", cls: "bg-green-100 text-green-700" };
@@ -62,11 +65,17 @@ export default function CoordinatorCyclesPage() {
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title: "", startsAt: "", endsAt: "" });
+  const [page, setPage] = useState(1);
 
-  const { data: cycles, isLoading } = useQuery({
-    queryKey: ["coordinator-cycles"],
-    queryFn: () => coordinatorApi.getCycles(),
+  const { data, isLoading } = useQuery({
+    queryKey: ["coordinator-cycles", page],
+    queryFn: () => coordinatorApi.getCycles({ page, limit: LIMIT }),
+    placeholderData: (prev) => prev,
   });
+
+  const cycles = data?.data ?? [];
+  const total = data?.total ?? 0;
+  const totalPages = data?.totalPages ?? 1;
 
   const createMutation = useMutation({
     mutationFn: () => coordinatorApi.createCycle(form),
@@ -75,6 +84,7 @@ export default function CoordinatorCyclesPage() {
       qc.invalidateQueries({ queryKey: ["coordinator-cycles"] });
       setShowForm(false);
       setForm({ title: "", startsAt: "", endsAt: "" });
+      setPage(1);
     },
     onError: () => toast.error("Erro ao criar ciclo."),
   });
@@ -171,15 +181,17 @@ export default function CoordinatorCyclesPage() {
 
       {isLoading ? (
         <div className="space-y-3 animate-pulse">
-          {[...Array(3)].map((_, i) => <div key={i} className="h-20 rounded-xl bg-muted" />)}
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-20 rounded-xl bg-muted" />
+          ))}
         </div>
-      ) : cycles?.length === 0 ? (
+      ) : cycles.length === 0 ? (
         <div className="rounded-xl border border-border bg-card p-8 text-center text-muted-foreground">
           Nenhum ciclo cadastrado. Crie o primeiro ciclo de avaliação.
         </div>
       ) : (
         <div className="space-y-3">
-          {cycles?.map((c) => (
+          {cycles.map((c) => (
             <CycleCard
               key={c.id}
               cycle={c}
@@ -189,6 +201,14 @@ export default function CoordinatorCyclesPage() {
           ))}
         </div>
       )}
+
+      <PaginationControls
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        limit={LIMIT}
+        onPage={setPage}
+      />
     </div>
   );
 }

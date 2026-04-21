@@ -1,6 +1,14 @@
 import { api } from "./client";
 import { EvaluationCycle } from "./evaluations";
 
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export interface InstitutionSettings {
   id: string;
   name: string;
@@ -146,7 +154,13 @@ export interface ClassBenchmark {
 
 export const coordinatorApi = {
   // Cycles
-  getCycles: () => api.get<EvaluationCycle[]>("/evaluations/cycles"),
+  getCycles: (params: { page?: number; limit?: number } = {}) => {
+    const qs = new URLSearchParams();
+    if (params.page) qs.set("page", String(params.page));
+    if (params.limit) qs.set("limit", String(params.limit));
+    const q = qs.toString();
+    return api.get<PaginatedResponse<EvaluationCycle>>(`/evaluations/cycles${q ? `?${q}` : ""}`);
+  },
   createCycle: (data: { title: string; startsAt: string; endsAt: string }) =>
     api.post<EvaluationCycle>("/evaluations/cycles", data),
   openCycle: (id: string) => api.patch<EvaluationCycle>(`/evaluations/cycles/${id}/open`, {}),
@@ -155,10 +169,15 @@ export const coordinatorApi = {
   // Analytics
   getOverview: (cycleId: string) =>
     api.get<InstitutionOverview>(`/analytics/overview?cycleId=${cycleId}`),
-  getTeachers: (cycleId?: string) =>
-    api.get<TeacherWithScores[]>(
-      `/analytics/teachers${cycleId ? `?cycleId=${cycleId}` : ""}`
-    ),
+  getTeachers: (params: { cycleId?: string; page?: number; limit?: number; search?: string } = {}) => {
+    const qs = new URLSearchParams();
+    if (params.cycleId) qs.set("cycleId", params.cycleId);
+    if (params.page) qs.set("page", String(params.page));
+    if (params.limit) qs.set("limit", String(params.limit));
+    if (params.search) qs.set("search", params.search);
+    const q = qs.toString();
+    return api.get<PaginatedResponse<TeacherWithScores>>(`/analytics/teachers${q ? `?${q}` : ""}`);
+  },
   getReports: (cycleId: string) =>
     api.get<ReportEntry[]>(`/analytics/reports?cycleId=${cycleId}`),
   getTeacherProfile: (teacherId: string) =>

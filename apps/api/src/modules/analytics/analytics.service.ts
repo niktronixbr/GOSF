@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { DatabaseService } from "../../common/database/database.service";
 import { TargetType } from "@gosf/database";
+import { paginate } from "../../common/dto/pagination.dto";
 
 interface DimensionScore {
   dimension: string;
@@ -127,28 +128,58 @@ export class AnalyticsService {
     });
   }
 
-  async getTeachersWithScores(institutionId: string, cycleId: string) {
-    const teachers = await this.db.teacher.findMany({
-      where: { user: { institutionId } },
-      include: {
-        user: { select: { id: true, fullName: true, email: true, status: true } },
-        developmentPlans: {
-          where: { cycleId },
-          orderBy: { version: "desc" },
-          take: 1,
-          select: { status: true },
-        },
+  async getTeachersWithScores(
+    institutionId: string,
+    cycleId: string,
+    page = 1,
+    limit = 20,
+    search?: string,
+  ) {
+    const skip = (page - 1) * limit;
+
+    const where = {
+      user: {
+        institutionId,
+        ...(search && {
+          OR: [
+            { fullName: { contains: search, mode: "insensitive" as const } },
+            { email: { contains: search, mode: "insensitive" as const } },
+          ],
+        }),
       },
-      orderBy: { user: { fullName: "asc" } },
-    });
+    };
+
+    const [teachers, total] = await Promise.all([
+      this.db.teacher.findMany({
+        where,
+        include: {
+          user: { select: { id: true, fullName: true, email: true, status: true } },
+          developmentPlans: {
+            where: { cycleId },
+            orderBy: { version: "desc" },
+            take: 1,
+            select: { status: true },
+          },
+        },
+        orderBy: { user: { fullName: "asc" } },
+        skip,
+        take: limit,
+      }),
+      this.db.teacher.count({ where }),
+    ]);
 
     const scores = cycleId
       ? await this.db.scoreAggregate.findMany({
-          where: { institutionId, cycleId, targetType: TargetType.TEACHER },
+          where: {
+            institutionId,
+            cycleId,
+            targetType: TargetType.TEACHER,
+            targetId: { in: teachers.map((t) => t.id) },
+          },
         })
       : [];
 
-    return teachers.map((t) => {
+    const data = teachers.map((t) => {
       const teacherScores = scores.filter((s) => s.targetId === t.id);
       const avg =
         teacherScores.length
@@ -169,6 +200,8 @@ export class AnalyticsService {
         scores: teacherScores.map((s) => ({ dimension: s.dimension, score: s.score })),
       };
     });
+
+    return paginate(data, total, page, limit);
   }
 
   async getInstitutionOverview(institutionId: string, cycleId: string) {

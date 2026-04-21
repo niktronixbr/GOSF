@@ -1,12 +1,14 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException, UnauthorizedException } from "@nestjs/common";
 import * as bcrypt from "bcryptjs";
-import { UserRole, UserStatus } from "@gosf/database";
+import { Prisma, UserRole, UserStatus } from "@gosf/database";
 import { DatabaseService } from "../../common/database/database.service";
 import { AuditService } from "../audit/audit.service";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { ChangePasswordDto } from "./dto/change-password.dto";
 import { UpdateProfileDto } from "./dto/update-profile.dto";
+import { UsersQueryDto } from "./dto/users-query.dto";
+import { paginate } from "../../common/dto/pagination.dto";
 
 const userSelect = {
   id: true,
@@ -35,12 +37,28 @@ export class UsersService {
     return user;
   }
 
-  async findByInstitution(institutionId: string) {
-    return this.db.user.findMany({
-      where: { institutionId },
-      select: userSelect,
-      orderBy: { fullName: "asc" },
-    });
+  async findByInstitution(institutionId: string, dto: Partial<UsersQueryDto> = {}) {
+    const page = dto.page ?? 1;
+    const limit = dto.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.UserWhereInput = {
+      institutionId,
+      ...(dto.search && {
+        OR: [
+          { fullName: { contains: dto.search, mode: "insensitive" } },
+          { email: { contains: dto.search, mode: "insensitive" } },
+        ],
+      }),
+      ...(dto.role && { role: dto.role }),
+    };
+
+    const [data, total] = await Promise.all([
+      this.db.user.findMany({ where, select: userSelect, orderBy: { fullName: "asc" }, skip, take: limit }),
+      this.db.user.count({ where }),
+    ]);
+
+    return paginate(data, total, page, limit);
   }
 
   async create(institutionId: string, dto: CreateUserDto) {
@@ -90,7 +108,8 @@ export class UsersService {
   }
 
   async updateMe(id: string, dto: UpdateProfileDto) {
-    return this.db.user.update({
+    const user = await this.findById(id);
+    const updated = await this.db.user.update({
       where: { id },
       data: {
         ...(dto.fullName !== undefined && { fullName: dto.fullName }),
@@ -98,6 +117,10 @@ export class UsersService {
       },
       select: userSelect,
     });
+    this.audit
+      .log(user.institutionId, "UPDATE_PROFILE", "User", { resourceId: id })
+      .catch(() => {});
+    return updated;
   }
 
   async changePassword(id: string, dto: ChangePasswordDto) {

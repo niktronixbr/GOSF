@@ -5,6 +5,7 @@ import {
   Patch,
   Param,
   Body,
+  Query,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -19,6 +20,7 @@ import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { ChangePasswordDto } from "./dto/change-password.dto";
 import { UpdateProfileDto } from "./dto/update-profile.dto";
+import { UsersQueryDto } from "./dto/users-query.dto";
 
 @Controller("users")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -43,8 +45,8 @@ export class UsersController {
 
   @Get()
   @Roles(UserRole.ADMIN, UserRole.COORDINATOR)
-  findAll(@CurrentUser() user: any) {
-    return this.usersService.findByInstitution(user.institutionId);
+  findAll(@CurrentUser() user: any, @Query() query: UsersQueryDto) {
+    return this.usersService.findByInstitution(user.institutionId, query);
   }
 
   @Post()
