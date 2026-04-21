@@ -10,6 +10,7 @@ interface AuthState {
   login: (accessToken: string, refreshToken: string) => string;
   logout: () => Promise<void>;
   hydrate: () => void;
+  updateUser: (patch: Partial<Pick<SessionUser, "fullName">>) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -32,4 +33,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     await doLogout();
     set({ user: null });
   },
+
+  updateUser: (patch) =>
+    set((state) => ({
+      user: state.user ? { ...state.user, ...patch } : null,
+    })),
 }));

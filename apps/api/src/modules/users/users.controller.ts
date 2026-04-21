@@ -18,6 +18,7 @@ import { UserRole } from "@gosf/database";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { ChangePasswordDto } from "./dto/change-password.dto";
+import { UpdateProfileDto } from "./dto/update-profile.dto";
 
 @Controller("users")
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -27,6 +28,11 @@ export class UsersController {
   @Get("me")
   getMe(@CurrentUser() user: any) {
     return this.usersService.findById(user.id);
+  }
+
+  @Patch("me")
+  updateMe(@CurrentUser() user: any, @Body() dto: UpdateProfileDto) {
+    return this.usersService.updateMe(user.id, dto);
   }
 
   @Patch("me/password")

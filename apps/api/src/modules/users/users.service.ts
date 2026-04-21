@@ -6,6 +6,7 @@ import { AuditService } from "../audit/audit.service";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { ChangePasswordDto } from "./dto/change-password.dto";
+import { UpdateProfileDto } from "./dto/update-profile.dto";
 
 const userSelect = {
   id: true,
@@ -83,6 +84,17 @@ export class UsersService {
         ...(dto.fullName !== undefined && { fullName: dto.fullName }),
         ...(dto.role !== undefined && { role: dto.role }),
         ...(dto.status !== undefined && { status: dto.status }),
+      },
+      select: userSelect,
+    });
+  }
+
+  async updateMe(id: string, dto: UpdateProfileDto) {
+    return this.db.user.update({
+      where: { id },
+      data: {
+        ...(dto.fullName !== undefined && { fullName: dto.fullName }),
+        ...(dto.avatarUrl !== undefined && { avatarUrl: dto.avatarUrl }),
       },
       select: userSelect,
     });
