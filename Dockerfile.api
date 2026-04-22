@@ -34,7 +34,11 @@ COPY apps/api                             ./apps/api
 COPY packages/database                    ./packages/database
 COPY packages/shared                      ./packages/shared
 
-# 1. Compila o packages/database de TS → JS
+# 1. Gera o Prisma Client (precisa vir ANTES do tsc, pois packages/database importa PrismaClient)
+RUN packages/database/node_modules/.bin/prisma generate \
+    --schema packages/database/prisma/schema.prisma
+
+# 2. Compila o packages/database de TS → JS
 RUN node_modules/.bin/tsc --project packages/database/tsconfig.json
 
 # Aponta main para o JS compilado (somente no contexto Docker)
@@ -43,10 +47,6 @@ RUN node -e "\
   p.main = './dist/index.js'; \
   require('fs').writeFileSync('./packages/database/package.json', JSON.stringify(p, null, 2)); \
 "
-
-# 2. Gera o Prisma Client
-RUN packages/database/node_modules/.bin/prisma generate \
-    --schema packages/database/prisma/schema.prisma
 
 # 3. Compila a API NestJS
 RUN apps/api/node_modules/.bin/nest build \
