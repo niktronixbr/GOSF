@@ -14,6 +14,7 @@ import {
   LogOut,
   ShieldCheck,
   GitCompare,
+  FileClock,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useAuthStore } from "@/store/auth.store";
@@ -49,6 +50,7 @@ const coordinatorNav: NavItem[] = [
 
 const adminNav: NavItem[] = [
   { href: "/admin", label: "Usuários", icon: ShieldCheck },
+  { href: "/admin/audit", label: "Auditoria", icon: FileClock },
   ...coordinatorNav,
 ];
 

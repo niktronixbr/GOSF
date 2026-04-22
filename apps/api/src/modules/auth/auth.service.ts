@@ -120,10 +120,24 @@ export class AuthService {
   }
 
   async logout(token: string) {
+    const stored = await this.db.refreshToken.findUnique({
+      where: { token },
+      include: { user: true },
+    });
+
     await this.db.refreshToken.updateMany({
       where: { token },
       data: { revokedAt: new Date() },
     });
+
+    if (stored) {
+      this.audit
+        .log(stored.user.institutionId, "LOGOUT", "User", {
+          actorUserId: stored.user.id,
+          resourceId: stored.user.id,
+        })
+        .catch(() => {});
+    }
   }
 
   async forgotPassword(email: string, institutionSlug: string) {
