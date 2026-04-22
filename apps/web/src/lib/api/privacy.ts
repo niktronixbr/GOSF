@@ -36,6 +36,15 @@ export interface DataRequest {
   resolvedAt: string | null;
 }
 
+export interface DataRequestWithUser extends DataRequest {
+  user: {
+    id: string;
+    fullName: string;
+    email: string;
+    role: string;
+  };
+}
+
 export interface CreateConsentPayload {
   purpose: string;
   version: string;
@@ -57,4 +66,11 @@ export const privacyApi = {
     api.post<DataRequest>("/privacy/requests", payload),
   getMyDataRequests: () => api.get<DataRequest[]>("/privacy/requests/me"),
   exportMyData: () => api.get<Record<string, unknown>>("/privacy/export"),
+
+  listDataRequests: (status?: DataRequestStatus) => {
+    const qs = status ? `?status=${status}` : "";
+    return api.get<DataRequestWithUser[]>(`/privacy/requests${qs}`);
+  },
+  updateDataRequestStatus: (id: string, status: DataRequestStatus) =>
+    api.patch<DataRequest>(`/privacy/requests/${id}/status`, { status }),
 };
