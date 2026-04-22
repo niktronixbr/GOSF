@@ -10,6 +10,7 @@ WORKDIR /app
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY apps/web/package.json                ./apps/web/
+COPY apps/api/package.json                ./apps/api/
 COPY packages/database/package.json       ./packages/database/
 COPY packages/shared/package.json         ./packages/shared/
 

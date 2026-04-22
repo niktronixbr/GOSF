@@ -10,12 +10,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - name: Build and push Docker images
-        run: |
-          echo "Building Docker images for production..."
-          docker build -f Dockerfile.api -t gosf-api:latest .
-          docker build -f Dockerfile.web -t gosf-web:latest .
-          echo "Docker images built successfully!"
-      
-      - name: Deploy notification
-        run: echo "Ready for deployment to production server"
+      - name: Deploy placeholder
+        run: echo "Deploy to production not yet configured. Skipping."
