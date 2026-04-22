@@ -15,7 +15,8 @@ COPY packages/database/package.json       ./packages/database/
 COPY packages/shared/package.json         ./packages/shared/
 COPY packages/database/prisma             ./packages/database/prisma/
 
-RUN pnpm install --frozen-lockfile --ignore-scripts
+ENV PRISMA_CLI_BINARY_TARGETS="linux-musl-openssl-3.0.x"
+RUN pnpm install --frozen-lockfile
 
 # ─── Stage 3: builder — build Next.js standalone ──────────────────────────────
 FROM base AS builder
