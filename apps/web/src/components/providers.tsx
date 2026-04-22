@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
+import { ConsentGate } from "@/components/consent-gate";
 
 function AuthHydrator() {
   const hydrate = useAuthStore((s) => s.hydrate);
@@ -24,7 +25,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthHydrator />
-      {children}
+      <ConsentGate>{children}</ConsentGate>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
