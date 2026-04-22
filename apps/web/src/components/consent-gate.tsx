@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { usePathname } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
@@ -9,15 +10,29 @@ import { privacyApi } from "@/lib/api/privacy";
 export const TERMS_PURPOSE = "terms-of-use";
 export const TERMS_VERSION = "2026.04";
 
+const PUBLIC_ROUTE_PREFIXES = [
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+];
+
+function isPublicRoute(pathname: string | null) {
+  if (!pathname || pathname === "/") return true;
+  return PUBLIC_ROUTE_PREFIXES.some((p) => pathname.startsWith(p));
+}
+
 export function ConsentGate({ children }: { children: React.ReactNode }) {
   const qc = useQueryClient();
+  const pathname = usePathname();
   const user = useAuthStore((s) => s.user);
   const isLoadingUser = useAuthStore((s) => s.isLoading);
+  const onPublicRoute = isPublicRoute(pathname);
 
   const { data: consents, isLoading: loadingConsents } = useQuery({
     queryKey: ["my-consents"],
     queryFn: privacyApi.getMyConsents,
-    enabled: !!user,
+    enabled: !!user && !onPublicRoute,
   });
 
   const acceptMut = useMutation({
@@ -35,6 +50,7 @@ export function ConsentGate({ children }: { children: React.ReactNode }) {
     onError: () => toast.error("Erro ao registrar consentimento"),
   });
 
+  if (onPublicRoute) return <>{children}</>;
   if (isLoadingUser || !user) return <>{children}</>;
   if (loadingConsents) return <>{children}</>;
 

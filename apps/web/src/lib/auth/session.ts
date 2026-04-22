@@ -42,6 +42,10 @@ export async function getValidAccessToken(): Promise<string | null> {
 export function getSessionUser(): SessionUser | null {
   const token = getAccessToken();
   if (!token) return null;
+  if (isTokenExpired(token) && !getRefreshToken()) {
+    clearTokens();
+    return null;
+  }
   const payload = parseJwt(token);
   if (!payload) return null;
   return {
