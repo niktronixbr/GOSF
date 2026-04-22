@@ -48,9 +48,8 @@ RUN node -e "\
   require('fs').writeFileSync('./packages/database/package.json', JSON.stringify(p, null, 2)); \
 "
 
-# 3. Compila a API NestJS
-RUN apps/api/node_modules/.bin/nest build \
-    --config apps/api/nest-cli.json
+# 3. Compila a API NestJS (rodar de dentro de apps/api para nest achar tsconfig.json)
+RUN cd apps/api && node_modules/.bin/nest build
 
 # ─── Stage 4: runner — imagem final de produção ───────────────────────────────
 FROM node:20-alpine AS runner
