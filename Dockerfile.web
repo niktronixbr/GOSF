@@ -8,7 +8,7 @@ RUN npm install -g pnpm@10.33.0
 FROM base AS deps
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc .pnpmfile.cjs ./
 COPY apps/web/package.json                ./apps/web/
 COPY apps/api/package.json                ./apps/api/
 COPY packages/database/package.json       ./packages/database/

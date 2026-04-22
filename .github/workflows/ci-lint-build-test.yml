@@ -43,6 +43,7 @@ jobs:
       NODE_ENV: test
       APP_URL: http://localhost:3001
       WEB_URL: http://localhost:3002
+      ANTHROPIC_API_KEY: sk-ant-dummy-key-for-ci-tests-only
 
     steps:
       - uses: actions/checkout@v4
