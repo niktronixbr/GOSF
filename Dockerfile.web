@@ -15,7 +15,7 @@ COPY packages/database/package.json       ./packages/database/
 COPY packages/shared/package.json         ./packages/shared/
 COPY packages/database/prisma             ./packages/database/prisma/
 
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # ─── Stage 3: builder — build Next.js standalone ──────────────────────────────
 FROM base AS builder
