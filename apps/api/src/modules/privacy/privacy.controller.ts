@@ -47,6 +47,11 @@ export class PrivacyController {
     return this.privacyService.getMyDataRequests(user.id);
   }
 
+  @Get("export")
+  exportMyData(@CurrentUser() user: any) {
+    return this.privacyService.exportMyData(user.id);
+  }
+
   @Get("requests")
   @Roles(UserRole.ADMIN, UserRole.COORDINATOR)
   listDataRequests(

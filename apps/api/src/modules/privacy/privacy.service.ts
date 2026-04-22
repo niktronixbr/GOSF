@@ -77,4 +77,62 @@ export class PrivacyService {
       },
     });
   }
+
+  async exportMyData(userId: string) {
+    const user = await this.db.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        role: true,
+        status: true,
+        lastLoginAt: true,
+        createdAt: true,
+        updatedAt: true,
+        institution: { select: { name: true, slug: true } },
+      },
+    });
+    if (!user) throw new NotFoundException("Usuário não encontrado");
+
+    const [student, teacher, consents, dataRequests, notifications] = await Promise.all([
+      this.db.student.findUnique({
+        where: { userId },
+        include: {
+          enrollments: { include: { classGroup: { select: { name: true, academicPeriod: true } } } },
+          plans: true,
+          goals: true,
+        },
+      }),
+      this.db.teacher.findUnique({
+        where: { userId },
+        include: {
+          classAssignments: {
+            include: {
+              classGroup: { select: { name: true, academicPeriod: true } },
+              subject: { select: { name: true } },
+            },
+          },
+          developmentPlans: true,
+        },
+      }),
+      this.db.consentRecord.findMany({ where: { userId }, orderBy: { recordedAt: "desc" } }),
+      this.db.dataRequest.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }),
+      this.db.notification.findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 500,
+      }),
+    ]);
+
+    return {
+      exportedAt: new Date().toISOString(),
+      user,
+      ...(student && { studentProfile: student }),
+      ...(teacher && { teacherProfile: teacher }),
+      consents,
+      dataRequests,
+      notifications,
+    };
+  }
 }
