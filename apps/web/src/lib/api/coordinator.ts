@@ -154,8 +154,10 @@ export interface ClassBenchmark {
 
 export const coordinatorApi = {
   // Cycles
-  getCycles: () =>
-    api.get<EvaluationCycle[]>("/evaluations/cycles"),
+  getCycles: async () => {
+    const res = await api.get<PaginatedResponse<EvaluationCycle>>("/evaluations/cycles");
+    return res.data;
+  },
   createCycle: (data: { title: string; startsAt: string; endsAt: string }) =>
     api.post<EvaluationCycle>("/evaluations/cycles", data),
   openCycle: (id: string) => api.patch<EvaluationCycle>(`/evaluations/cycles/${id}/open`, {}),
