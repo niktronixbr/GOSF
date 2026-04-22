@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
+    "@fastify/static": "^7.0.4",
     "@gosf/database": "workspace:*",
     "@nestjs/bull": "^10.2.1",
     "@nestjs/common": "^10.4.15",
