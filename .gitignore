@@ -9,3 +9,13 @@ build
 *.log
 coverage
 .DS_Store
+.claude/
+.npmrc
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.cache/
+tmp/
+temp/
