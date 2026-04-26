@@ -1,13 +1,46 @@
 import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
 import { DatabaseService } from "../../common/database/database.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { CreateConsentDto } from "./dto/create-consent.dto";
 import { CreateDataRequestDto } from "./dto/create-data-request.dto";
 import { UpdateDataRequestStatusDto } from "./dto/update-data-request-status.dto";
-import { DataRequestStatus, UserRole } from "@gosf/database";
+import { DataRequestStatus, DataRequestType, NotificationType, UserRole } from "@gosf/database";
+
+const STATUS_NOTIFICATION_COPY: Record<
+  DataRequestStatus,
+  { title: string; body: (type: DataRequestType) => string } | null
+> = {
+  PENDING: null,
+  IN_PROGRESS: {
+    title: "Sua solicitação LGPD está em análise",
+    body: (t) => `Sua solicitação de ${typeLabel(t)} entrou em análise.`,
+  },
+  COMPLETED: {
+    title: "Sua solicitação LGPD foi concluída",
+    body: (t) => `Sua solicitação de ${typeLabel(t)} foi concluída.`,
+  },
+  REJECTED: {
+    title: "Sua solicitação LGPD foi recusada",
+    body: (t) => `Sua solicitação de ${typeLabel(t)} foi recusada.`,
+  },
+};
+
+function typeLabel(t: DataRequestType): string {
+  switch (t) {
+    case "ACCESS": return "acesso aos dados";
+    case "CORRECTION": return "correção de dados";
+    case "DELETION": return "exclusão de dados";
+    case "PORTABILITY": return "portabilidade dos dados";
+    case "OPPOSITION": return "oposição ao tratamento";
+  }
+}
 
 @Injectable()
 export class PrivacyService {
-  constructor(private db: DatabaseService) {}
+  constructor(
+    private db: DatabaseService,
+    private notifications: NotificationsService,
+  ) {}
 
   async recordConsent(userId: string, institutionId: string, dto: CreateConsentDto) {
     return this.db.consentRecord.create({
@@ -67,7 +100,7 @@ export class PrivacyService {
     const request = await this.db.dataRequest.findFirst({ where: { id, institutionId } });
     if (!request) throw new NotFoundException("Solicitação não encontrada");
 
-    return this.db.dataRequest.update({
+    const updated = await this.db.dataRequest.update({
       where: { id },
       data: {
         status: dto.status,
@@ -76,6 +109,21 @@ export class PrivacyService {
           : {}),
       },
     });
+
+    if (request.status !== dto.status) {
+      const copy = STATUS_NOTIFICATION_COPY[dto.status];
+      if (copy) {
+        await this.notifications.create(
+          request.userId,
+          NotificationType.SYSTEM,
+          copy.title,
+          copy.body(request.type),
+          { dataRequestId: id, status: dto.status },
+        );
+      }
+    }
+
+    return updated;
   }
 
   async exportMyData(userId: string) {

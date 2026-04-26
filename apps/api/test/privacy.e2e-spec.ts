@@ -300,5 +300,89 @@ describe("Privacy / LGPD (e2e)", () => {
       });
       expect(res.statusCode).toBe(404);
     });
+
+    it("notifica o solicitante (SYSTEM) quando status muda para REJECTED", async () => {
+      const createRes = await app.inject({
+        method: "POST",
+        url: "/api/v1/privacy/requests",
+        headers: { authorization: `Bearer ${studentToken}` },
+        payload: { type: "DELETION", details: "fluxo notificacao" },
+      });
+      expect(createRes.statusCode).toBe(201);
+      const { id } = createRes.json();
+
+      const before = await app.inject({
+        method: "GET",
+        url: "/api/v1/notifications",
+        headers: { authorization: `Bearer ${studentToken}` },
+      });
+      const beforeIds = new Set(
+        (before.json() as Array<{ id: string }>).map((n) => n.id),
+      );
+
+      const patchRes = await app.inject({
+        method: "PATCH",
+        url: `/api/v1/privacy/requests/${id}/status`,
+        headers: { authorization: `Bearer ${adminToken}` },
+        payload: { status: "REJECTED" },
+      });
+      expect(patchRes.statusCode).toBe(200);
+
+      const after = await app.inject({
+        method: "GET",
+        url: "/api/v1/notifications",
+        headers: { authorization: `Bearer ${studentToken}` },
+      });
+      const newOnes = (after.json() as Array<{
+        id: string;
+        type: string;
+        title: string;
+        body: string;
+      }>).filter((n) => !beforeIds.has(n.id));
+
+      const created = newOnes.find(
+        (n) => n.type === "SYSTEM" && /recusada/i.test(n.title),
+      );
+      expect(created).toBeDefined();
+      expect(created!.body).toMatch(/exclusão/i);
+    });
+
+    it("nao gera notificacao duplicada se status nao mudou", async () => {
+      const createRes = await app.inject({
+        method: "POST",
+        url: "/api/v1/privacy/requests",
+        headers: { authorization: `Bearer ${studentToken}` },
+        payload: { type: "ACCESS", details: "fluxo idempotencia" },
+      });
+      const { id } = createRes.json();
+
+      await app.inject({
+        method: "PATCH",
+        url: `/api/v1/privacy/requests/${id}/status`,
+        headers: { authorization: `Bearer ${adminToken}` },
+        payload: { status: "COMPLETED" },
+      });
+
+      const between = await app.inject({
+        method: "GET",
+        url: "/api/v1/notifications",
+        headers: { authorization: `Bearer ${studentToken}` },
+      });
+      const countBefore = (between.json() as unknown[]).length;
+
+      await app.inject({
+        method: "PATCH",
+        url: `/api/v1/privacy/requests/${id}/status`,
+        headers: { authorization: `Bearer ${adminToken}` },
+        payload: { status: "COMPLETED" },
+      });
+
+      const after = await app.inject({
+        method: "GET",
+        url: "/api/v1/notifications",
+        headers: { authorization: `Bearer ${studentToken}` },
+      });
+      expect((after.json() as unknown[]).length).toBe(countBefore);
+    });
   });
 });
