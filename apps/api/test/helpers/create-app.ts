@@ -1,13 +1,25 @@
-import { NestFactory } from "@nestjs/core";
+import { Test } from "@nestjs/testing";
 import { FastifyAdapter, NestFastifyApplication } from "@nestjs/platform-fastify";
 import { ValidationPipe } from "@nestjs/common";
 import { AppModule } from "../../src/app.module";
 
-export async function createTestApp(): Promise<NestFastifyApplication> {
-  const app = await NestFactory.create<NestFastifyApplication>(
-    AppModule,
+export interface ProviderOverride {
+  token: any;
+  value: any;
+}
+
+export async function createTestApp(
+  overrides: ProviderOverride[] = [],
+): Promise<NestFastifyApplication> {
+  let builder = Test.createTestingModule({ imports: [AppModule] });
+  for (const o of overrides) {
+    builder = builder.overrideProvider(o.token).useValue(o.value);
+  }
+  const moduleRef = await builder.compile();
+
+  const app = moduleRef.createNestApplication<NestFastifyApplication>(
     new FastifyAdapter({ logger: false }),
-    { logger: false }
+    { logger: false },
   );
 
   app.setGlobalPrefix("api/v1");
