@@ -191,4 +191,103 @@ describe("Evaluations (e2e)", () => {
       expect(res.statusCode).toBe(403);
     });
   });
+
+  // ─── Notificações automáticas de ciclo ────────────────────────────────────
+
+  describe("Notificações automáticas em mudança de status do ciclo", () => {
+    let notifCycleId: string;
+    const uniqueTitle = `Ciclo Notif ${Date.now()}`;
+    const startsAt = new Date().toISOString();
+    const endsAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    async function listStudentNotifications() {
+      const res = await app.inject({
+        method: "GET",
+        url: "/api/v1/notifications",
+        headers: { authorization: `Bearer ${studentToken}` },
+      });
+      return res.json() as Array<{ id: string; type: string; title: string }>;
+    }
+
+    it("setup: cria ciclo DRAFT", async () => {
+      const res = await app.inject({
+        method: "POST",
+        url: "/api/v1/evaluations/cycles",
+        headers: { authorization: `Bearer ${coordinatorToken}` },
+        payload: { title: uniqueTitle, startsAt, endsAt },
+      });
+      expect(res.statusCode).toBe(201);
+      notifCycleId = res.json().id;
+    });
+
+    it("abrir ciclo dispara notification EVALUATION_OPEN para STUDENT", async () => {
+      const res = await app.inject({
+        method: "PATCH",
+        url: `/api/v1/evaluations/cycles/${notifCycleId}/open`,
+        headers: { authorization: `Bearer ${coordinatorToken}` },
+        payload: {},
+      });
+      expect(res.statusCode).toBe(200);
+
+      const notifs = await listStudentNotifications();
+      const matching = notifs.filter(
+        (n) => n.type === "EVALUATION_OPEN" && n.title.includes(uniqueTitle),
+      );
+      expect(matching.length).toBe(1);
+    });
+
+    it("reabrir ciclo já OPEN não duplica notification", async () => {
+      const res = await app.inject({
+        method: "PATCH",
+        url: `/api/v1/evaluations/cycles/${notifCycleId}/open`,
+        headers: { authorization: `Bearer ${coordinatorToken}` },
+        payload: {},
+      });
+      expect(res.statusCode).toBe(200);
+
+      const notifs = await listStudentNotifications();
+      const matching = notifs.filter(
+        (n) => n.type === "EVALUATION_OPEN" && n.title.includes(uniqueTitle),
+      );
+      expect(matching.length).toBe(1);
+    });
+
+    it("fechar ciclo dispara notification SYSTEM para STUDENT", async () => {
+      const res = await app.inject({
+        method: "PATCH",
+        url: `/api/v1/evaluations/cycles/${notifCycleId}/close`,
+        headers: { authorization: `Bearer ${coordinatorToken}` },
+        payload: {},
+      });
+      expect(res.statusCode).toBe(200);
+
+      const notifs = await listStudentNotifications();
+      const matching = notifs.filter(
+        (n) =>
+          n.type === "SYSTEM" &&
+          n.title.includes("encerrado") &&
+          n.title.includes(uniqueTitle),
+      );
+      expect(matching.length).toBe(1);
+    });
+
+    it("re-fechar ciclo já CLOSED não duplica notification", async () => {
+      const res = await app.inject({
+        method: "PATCH",
+        url: `/api/v1/evaluations/cycles/${notifCycleId}/close`,
+        headers: { authorization: `Bearer ${coordinatorToken}` },
+        payload: {},
+      });
+      expect(res.statusCode).toBe(200);
+
+      const notifs = await listStudentNotifications();
+      const matching = notifs.filter(
+        (n) =>
+          n.type === "SYSTEM" &&
+          n.title.includes("encerrado") &&
+          n.title.includes(uniqueTitle),
+      );
+      expect(matching.length).toBe(1);
+    });
+  });
 });

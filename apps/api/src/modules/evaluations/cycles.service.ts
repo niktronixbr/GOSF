@@ -60,30 +60,40 @@ export class CyclesService {
 
   async open(id: string, institutionId: string) {
     const cycle = await this.findOne(id, institutionId);
+    const wasOpen = cycle.status === EvaluationCycleStatus.OPEN;
     const updated = await this.db.evaluationCycle.update({
       where: { id },
       data: { status: EvaluationCycleStatus.OPEN },
     });
-    await this.notifyInstitution(institutionId, NotificationType.EVALUATION_OPEN,
-      `Ciclo aberto: ${cycle.title}`,
-      "Um novo ciclo de avaliação está disponível. Acesse para registrar suas avaliações.",
-    );
+    if (!wasOpen) {
+      await this.notifyInstitution(
+        institutionId,
+        NotificationType.EVALUATION_OPEN,
+        `Ciclo aberto: ${cycle.title}`,
+        "Um novo ciclo de avaliação está disponível. Acesse para registrar suas avaliações.",
+      );
+    }
     return updated;
   }
 
   async close(id: string, institutionId: string) {
     const cycle = await this.findOne(id, institutionId);
+    const wasClosed = cycle.status === EvaluationCycleStatus.CLOSED;
     const updated = await this.db.evaluationCycle.update({
       where: { id },
       data: { status: EvaluationCycleStatus.CLOSED },
     });
 
-    await this.notifyInstitution(institutionId, NotificationType.SYSTEM,
-      `Ciclo encerrado: ${cycle.title}`,
-      "O ciclo de avaliação foi encerrado. Verifique seus resultados.",
-    );
+    if (!wasClosed) {
+      await this.notifyInstitution(
+        institutionId,
+        NotificationType.SYSTEM,
+        `Ciclo encerrado: ${cycle.title}`,
+        "O ciclo de avaliação foi encerrado. Verifique seus resultados.",
+      );
 
-    await this.computeScoresForCycle(id, institutionId);
+      await this.computeScoresForCycle(id, institutionId);
+    }
 
     return updated;
   }
