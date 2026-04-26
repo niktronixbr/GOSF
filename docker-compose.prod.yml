@@ -33,9 +33,7 @@ services:
       - gosf_net
 
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile.api
+    image: ghcr.io/${GHCR_OWNER}/gosf-api:${IMAGE_TAG:-latest}
     container_name: gosf_prod_api
     restart: unless-stopped
     env_file: .env.production
@@ -50,11 +48,7 @@ services:
       - gosf_net
 
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile.web
-      args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    image: ghcr.io/${GHCR_OWNER}/gosf-web:${IMAGE_TAG:-latest}
     container_name: gosf_prod_web
     restart: unless-stopped
     env_file: .env.production
