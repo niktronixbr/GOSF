@@ -26,9 +26,12 @@ import { DatabaseModule } from "./common/database/database.module";
         level: process.env.LOG_LEVEL ?? (process.env.NODE_ENV === "production" ? "info" : "debug"),
         redact: [
           "req.headers.authorization",
-          "body.password",
-          "body.token",
-          "body.refreshToken",
+          "req.headers.cookie",
+          "req.body.password",
+          "req.body.currentPassword",
+          "req.body.newPassword",
+          "req.body.token",
+          "req.body.refreshToken",
         ],
         transport:
           process.env.NODE_ENV !== "production"

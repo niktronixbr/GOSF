@@ -16,7 +16,6 @@ async function bootstrap() {
   );
 
   app.useLogger(app.get(Logger));
-  app.flushLogs();
 
   app.setGlobalPrefix("api/v1");
 
