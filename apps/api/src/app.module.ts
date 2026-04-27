@@ -14,6 +14,7 @@ import { NotificationsModule } from "./modules/notifications/notifications.modul
 import { PrivacyModule } from "./modules/privacy/privacy.module";
 import { AuditModule } from "./modules/audit/audit.module";
 import { GoalsModule } from "./modules/goals/goals.module";
+import { HealthModule } from "./modules/health/health.module";
 import { DatabaseModule } from "./common/database/database.module";
 
 @Module({
@@ -35,6 +36,7 @@ import { DatabaseModule } from "./common/database/database.module";
     PrivacyModule,
     AuditModule,
     GoalsModule,
+    HealthModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
