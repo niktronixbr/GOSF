@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { APP_GUARD, APP_INTERCEPTOR } from "@nestjs/core";
 import { ConfigModule } from "@nestjs/config";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
+import { LoggerModule } from "nestjs-pino";
 import { AuditInterceptor } from "./common/interceptors/audit.interceptor";
 import { AuthModule } from "./modules/auth/auth.module";
 import { UsersModule } from "./modules/users/users.module";
@@ -20,6 +21,21 @@ import { DatabaseModule } from "./common/database/database.module";
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: [".env", "../../.env"] }),
+    LoggerModule.forRoot({
+      pinoHttp: {
+        level: process.env.LOG_LEVEL ?? (process.env.NODE_ENV === "production" ? "info" : "debug"),
+        redact: [
+          "req.headers.authorization",
+          "body.password",
+          "body.token",
+          "body.refreshToken",
+        ],
+        transport:
+          process.env.NODE_ENV !== "production"
+            ? { target: "pino-pretty", options: { colorize: true, singleLine: true } }
+            : undefined,
+      },
+    }),
     ThrottlerModule.forRoot([
       { name: "default", ttl: 60000, limit: 200 },
       { name: "auth", ttl: 60000, limit: 5 },

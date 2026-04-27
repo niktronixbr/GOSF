@@ -3,16 +3,20 @@ import {
   FastifyAdapter,
   NestFastifyApplication,
 } from "@nestjs/platform-fastify";
-import { ValidationPipe, Logger } from "@nestjs/common";
+import { ValidationPipe } from "@nestjs/common";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
+import { Logger } from "nestjs-pino";
 import { AppModule } from "./app.module";
 
 async function bootstrap() {
-  const logger = new Logger("Bootstrap");
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
-    new FastifyAdapter({ logger: false })
+    new FastifyAdapter({ logger: false }),
+    { bufferLogs: true }
   );
+
+  app.useLogger(app.get(Logger));
+  app.flushLogs();
 
   app.setGlobalPrefix("api/v1");
 
@@ -50,8 +54,6 @@ async function bootstrap() {
 
   const port = process.env.API_PORT ?? 3001;
   await app.listen(port, "0.0.0.0");
-  logger.log(`GOSF API running on http://localhost:${port}/api/v1`);
-  logger.log(`Swagger docs: http://localhost:${port}/api/docs`);
 }
 
 bootstrap();
