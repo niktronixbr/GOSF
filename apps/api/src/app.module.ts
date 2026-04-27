@@ -19,7 +19,10 @@ import { DatabaseModule } from "./common/database/database.module";
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: [".env", "../../.env"] }),
-    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
+    ThrottlerModule.forRoot([
+      { name: "default", ttl: 60000, limit: 200 },
+      { name: "auth", ttl: 60000, limit: 5 },
+    ]),
     DatabaseModule,
     AuthModule,
     UsersModule,

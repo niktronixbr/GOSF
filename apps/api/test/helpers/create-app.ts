@@ -8,6 +8,10 @@ export interface ProviderOverride {
   value: any;
 }
 
+// Contador de IP para garantir que cada loginAs use um IP virtual único,
+// evitando que o ThrottlerGuard bloqueie chamadas auxiliares nos testes.
+let ipCounter = 1;
+
 export async function createTestApp(
   overrides: ProviderOverride[] = [],
 ): Promise<NestFastifyApplication> {
@@ -18,7 +22,7 @@ export async function createTestApp(
   const moduleRef = await builder.compile();
 
   const app = moduleRef.createNestApplication<NestFastifyApplication>(
-    new FastifyAdapter({ logger: false }),
+    new FastifyAdapter({ logger: false, trustProxy: true }),
     { logger: false },
   );
 
@@ -51,9 +55,12 @@ export async function loginAs(
   role: keyof typeof SEED
 ): Promise<{ accessToken: string; refreshToken: string }> {
   const creds = SEED[role] as { email: string; password: string };
+  // Usa um IP virtual único por chamada para não esgotar a cota do ThrottlerGuard
+  const fakeIp = `10.0.${Math.floor(ipCounter / 256)}.${ipCounter++ % 256}`;
   const res = await app.inject({
     method: "POST",
     url: "/api/v1/auth/login",
+    headers: { "x-forwarded-for": fakeIp },
     payload: { ...creds, institutionSlug: SEED.institutionSlug },
   });
   if (res.statusCode !== 200) {

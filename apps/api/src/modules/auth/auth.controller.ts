@@ -19,7 +19,7 @@ import { CurrentUser } from "../../common/decorators/current-user.decorator";
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @Throttle({ default: { ttl: 60000, limit: 10 } })
+  @Throttle({ auth: { ttl: 60000, limit: 5 } })
   @UseGuards(AuthGuard("local"))
   @Post("login")
   @HttpCode(HttpStatus.OK)
@@ -39,13 +39,14 @@ export class AuthController {
     return this.authService.logout(dto.refreshToken);
   }
 
-  @Throttle({ default: { ttl: 60000, limit: 5 } })
+  @Throttle({ auth: { ttl: 60000, limit: 5 } })
   @Post("forgot-password")
   @HttpCode(HttpStatus.OK)
   async forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.forgotPassword(dto.email, dto.institutionSlug);
   }
 
+  @Throttle({ auth: { ttl: 60000, limit: 5 } })
   @Post("reset-password")
   @HttpCode(HttpStatus.OK)
   async resetPassword(@Body() dto: ResetPasswordDto) {

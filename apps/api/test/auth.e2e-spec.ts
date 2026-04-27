@@ -19,6 +19,7 @@ describe("Auth (e2e)", () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/v1/auth/login",
+        headers: { "x-forwarded-for": "10.1.0.1" },
         payload: { ...SEED.admin, institutionSlug: SEED.institutionSlug },
       });
       expect(res.statusCode).toBe(200);
@@ -33,6 +34,7 @@ describe("Auth (e2e)", () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/v1/auth/login",
+        headers: { "x-forwarded-for": "10.1.0.2" },
         payload: { ...SEED.coordinator, institutionSlug: SEED.institutionSlug },
       });
       expect(res.statusCode).toBe(200);
@@ -43,6 +45,7 @@ describe("Auth (e2e)", () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/v1/auth/login",
+        headers: { "x-forwarded-for": "10.1.0.3" },
         payload: { ...SEED.student, institutionSlug: SEED.institutionSlug },
       });
       expect(res.statusCode).toBe(200);
@@ -53,6 +56,7 @@ describe("Auth (e2e)", () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/v1/auth/login",
+        headers: { "x-forwarded-for": "10.1.0.4" },
         payload: { email: SEED.admin.email, password: "senhaerrada", institutionSlug: SEED.institutionSlug },
       });
       expect(res.statusCode).toBe(401);
@@ -62,6 +66,7 @@ describe("Auth (e2e)", () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/v1/auth/login",
+        headers: { "x-forwarded-for": "10.1.0.5" },
         payload: { email: "naoexiste@test.com", password: "Admin@1234", institutionSlug: SEED.institutionSlug },
       });
       expect(res.statusCode).toBe(401);
@@ -71,6 +76,7 @@ describe("Auth (e2e)", () => {
       const res = await app.inject({
         method: "POST",
         url: "/api/v1/auth/login",
+        headers: { "x-forwarded-for": "10.1.0.6" },
         payload: {},
       });
       expect(res.statusCode).toBe(401);
@@ -170,4 +176,44 @@ describe("Auth (e2e)", () => {
       expect(res.statusCode).toBe(200);
     });
   });
+});
+
+// ─── Rate limit (instância isolada para não interferir nos outros testes) ──
+
+describe("Auth rate limit (e2e)", () => {
+  let app: NestFastifyApplication;
+
+  beforeAll(async () => {
+    app = await createTestApp();
+  });
+
+  afterAll(async () => {
+    await closeTestApp(app);
+  });
+
+  it("retorna 429 após 5 tentativas de login em 60s (rate limit auth)", async () => {
+    // Faz 5 requisições — todas retornam 401 (senha errada) mas consomem cota
+    for (let i = 0; i < 5; i++) {
+      await app.inject({
+        method: "POST",
+        url: "/api/v1/auth/login",
+        payload: {
+          email: "inexistente@teste.com",
+          password: "senhaerrada",
+          institutionSlug: SEED.institutionSlug,
+        },
+      });
+    }
+    // 6ª requisição deve bater no rate limit
+    const res = await app.inject({
+      method: "POST",
+      url: "/api/v1/auth/login",
+      payload: {
+        email: "inexistente@teste.com",
+        password: "senhaerrada",
+        institutionSlug: SEED.institutionSlug,
+      },
+    });
+    expect(res.statusCode).toBe(429);
+  }, 30000);
 });
