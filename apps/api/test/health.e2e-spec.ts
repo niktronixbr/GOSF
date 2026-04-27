@@ -23,12 +23,11 @@ describe("Health (e2e)", () => {
       expect(body.status).toBe("ok");
     });
 
-    it("não é bloqueado pelo rate limiter", async () => {
-      // Faz 10 requisições — deve sempre retornar 200 (SkipThrottle)
-      for (let i = 0; i < 10; i++) {
+    it("não é bloqueado pelo rate limiter (acima do limite default de 200/min)", async () => {
+      for (let i = 0; i < 210; i++) {
         const res = await app.inject({ method: "GET", url: "/api/v1/health" });
         expect(res.statusCode).toBe(200);
       }
-    });
+    }, 30000);
   });
 });
