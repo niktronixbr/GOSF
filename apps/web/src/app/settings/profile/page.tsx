@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { UserCircle, KeyRound } from "lucide-react";
 import { usersApi } from "@/lib/api/users";
+import { ApiError } from "@/lib/api/client";
 
 function getInitials(name: string): string {
   return name
@@ -46,11 +47,13 @@ export default function ProfilePage() {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [initialized, setInitialized] = useState(false);
 
-  if (data && !initialized) {
-    setFullName(data.fullName ?? "");
-    setAvatarUrl(data.avatarUrl ?? "");
-    setInitialized(true);
-  }
+  useEffect(() => {
+    if (data && !initialized) {
+      setFullName(data.fullName ?? "");
+      setAvatarUrl(data.avatarUrl ?? "");
+      setInitialized(true);
+    }
+  }, [data, initialized]);
 
   const profileDirty =
     fullName !== (data?.fullName ?? "") ||
@@ -66,9 +69,8 @@ export default function ProfilePage() {
       qc.setQueryData(["me"], updated);
       toast.success("Perfil atualizado");
     },
-    onError: (err: any) => {
-      const msg = err?.response?.message ?? "Erro ao salvar";
-      toast.error(Array.isArray(msg) ? msg[0] : msg);
+    onError: (err: ApiError) => {
+      toast.error(err.message);
     },
   });
 
@@ -86,13 +88,11 @@ export default function ProfilePage() {
       setConfirmPassword("");
       setPasswordError("");
     },
-    onError: (err: any) => {
-      const status = err?.status ?? err?.response?.statusCode;
-      if (status === 401) {
+    onError: (err: ApiError) => {
+      if (err.status === 401) {
         setPasswordError("Senha atual incorreta");
       } else {
-        const msg = err?.response?.message ?? "Erro ao alterar senha";
-        setPasswordError(Array.isArray(msg) ? msg[0] : msg);
+        setPasswordError(err.message);
       }
     },
   });
