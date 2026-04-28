@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, Logger } from "@nestjs/common";
 import { DatabaseService } from "../../common/database/database.service";
 import { AiProviderService } from "./ai-provider.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { MailService } from "../../common/mail/mail.service";
 import { STUDENT_PLAN_SYSTEM, TEACHER_PLAN_SYSTEM } from "./prompts";
 import { PlanStatus, NotificationType } from "@gosf/database";
 
@@ -13,12 +14,13 @@ export class PlansService {
     private db: DatabaseService,
     private ai: AiProviderService,
     private notifications: NotificationsService,
+    private mail: MailService,
   ) {}
 
   async generateStudentPlan(studentUserId: string, cycleId: string, institutionId: string) {
     const student = await this.db.student.findUnique({
       where: { userId: studentUserId },
-      include: { user: { select: { fullName: true } } },
+      include: { user: { select: { fullName: true, email: true } } },
     });
     if (!student) throw new NotFoundException("Student not found");
 
@@ -68,6 +70,9 @@ export class PlansService {
         "Seu plano de estudo está pronto",
         "A IA gerou seu plano personalizado. Acesse Plano de Estudo para visualizar.",
       );
+      await this.mail
+        .sendPlanReady(student.user.email, student.user.fullName, 'student')
+        .catch((err) => this.logger.error(`Email plan failed for ${student.user.email}`, err));
       return ready;
     } catch (err) {
       this.logger.error("Failed to generate student plan", err);
@@ -82,7 +87,7 @@ export class PlansService {
   async generateTeacherPlan(teacherUserId: string, cycleId: string, institutionId: string) {
     const teacher = await this.db.teacher.findUnique({
       where: { userId: teacherUserId },
-      include: { user: { select: { fullName: true } } },
+      include: { user: { select: { fullName: true, email: true } } },
     });
     if (!teacher) throw new NotFoundException("Teacher not found");
 
@@ -133,6 +138,9 @@ export class PlansService {
         "Seu plano de desenvolvimento está pronto",
         "A IA gerou seu plano de desenvolvimento profissional. Acesse Desenvolvimento para visualizar.",
       );
+      await this.mail
+        .sendPlanReady(teacher.user.email, teacher.user.fullName, 'teacher')
+        .catch((err) => this.logger.error(`Email plan failed for ${teacher.user.email}`, err));
       return ready;
     } catch (err) {
       this.logger.error("Failed to generate teacher plan", err);
