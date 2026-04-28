@@ -1,5 +1,12 @@
 import { NestFastifyApplication } from "@nestjs/platform-fastify";
 import { createTestApp, closeTestApp, loginAs } from "./helpers/create-app";
+import { MailService } from "../src/common/mail/mail.service";
+
+const mockMailService = {
+  sendPasswordReset: jest.fn().mockResolvedValue(undefined),
+  sendEvaluationOpen: jest.fn().mockResolvedValue(undefined),
+  sendPlanReady: jest.fn().mockResolvedValue(undefined),
+};
 
 describe("Evaluations (e2e)", () => {
   let app: NestFastifyApplication;
@@ -8,7 +15,7 @@ describe("Evaluations (e2e)", () => {
   let teacherToken: string;
 
   beforeAll(async () => {
-    app = await createTestApp();
+    app = await createTestApp([{ token: MailService, value: mockMailService }]);
     [coordinatorToken, studentToken, teacherToken] = await Promise.all([
       loginAs(app, "coordinator").then((r) => r.accessToken),
       loginAs(app, "student").then((r) => r.accessToken),

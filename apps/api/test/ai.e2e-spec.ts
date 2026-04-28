@@ -3,6 +3,13 @@ import { createTestApp, closeTestApp, loginAs } from "./helpers/create-app";
 import { MockAiProvider, STUDENT_PLAN_FIXTURE, TEACHER_PLAN_FIXTURE } from "./helpers/mock-ai-provider";
 import { AiProviderService } from "../src/modules/ai/ai-provider.service";
 import { DatabaseService } from "../src/common/database/database.service";
+import { MailService } from "../src/common/mail/mail.service";
+
+const mockMailService = {
+  sendPasswordReset: jest.fn().mockResolvedValue(undefined),
+  sendEvaluationOpen: jest.fn().mockResolvedValue(undefined),
+  sendPlanReady: jest.fn().mockResolvedValue(undefined),
+};
 
 describe("AI Plans (e2e)", () => {
   let app: NestFastifyApplication;
@@ -17,7 +24,10 @@ describe("AI Plans (e2e)", () => {
 
   beforeAll(async () => {
     mockAi = new MockAiProvider();
-    app = await createTestApp([{ token: AiProviderService, value: mockAi }]);
+    app = await createTestApp([
+      { token: AiProviderService, value: mockAi },
+      { token: MailService, value: mockMailService },
+    ]);
     db = app.get(DatabaseService);
 
     [studentToken, teacherToken, coordinatorToken, adminToken] = await Promise.all([
