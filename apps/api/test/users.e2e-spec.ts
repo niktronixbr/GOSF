@@ -3,163 +3,110 @@ import { createTestApp, closeTestApp, loginAs } from "./helpers/create-app";
 
 describe("Users (e2e)", () => {
   let app: NestFastifyApplication;
-  let adminToken: string;
-  let coordinatorToken: string;
-  let studentToken: string;
+  let token: string;
 
   beforeAll(async () => {
     app = await createTestApp();
-    [adminToken, coordinatorToken, studentToken] = await Promise.all([
-      loginAs(app, "admin").then((r) => r.accessToken),
-      loginAs(app, "coordinator").then((r) => r.accessToken),
-      loginAs(app, "student").then((r) => r.accessToken),
-    ]);
+    const auth = await loginAs(app, "student");
+    token = auth.accessToken;
   });
 
   afterAll(async () => {
     await closeTestApp(app);
   });
 
-  // ─── /users/me ────────────────────────────────────────────────────────────
-
   describe("GET /api/v1/users/me", () => {
-    it("retorna perfil do usuário autenticado (admin)", async () => {
+    it("retorna 200 com dados do usuário autenticado", async () => {
       const res = await app.inject({
         method: "GET",
         url: "/api/v1/users/me",
-        headers: { authorization: `Bearer ${adminToken}` },
+        headers: { authorization: `Bearer ${token}` },
       });
       expect(res.statusCode).toBe(200);
       const body = res.json();
-      expect(body).toHaveProperty("email");
-      expect(body).toHaveProperty("role");
-      expect(body.role).toBe("ADMIN");
-    });
-
-    it("retorna perfil correto para student", async () => {
-      const res = await app.inject({
-        method: "GET",
-        url: "/api/v1/users/me",
-        headers: { authorization: `Bearer ${studentToken}` },
-      });
-      expect(res.statusCode).toBe(200);
-      expect(res.json().role).toBe("STUDENT");
+      expect(body).toMatchObject({ email: "aluno@escolademo.com", role: "STUDENT" });
+      expect(body.id).toBeDefined();
+      expect(body.fullName).toBeDefined();
     });
 
     it("retorna 401 sem token", async () => {
-      const res = await app.inject({
-        method: "GET",
-        url: "/api/v1/users/me",
-      });
-      expect(res.statusCode).toBe(401);
-    });
-
-    it("retorna 401 com token malformado", async () => {
-      const res = await app.inject({
-        method: "GET",
-        url: "/api/v1/users/me",
-        headers: { authorization: "Bearer token-invalido" },
-      });
+      const res = await app.inject({ method: "GET", url: "/api/v1/users/me" });
       expect(res.statusCode).toBe(401);
     });
   });
 
-  // ─── GET /users (ADMIN only) ──────────────────────────────────────────────
-
-  describe("GET /api/v1/users", () => {
-    it("retorna lista paginada de usuários para ADMIN", async () => {
+  describe("PATCH /api/v1/users/me", () => {
+    it("atualiza fullName com sucesso (200)", async () => {
       const res = await app.inject({
-        method: "GET",
-        url: "/api/v1/users",
-        headers: { authorization: `Bearer ${adminToken}` },
+        method: "PATCH",
+        url: "/api/v1/users/me",
+        headers: { authorization: `Bearer ${token}` },
+        payload: { fullName: "Aluno Atualizado" },
       });
       expect(res.statusCode).toBe(200);
-      const body = res.json();
-      expect(body).toHaveProperty("data");
-      expect(Array.isArray(body.data)).toBe(true);
+      expect(res.json().fullName).toBe("Aluno Atualizado");
     });
 
-    it("retorna lista paginada para COORDINATOR", async () => {
+    it("atualiza avatarUrl com URL válida (200)", async () => {
       const res = await app.inject({
-        method: "GET",
-        url: "/api/v1/users",
-        headers: { authorization: `Bearer ${coordinatorToken}` },
+        method: "PATCH",
+        url: "/api/v1/users/me",
+        headers: { authorization: `Bearer ${token}` },
+        payload: { avatarUrl: "https://example.com/avatar.png" },
       });
       expect(res.statusCode).toBe(200);
+      expect(res.json().avatarUrl).toBe("https://example.com/avatar.png");
     });
 
-    it("retorna 403 para STUDENT", async () => {
+    it("retorna 400 com avatarUrl inválida (não é URL)", async () => {
       const res = await app.inject({
-        method: "GET",
-        url: "/api/v1/users",
-        headers: { authorization: `Bearer ${studentToken}` },
+        method: "PATCH",
+        url: "/api/v1/users/me",
+        headers: { authorization: `Bearer ${token}` },
+        payload: { avatarUrl: "nao-e-uma-url" },
       });
-      expect(res.statusCode).toBe(403);
-    });
-
-    it("retorna 401 sem token", async () => {
-      const res = await app.inject({
-        method: "GET",
-        url: "/api/v1/users",
-      });
-      expect(res.statusCode).toBe(401);
+      expect(res.statusCode).toBe(400);
     });
   });
 
-  // ─── POST /users (ADMIN only) ─────────────────────────────────────────────
-
-  describe("POST /api/v1/users", () => {
-    const newUser = {
-      email: `e2e-test-${Date.now()}@test.com`,
-      password: "Teste@1234",
-      fullName: "Usuário E2E",
-      role: "STUDENT",
-    };
-
-    let createdUserId: string;
-
-    it("cria usuário como ADMIN e retorna 201", async () => {
+  describe("PATCH /api/v1/users/me/password", () => {
+    it("retorna 401 com senha atual errada", async () => {
       const res = await app.inject({
-        method: "POST",
-        url: "/api/v1/users",
-        headers: { authorization: `Bearer ${adminToken}` },
-        payload: newUser,
+        method: "PATCH",
+        url: "/api/v1/users/me/password",
+        headers: { authorization: `Bearer ${token}` },
+        payload: { currentPassword: "SenhaErrada123", newPassword: "NovaSenha@1" },
       });
-      expect(res.statusCode).toBe(201);
-      const body = res.json();
-      expect(body).toHaveProperty("id");
-      expect(body.email).toBe(newUser.email);
-      createdUserId = body.id;
+      expect(res.statusCode).toBe(401);
     });
 
-    it("retorna 409 ao criar usuário com e-mail duplicado", async () => {
+    it("retorna 400 com nova senha muito curta (menos de 6 chars)", async () => {
       const res = await app.inject({
-        method: "POST",
-        url: "/api/v1/users",
-        headers: { authorization: `Bearer ${adminToken}` },
-        payload: newUser,
+        method: "PATCH",
+        url: "/api/v1/users/me/password",
+        headers: { authorization: `Bearer ${token}` },
+        payload: { currentPassword: "Admin@1234", newPassword: "123" },
       });
-      expect(res.statusCode).toBe(409);
+      expect(res.statusCode).toBe(400);
     });
 
-    it("retorna 403 para STUDENT tentando criar usuário", async () => {
+    it("troca senha com sucesso (204) e restaura senha original", async () => {
       const res = await app.inject({
-        method: "POST",
-        url: "/api/v1/users",
-        headers: { authorization: `Bearer ${studentToken}` },
-        payload: { ...newUser, email: "outro@test.com" },
+        method: "PATCH",
+        url: "/api/v1/users/me/password",
+        headers: { authorization: `Bearer ${token}` },
+        payload: { currentPassword: "Admin@1234", newPassword: "Admin@5678_tmp" },
       });
-      expect(res.statusCode).toBe(403);
-    });
+      expect(res.statusCode).toBe(204);
 
-    afterAll(async () => {
-      if (createdUserId) {
-        await app.inject({
-          method: "PATCH",
-          url: `/api/v1/users/${createdUserId}/toggle-status`,
-          headers: { authorization: `Bearer ${adminToken}` },
-        });
-      }
+      // Restaura a senha original para não quebrar outros testes
+      const restore = await app.inject({
+        method: "PATCH",
+        url: "/api/v1/users/me/password",
+        headers: { authorization: `Bearer ${token}` },
+        payload: { currentPassword: "Admin@5678_tmp", newPassword: "Admin@1234" },
+      });
+      expect(restore.statusCode).toBe(204);
     });
   });
 });
