@@ -25,7 +25,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
                 key={href}
                 href={href}
                 className={`px-3 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
-                  pathname === href
+                  pathname.startsWith(href)
                     ? "border-primary text-primary"
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
