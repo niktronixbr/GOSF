@@ -10,6 +10,7 @@ import { AnalyticsService } from "../analytics/analytics.service";
 import { CreateCycleDto } from "./dto/create-cycle.dto";
 import { EvaluationCycleStatus, NotificationType } from "@gosf/database";
 import { paginate, PaginationQueryDto } from "../../common/dto/pagination.dto";
+import { MailService } from "../../common/mail/mail.service";
 
 @Injectable()
 export class CyclesService {
@@ -19,6 +20,7 @@ export class CyclesService {
     private db: DatabaseService,
     private notifications: NotificationsService,
     private analytics: AnalyticsService,
+    private mail: MailService,
   ) {}
 
   async findAll(institutionId: string, dto: Partial<PaginationQueryDto> = {}) {
@@ -72,6 +74,7 @@ export class CyclesService {
         `Ciclo aberto: ${cycle.title}`,
         "Um novo ciclo de avaliação está disponível. Acesse para registrar suas avaliações.",
       );
+      await this.emailInstitution(institutionId, cycle.title);
     }
     return updated;
   }
@@ -127,6 +130,20 @@ export class CyclesService {
         this.logger.error(`Erro ao computar scores do aluno ${studentId}: ${err}`);
       }
     }
+  }
+
+  private async emailInstitution(institutionId: string, cycleTitle: string) {
+    const users = await this.db.user.findMany({
+      where: { institutionId, status: "ACTIVE" },
+      select: { email: true, fullName: true },
+    });
+    const results = await Promise.allSettled(
+      users.map((u) => this.mail.sendEvaluationOpen(u.email, u.fullName, cycleTitle)),
+    );
+    results.forEach((r, i) => {
+      if (r.status === "rejected")
+        this.logger.error(`Email cycle failed for ${users[i].email}`, r.reason);
+    });
   }
 
   private async notifyInstitution(
