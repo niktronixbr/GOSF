@@ -70,7 +70,7 @@ export class BillingService {
   }
 
   async handleWebhookEvent(rawBody: Buffer, signature: string) {
-    let event: Stripe.Event;
+    let event: ReturnType<StripeService["constructWebhookEvent"]>;
     try {
       event = this.stripe.constructWebhookEvent(rawBody, signature);
     } catch {
@@ -79,16 +79,16 @@ export class BillingService {
 
     switch (event.type) {
       case "checkout.session.completed":
-        await this.onCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
+        await this.onCheckoutCompleted(event.data.object as any);
         break;
       case "invoice.payment_succeeded":
-        await this.onPaymentSucceeded(event.data.object as Stripe.Invoice);
+        await this.onPaymentSucceeded(event.data.object as any);
         break;
       case "invoice.payment_failed":
-        await this.onPaymentFailed(event.data.object as Stripe.Invoice);
+        await this.onPaymentFailed(event.data.object as any);
         break;
       case "customer.subscription.deleted":
-        await this.onSubscriptionDeleted(event.data.object as Stripe.Subscription);
+        await this.onSubscriptionDeleted(event.data.object as any);
         break;
     }
 
@@ -115,7 +115,7 @@ export class BillingService {
     return priceId;
   }
 
-  private async onCheckoutCompleted(session: Stripe.Checkout.Session) {
+  private async onCheckoutCompleted(session: any) {
     const { institutionId, planName, interval } = session.metadata ?? {};
     if (!institutionId) return;
 
@@ -129,7 +129,7 @@ export class BillingService {
 
     const periodEnd = subscription?.items.data[0]?.current_period_end;
 
-    await this.db.institution.update({
+    await this.db.institution.updateMany({
       where: { id: institutionId },
       data: {
         status: InstitutionStatus.ACTIVE,
@@ -142,7 +142,7 @@ export class BillingService {
     });
   }
 
-  private async onPaymentSucceeded(invoice: Stripe.Invoice) {
+  private async onPaymentSucceeded(invoice: any) {
     const subscriptionId = typeof invoice.subscription === "string"
       ? invoice.subscription
       : invoice.subscription?.id;
@@ -159,7 +159,7 @@ export class BillingService {
     });
   }
 
-  private async onPaymentFailed(invoice: Stripe.Invoice) {
+  private async onPaymentFailed(invoice: any) {
     const subscriptionId = typeof invoice.subscription === "string"
       ? invoice.subscription
       : invoice.subscription?.id;
@@ -171,7 +171,7 @@ export class BillingService {
     });
   }
 
-  private async onSubscriptionDeleted(subscription: Stripe.Subscription) {
+  private async onSubscriptionDeleted(subscription: any) {
     await this.db.institution.updateMany({
       where: { stripeSubscriptionId: subscription.id },
       data: {

@@ -23,7 +23,7 @@ export async function createTestApp(
 
   const app = moduleRef.createNestApplication<NestFastifyApplication>(
     new FastifyAdapter({ logger: false, trustProxy: true }),
-    { logger: false },
+    { logger: false, rawBody: true },
   );
 
   app.setGlobalPrefix("api/v1");
