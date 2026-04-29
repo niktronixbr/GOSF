@@ -11,7 +11,6 @@ import {
   HttpStatus,
 } from "@nestjs/common";
 import { UsersService } from "./users.service";
-import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
@@ -23,7 +22,7 @@ import { UpdateProfileDto } from "./dto/update-profile.dto";
 import { UsersQueryDto } from "./dto/users-query.dto";
 
 @Controller("users")
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(RolesGuard)
 export class UsersController {
   constructor(private usersService: UsersService) {}
 

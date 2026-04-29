@@ -11,7 +11,6 @@ import {
   HttpStatus,
 } from "@nestjs/common";
 import { PrivacyService } from "./privacy.service";
-import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
@@ -21,7 +20,7 @@ import { CreateDataRequestDto } from "./dto/create-data-request.dto";
 import { UpdateDataRequestStatusDto } from "./dto/update-data-request-status.dto";
 
 @Controller("privacy")
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(RolesGuard)
 export class PrivacyController {
   constructor(private privacyService: PrivacyService) {}
 

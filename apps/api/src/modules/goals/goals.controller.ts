@@ -1,7 +1,6 @@
 import {
   Controller, Get, Post, Patch, Delete, Body, Param, UseGuards,
 } from "@nestjs/common";
-import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
@@ -11,7 +10,7 @@ import { CreateGoalDto } from "./dto/create-goal.dto";
 import { UpdateGoalDto } from "./dto/update-goal.dto";
 
 @Controller("goals")
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(RolesGuard)
 @Roles(UserRole.STUDENT)
 export class GoalsController {
   constructor(private goals: GoalsService) {}

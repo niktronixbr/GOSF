@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";
-import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
+import { SkipPlanGuard } from "../../common/decorators/skip-plan-guard.decorator";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { UserRole } from "@gosf/database";
@@ -8,11 +8,11 @@ import { BillingService } from "./billing.service";
 import { CreateCheckoutDto } from "./dto/create-checkout.dto";
 
 @Controller("billing")
-@UseGuards(JwtAuthGuard)
 export class BillingController {
   constructor(private billing: BillingService) {}
 
   @Get("status")
+  @SkipPlanGuard()
   getStatus(@CurrentUser() user: any) {
     return this.billing.getStatus(user.institutionId);
   }
@@ -25,6 +25,7 @@ export class BillingController {
   }
 
   @Post("portal")
+  @SkipPlanGuard()
   @UseGuards(RolesGuard)
   @Roles(UserRole.COORDINATOR, UserRole.ADMIN)
   createPortal(@CurrentUser() user: any) {

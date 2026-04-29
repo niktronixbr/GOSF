@@ -10,7 +10,6 @@ import {
   HttpCode,
   HttpStatus,
 } from "@nestjs/common";
-import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
@@ -25,7 +24,7 @@ import { SubmitEvaluationDto } from "./dto/submit-evaluation.dto";
 import { PaginationQueryDto } from "../../common/dto/pagination.dto";
 
 @Controller("evaluations")
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(RolesGuard)
 export class EvaluationsController {
   constructor(
     private cycles: CyclesService,

@@ -8,7 +8,6 @@ import {
   Post,
   UseGuards,
 } from "@nestjs/common";
-import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
@@ -20,7 +19,7 @@ import { EnrollStudentDto } from "./dto/enroll-student.dto";
 import { AssignTeacherDto } from "./dto/assign-teacher.dto";
 
 @Controller("classes")
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(RolesGuard)
 export class ClassesController {
   constructor(private classes: ClassesService) {}
 
@@ -102,7 +101,7 @@ export class ClassesController {
 }
 
 @Controller("subjects")
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(RolesGuard)
 export class SubjectsController {
   constructor(private classes: ClassesService) {}
 
