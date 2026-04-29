@@ -14,6 +14,10 @@ packages/database/dist
 .env.local
 .env.production
 .env.*.local
+**/.env
+**/.env.local
+**/.env.production
+**/.env.*.local
 GOSF-API-KEY.txt
 
 # Arquivos de desenvolvimento
