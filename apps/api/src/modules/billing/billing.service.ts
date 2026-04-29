@@ -119,21 +119,25 @@ export class BillingService {
     const { institutionId, planName, interval } = session.metadata ?? {};
     if (!institutionId) return;
 
-    const subscription = session.subscription
-      ? await this.stripe.client.subscriptions.retrieve(session.subscription as string)
+    const subscriptionId = typeof session.subscription === "string"
+      ? session.subscription
+      : session.subscription?.id ?? null;
+
+    const subscription = subscriptionId
+      ? await this.stripe.client.subscriptions.retrieve(subscriptionId)
       : null;
+
+    const periodEnd = subscription?.items.data[0]?.current_period_end;
 
     await this.db.institution.update({
       where: { id: institutionId },
       data: {
         status: InstitutionStatus.ACTIVE,
-        stripeSubscriptionId: session.subscription as string | null,
+        stripeSubscriptionId: subscriptionId,
         stripePriceId: subscription?.items.data[0]?.price.id ?? null,
         planName: planName ?? null,
         billingInterval: interval ?? null,
-        currentPeriodEnd: subscription?.current_period_end
-          ? new Date(subscription.current_period_end * 1000)
-          : null,
+        currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
       },
     });
   }
@@ -145,10 +149,11 @@ export class BillingService {
     if (!subscriptionId) return;
 
     const subscription = await this.stripe.client.subscriptions.retrieve(subscriptionId);
+    const periodEnd = subscription.items.data[0]?.current_period_end;
     await this.db.institution.updateMany({
       where: { stripeSubscriptionId: subscriptionId },
       data: {
-        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
         status: InstitutionStatus.ACTIVE,
       },
     });
