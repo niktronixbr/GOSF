@@ -32,6 +32,7 @@ function Nav() {
           <a href="#features" className="hover:text-white transition-colors">Funcionalidades</a>
           <a href="#how" className="hover:text-white transition-colors">Como funciona</a>
           <a href="#audience" className="hover:text-white transition-colors">Para quem</a>
+          <Link href="/pricing" className="hover:text-white transition-colors">Preços</Link>
         </nav>
 
         <div className="flex items-center gap-3">
