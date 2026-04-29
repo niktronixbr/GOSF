@@ -4,11 +4,12 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { z } from "zod";
 import { toast } from "sonner";
 import { api, ApiError } from "@/lib/api/client";
 import { institutionsApi } from "@/lib/api/institutions";
+import { billingApi } from "@/lib/api/billing";
 import { useAuthStore } from "@/store/auth.store";
 
 const schema = z
@@ -43,6 +44,9 @@ function toSlug(name: string) {
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const planParam = searchParams.get("plan");
+  const intervalParam = searchParams.get("interval");
   const login = useAuthStore((s) => s.login);
 
   const form = useForm<FormValues>({
@@ -83,6 +87,15 @@ export default function RegisterPage() {
         true
       );
       const redirectTo = login(res.accessToken, res.refreshToken);
+      if (planParam && intervalParam) {
+        try {
+          const { url } = await billingApi.createCheckoutSession(planParam, intervalParam);
+          window.location.href = url;
+          return;
+        } catch {
+          // Segue para coordinator normalmente se checkout falhar
+        }
+      }
       router.push(redirectTo);
     } catch (err) {
       const message =
@@ -111,6 +124,14 @@ export default function RegisterPage() {
           <p className="mb-6 text-sm text-muted-foreground">
             Crie a conta da sua instituição e comece a usar o GOSF.
           </p>
+
+          {planParam && (
+            <div className="mb-4 rounded-lg bg-indigo-50 border border-indigo-200 px-4 py-3 text-sm text-indigo-800">
+              Você está assinando o plano{" "}
+              <span className="font-semibold capitalize">{planParam}</span>
+              {" "}— após o cadastro, você será redirecionado para o pagamento.
+            </div>
+          )}
 
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
