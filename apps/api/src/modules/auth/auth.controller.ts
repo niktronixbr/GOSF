@@ -14,7 +14,9 @@ import { RefreshDto } from "./dto/refresh.dto";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
 import { ResetPasswordDto } from "./dto/reset-password.dto";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import { Public } from "../../common/decorators/public.decorator";
 
+@Public()
 @Controller("auth")
 export class AuthController {
   constructor(private authService: AuthService) {}

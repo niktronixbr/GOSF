@@ -2,7 +2,9 @@ import { BadRequestException, Controller, Headers, Post, Req } from "@nestjs/com
 import { RawBodyRequest } from "@nestjs/common";
 import { SkipThrottle } from "@nestjs/throttler";
 import { BillingService } from "./billing.service";
+import { Public } from "../../common/decorators/public.decorator";
 
+@Public()
 @Controller("webhooks")
 @SkipThrottle({ default: true, auth: true })
 export class WebhooksController {

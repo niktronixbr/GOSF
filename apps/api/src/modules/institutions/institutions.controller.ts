@@ -9,10 +9,10 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
-import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import { Public } from "../../common/decorators/public.decorator";
 import { UserRole } from "@gosf/database";
 import { InstitutionsService } from "./institutions.service";
 import { UpdateInstitutionDto } from "./dto/update-institution.dto";
@@ -22,6 +22,7 @@ import { RegisterInstitutionDto } from "./dto/register-institution.dto";
 export class InstitutionsController {
   constructor(private institutions: InstitutionsService) {}
 
+  @Public()
   @Post("register")
   @Throttle({ default: { ttl: 60000, limit: 3 } })
   @HttpCode(HttpStatus.CREATED)
@@ -30,14 +31,14 @@ export class InstitutionsController {
   }
 
   @Get("me")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(UserRole.COORDINATOR, UserRole.ADMIN)
   getMyInstitution(@CurrentUser() user: any) {
     return this.institutions.findById(user.institutionId);
   }
 
   @Patch("me")
-  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(UserRole.COORDINATOR, UserRole.ADMIN)
   updateMyInstitution(@CurrentUser() user: any, @Body() dto: UpdateInstitutionDto) {
     return this.institutions.update(user.institutionId, dto);
