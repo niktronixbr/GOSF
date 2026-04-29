@@ -35,7 +35,7 @@ export class InstitutionsService {
     if (slugExists) throw new ConflictException("Slug já está em uso por outra instituição.");
 
     const institution = await this.db.institution.create({
-      data: { name: dto.name, slug: dto.slug, status: InstitutionStatus.TRIAL },
+      data: { name: dto.name, slug: dto.slug, status: InstitutionStatus.TRIAL, trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000) },
       select: { id: true, name: true, slug: true, status: true },
     });
 
