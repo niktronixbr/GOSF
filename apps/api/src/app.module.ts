@@ -4,6 +4,8 @@ import { ConfigModule } from "@nestjs/config";
 import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
 import { LoggerModule } from "nestjs-pino";
 import { AuditInterceptor } from "./common/interceptors/audit.interceptor";
+import { JwtAuthGuard } from "./common/guards/jwt-auth.guard";
+import { PlanGuard } from "./common/guards/plan.guard";
 import { AuthModule } from "./modules/auth/auth.module";
 import { UsersModule } from "./modules/users/users.module";
 import { InstitutionsModule } from "./modules/institutions/institutions.module";
@@ -61,6 +63,8 @@ import { DatabaseModule } from "./common/database/database.module";
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: PlanGuard },
     { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
   ],
 })
