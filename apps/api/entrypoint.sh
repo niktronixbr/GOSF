@@ -4,6 +4,7 @@ set -e
 PRISMA_BIN="/app/packages/database/node_modules/.bin/prisma"
 SCHEMA="/app/packages/database/prisma/schema.prisma"
 
+echo ">>> [GOSF API] DATABASE_URL host: $(echo "$DATABASE_URL" | sed 's|.*@||' | sed 's|/.*||')"
 echo ">>> [GOSF API] Aplicando migrations Prisma..."
 "$PRISMA_BIN" migrate deploy --schema "$SCHEMA"
 
