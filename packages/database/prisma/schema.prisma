@@ -102,6 +102,13 @@ model Institution {
   logoUrl   String?
   status    InstitutionStatus @default(TRIAL)
   settings  Json              @default("{}")
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
+  stripePriceId        String?
+  planName             String?
+  billingInterval      String?
+  trialEndsAt          DateTime?
+  currentPeriodEnd     DateTime?
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
 
