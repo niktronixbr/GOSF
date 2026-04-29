@@ -25,6 +25,9 @@ WORKDIR /app
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
+ARG GIT_SHA
+ENV GIT_SHA=$GIT_SHA
+
 # Copia node_modules instalados no Linux
 COPY --from=deps /app/node_modules                      ./node_modules
 COPY --from=deps /app/apps/web/node_modules             ./apps/web/node_modules
