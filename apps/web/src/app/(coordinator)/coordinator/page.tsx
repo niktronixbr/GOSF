@@ -15,6 +15,7 @@ import {
 import { evaluationsApi } from "@/lib/api/evaluations";
 import { coordinatorApi } from "@/lib/api/coordinator";
 import { AlertTriangle, Users, GraduationCap, BarChart2, BookOpen } from "lucide-react";
+import { OnboardingCard } from "@/components/onboarding/OnboardingCard";
 
 function scoreColor(score: number): string {
   if (score < 50) return "#ef4444";
@@ -157,6 +158,7 @@ export default function CoordinatorHomePage() {
 
   return (
     <div className="space-y-6">
+      <OnboardingCard />
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground">Visão Geral</h1>
