@@ -2,6 +2,8 @@ import { getValidAccessToken } from "@/lib/auth/session";
 
 const API_URL = "/api/v1";
 
+let handling402 = false;
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -9,6 +11,25 @@ export class ApiError extends Error {
   ) {
     super(message);
     this.name = "ApiError";
+  }
+}
+
+async function handle402() {
+  if (handling402) return;
+  handling402 = true;
+
+  try {
+    const { useAuthStore } = await import("@/store/auth.store");
+    const role = useAuthStore.getState().user?.role;
+
+    if (role === "COORDINATOR" || role === "ADMIN") {
+      window.location.href = "/coordinator/settings?tab=assinatura";
+    } else {
+      alert("A assinatura da sua escola está suspensa. Contate o coordenador.");
+      handling402 = false;
+    }
+  } catch {
+    window.location.href = "/coordinator/settings?tab=assinatura";
   }
 }
 
@@ -31,6 +52,10 @@ async function request<T>(
   const res = await fetch(`${API_URL}${path}`, { ...init, headers });
 
   if (!res.ok) {
+    if (res.status === 402) {
+      handle402();
+      throw new ApiError(402, "Assinatura suspensa ou cancelada.");
+    }
     const error = await res.json().catch(() => ({ message: "Request failed" }));
     throw new ApiError(res.status, error.message ?? "Request failed");
   }
