@@ -25,6 +25,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         role: true,
         status: true,
         institutionId: true,
+        institution: { select: { status: true } },
       },
     });
 
@@ -32,6 +33,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException();
     }
 
-    return user;
+    return {
+      id: user.id,
+      email: user.email,
+      fullName: user.fullName,
+      role: user.role,
+      institutionId: user.institutionId,
+      institutionStatus: user.institution.status,
+    };
   }
 }
