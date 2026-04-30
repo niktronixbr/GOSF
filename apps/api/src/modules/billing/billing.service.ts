@@ -1,17 +1,21 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { InstitutionStatus } from "@gosf/database";
+import { InstitutionStatus, UserRole } from "@gosf/database";
 import { DatabaseService } from "../../common/database/database.service";
 import { StripeService } from "./stripe.service";
 import { CreateCheckoutDto } from "./dto/create-checkout.dto";
+import { MailService } from "../../common/mail/mail.service";
 import Stripe from "stripe";
 
 @Injectable()
 export class BillingService {
+  private readonly logger = new Logger(BillingService.name);
+
   constructor(
     private db: DatabaseService,
     private stripe: StripeService,
     private config: ConfigService,
+    private mail: MailService,
   ) {}
 
   async getStatus(institutionId: string) {
@@ -140,6 +144,30 @@ export class BillingService {
         currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
       },
     });
+
+    const [coordinator, institution] = await Promise.all([
+      this.db.user.findFirst({
+        where: { institutionId, role: UserRole.COORDINATOR },
+        select: { email: true, fullName: true },
+      }),
+      this.db.institution.findUnique({
+        where: { id: institutionId },
+        select: { name: true },
+      }),
+    ]);
+
+    if (coordinator && institution) {
+      try {
+        await this.mail.sendCheckoutWelcome(
+          coordinator.email,
+          coordinator.fullName,
+          institution.name,
+          planName ?? "",
+        );
+      } catch (err) {
+        this.logger.warn(`Checkout welcome email falhou: ${err}`);
+      }
+    }
   }
 
   private async onPaymentSucceeded(invoice: any) {

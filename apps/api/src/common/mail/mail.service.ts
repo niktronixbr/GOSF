@@ -99,6 +99,49 @@ export class MailService {
     }
   }
 
+  async sendCheckoutWelcome(
+    to: string,
+    fullName: string,
+    institutionName: string,
+    planName: string,
+  ) {
+    const planLabel: Record<string, string> = {
+      STARTER: "Starter",
+      ESCOLA: "Escola",
+      ENTERPRISE: "Enterprise",
+    };
+    const label = planLabel[planName.toUpperCase()] ?? planName;
+
+    try {
+      const info = await this.transporter.sendMail({
+        from: this.from,
+        to,
+        subject: `Bem-vindo ao GOSF — plano ${label} ativado!`,
+        html: `
+          <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 16px">
+            <h2 style="color:#111">Olá, ${escapeHtml(fullName)} 🎉</h2>
+            <p style="color:#444;line-height:1.6">
+              O plano <strong>${escapeHtml(label)}</strong> da <strong>${escapeHtml(institutionName)}</strong>
+              foi ativado com sucesso. Seu time já pode usar todas as funcionalidades do GOSF.
+            </p>
+            <a href="${this.appUrl}/coordinator"
+               style="display:inline-block;margin:24px 0;padding:12px 28px;background:#4f46e5;color:#fff;text-decoration:none;border-radius:8px;font-weight:600">
+              Acessar o GOSF
+            </a>
+            <hr style="border:none;border-top:1px solid #eee;margin:24px 0"/>
+            <p style="color:#bbb;font-size:12px">GOSF — Plataforma de Inteligência Educacional</p>
+          </div>
+        `,
+      });
+      this.logger.log(`Checkout welcome email sent to ${to} [messageId=${info.messageId}]`);
+      const previewUrl = nodemailer.getTestMessageUrl(info);
+      if (previewUrl) this.logger.log(`Preview: ${previewUrl}`);
+    } catch (err) {
+      this.logger.error(`Failed to send checkout welcome email to ${to}`, err);
+      throw err;
+    }
+  }
+
   async sendPlanReady(to: string, fullName: string, type: "student" | "teacher") {
     const planPath = type === "student" ? "/student/plan" : "/teacher/development";
     const planLabel = type === "student" ? "plano de estudo" : "plano de desenvolvimento";

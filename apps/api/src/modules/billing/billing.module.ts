@@ -3,8 +3,10 @@ import { BillingController } from "./billing.controller";
 import { WebhooksController } from "./webhooks.controller";
 import { BillingService } from "./billing.service";
 import { StripeService } from "./stripe.service";
+import { MailModule } from "../../common/mail/mail.module";
 
 @Module({
+  imports: [MailModule],
   controllers: [BillingController, WebhooksController],
   providers: [BillingService, StripeService],
   exports: [BillingService, StripeService],
