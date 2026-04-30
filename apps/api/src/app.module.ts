@@ -19,6 +19,7 @@ import { AuditModule } from "./modules/audit/audit.module";
 import { GoalsModule } from "./modules/goals/goals.module";
 import { HealthModule } from "./modules/health/health.module";
 import { BillingModule } from "./modules/billing/billing.module";
+import { AdminModule } from "./modules/admin/admin.module";
 import { DatabaseModule } from "./common/database/database.module";
 
 @Module({
@@ -60,6 +61,7 @@ import { DatabaseModule } from "./common/database/database.module";
     GoalsModule,
     HealthModule,
     BillingModule,
+    AdminModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
