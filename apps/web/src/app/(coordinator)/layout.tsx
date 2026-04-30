@@ -1,5 +1,6 @@
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { TopBar } from "@/components/dashboard/top-bar";
+import { OnboardingGuard } from "@/components/coordinator/OnboardingGuard";
 
 export default function CoordinatorLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -7,7 +8,9 @@ export default function CoordinatorLayout({ children }: { children: React.ReactN
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <TopBar />
-        <main className="flex-1 overflow-y-auto p-6 bg-muted/20">{children}</main>
+        <main className="flex-1 overflow-y-auto p-6 bg-muted/20">
+          <OnboardingGuard>{children}</OnboardingGuard>
+        </main>
       </div>
     </div>
   );
