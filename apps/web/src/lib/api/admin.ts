@@ -29,6 +29,20 @@ export interface ListUsersParams {
   role?: UserRole | "ALL";
 }
 
+export interface AdminMetrics {
+  users: {
+    total: number;
+    active: number;
+    byRole: { STUDENT: number; TEACHER: number; COORDINATOR: number; ADMIN: number };
+  };
+  cycles: {
+    total: number;
+    byStatus: { DRAFT: number; OPEN: number; CLOSED: number; ARCHIVED: number };
+  };
+  evaluations: { totalSubmissions: number };
+  aiPlans: { studentPlans: number; teacherPlans: number };
+}
+
 export const adminApi = {
   listUsers: (params: ListUsersParams = {}) => {
     const qs = new URLSearchParams();
@@ -44,4 +58,5 @@ export const adminApi = {
   updateUser: (id: string, data: { fullName?: string; role?: UserRole; status?: UserStatus }) =>
     api.patch<AdminUser>(`/users/${id}`, data),
   toggleStatus: (id: string) => api.patch<AdminUser>(`/users/${id}/toggle-status`, {}),
+  fetchMetrics: () => api.get<AdminMetrics>("/admin/metrics"),
 };

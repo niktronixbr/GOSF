@@ -50,6 +50,7 @@ const coordinatorNav: NavItem[] = [
 
 const adminNav: NavItem[] = [
   { href: "/admin", label: "Usuários", icon: ShieldCheck },
+  { href: "/admin/metrics", label: "Métricas", icon: BarChart2 },
   { href: "/admin/privacy", label: "Solicitações LGPD", icon: ShieldCheck },
   { href: "/admin/audit", label: "Auditoria", icon: FileClock },
   ...coordinatorNav,
