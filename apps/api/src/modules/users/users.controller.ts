@@ -49,7 +49,7 @@ export class UsersController {
   }
 
   @Post()
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.COORDINATOR)
   @HttpCode(HttpStatus.CREATED)
   create(@CurrentUser() user: any, @Body() dto: CreateUserDto) {
     return this.usersService.create(user.institutionId, dto);
