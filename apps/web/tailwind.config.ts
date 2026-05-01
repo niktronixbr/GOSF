@@ -42,9 +42,10 @@ const config: Config = {
           foreground: "hsl(var(--destructive-foreground))",
         },
         border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        /* Design system GOSF */
+        input:  "hsl(var(--input))",
+        ring:   "hsl(var(--ring))",
+
+        /* Novos tokens diretos */
         sidebar: "#0f172a",
         teal: {
           DEFAULT: "oklch(0.55 0.08 195)",
@@ -57,14 +58,17 @@ const config: Config = {
           fg:      "oklch(0.42 0.10 60)",
         },
       },
+      fontFamily: {
+        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+        mono: ["ui-monospace", "SFMono-Regular", "monospace"],
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
-      fontFamily: {
-        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
-        mono: ["var(--font-geist-mono)"],
+      boxShadow: {
+        teal: "0 4px 14px oklch(0.55 0.08 195 / 0.2)",
       },
     },
   },
