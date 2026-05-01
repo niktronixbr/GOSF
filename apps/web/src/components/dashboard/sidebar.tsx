@@ -74,49 +74,69 @@ export function Sidebar() {
     router.push("/login");
   }
 
+  const initials = user?.fullName
+    ? user.fullName.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase()
+    : "?";
+
   return (
-    <aside className="flex h-full w-60 flex-col border-r border-border bg-card shrink-0">
-      <div className="flex h-16 items-center px-6 border-b border-border">
-        <span className="text-xl font-bold tracking-tight">GOSF</span>
+    <aside className="flex h-full w-60 flex-col bg-sidebar shrink-0">
+      {/* Logo */}
+      <div className="flex h-16 items-center gap-3 px-5">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal">
+          <span className="text-sm font-bold text-white">G</span>
+        </div>
+        <span className="text-base font-bold tracking-tight text-white">GOSF</span>
       </div>
 
-      <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-        {items.map(({ href, label, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            className={clsx(
-              "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-              pathname === href
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            )}
-          >
-            <Icon size={18} />
-            {label}
-          </Link>
-        ))}
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto px-3 py-2 space-y-0.5">
+        {items.map(({ href, label, icon: Icon }) => {
+          const active = pathname === href;
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={clsx(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                active
+                  ? "bg-white/10 font-semibold text-white"
+                  : "font-medium text-white/55 hover:bg-white/[0.06] hover:text-white/80"
+              )}
+            >
+              <Icon size={17} />
+              {label}
+            </Link>
+          );
+        })}
       </nav>
 
-      <div className="border-t border-border p-4 space-y-1">
-        {user && (
-          <div className="px-3 py-2 mb-2">
-            <p className="text-sm font-medium text-foreground truncate">{user.fullName}</p>
-            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-          </div>
-        )}
+      {/* Footer */}
+      <div className="border-t border-white/10 p-3 space-y-0.5">
         <Link
           href="/settings/privacy"
-          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-white/55 hover:bg-white/[0.06] hover:text-white/80 transition-colors"
         >
-          <Settings size={18} />
+          <Settings size={17} />
           Privacidade
         </Link>
+
+        {user && (
+          <div className="flex items-center gap-3 px-3 py-2 mt-1">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-soft text-xs font-semibold text-amber-fg">
+              {initials}
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-white truncate">{user.fullName}</p>
+              <p className="text-[10px] text-white/40 truncate">{user.email}</p>
+            </div>
+          </div>
+        )}
+
         <button
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-white/55 hover:bg-white/[0.06] hover:text-white/80 transition-colors"
         >
-          <LogOut size={18} />
+          <LogOut size={17} />
           Sair
         </button>
       </div>

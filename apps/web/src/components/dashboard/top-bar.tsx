@@ -100,17 +100,12 @@ export function TopBar() {
   }
 
   const initials = user?.fullName
-    ? user.fullName
-        .split(" ")
-        .slice(0, 2)
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
+    ? user.fullName.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase()
     : "?";
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-end border-b border-border bg-card px-6 gap-3">
+      <header className="flex h-14 shrink-0 items-center justify-end border-b border-border bg-white px-6 gap-3">
         <NotificationsBell />
 
         <div className="relative" ref={menuRef}>
@@ -118,7 +113,7 @@ export function TopBar() {
             onClick={() => setMenuOpen((v) => !v)}
             className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-muted transition-colors"
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-soft text-xs font-semibold text-amber-fg">
               {initials}
             </span>
             <span className="hidden sm:block text-sm font-medium max-w-[140px] truncate">
@@ -128,7 +123,7 @@ export function TopBar() {
           </button>
 
           {menuOpen && (
-            <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-border bg-card shadow-md z-50 py-1">
+            <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-border bg-white shadow-md z-50 py-1">
               <button
                 onClick={openProfileModal}
                 className="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors"
@@ -158,8 +153,11 @@ export function TopBar() {
 
       {/* Modal: Editar perfil */}
       {profileModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-lg">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={(e) => e.target === e.currentTarget && setProfileModalOpen(false)}
+        >
+          <div className="w-full max-w-sm rounded-xl border border-border bg-white p-6 shadow-xl">
             <h2 className="mb-4 text-lg font-semibold">Editar perfil</h2>
 
             <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
@@ -168,7 +166,7 @@ export function TopBar() {
                 <input
                   type="text"
                   {...profileForm.register("fullName")}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
                 {profileForm.formState.errors.fullName && (
                   <p className="mt-1 text-xs text-destructive">
@@ -186,7 +184,7 @@ export function TopBar() {
                   type="text"
                   placeholder="https://..."
                   {...profileForm.register("avatarUrl")}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
                 {profileForm.formState.errors.avatarUrl && (
                   <p className="mt-1 text-xs text-destructive">
@@ -218,8 +216,11 @@ export function TopBar() {
 
       {/* Modal: Trocar senha */}
       {passwordModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-lg">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={(e) => e.target === e.currentTarget && setPasswordModalOpen(false)}
+        >
+          <div className="w-full max-w-sm rounded-xl border border-border bg-white p-6 shadow-xl">
             <h2 className="mb-4 text-lg font-semibold">Trocar senha</h2>
 
             <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
@@ -228,7 +229,7 @@ export function TopBar() {
                 <input
                   type="password"
                   {...passwordForm.register("currentPassword")}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
                 {passwordForm.formState.errors.currentPassword && (
                   <p className="mt-1 text-xs text-destructive">
@@ -242,7 +243,7 @@ export function TopBar() {
                 <input
                   type="password"
                   {...passwordForm.register("newPassword")}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
                 {passwordForm.formState.errors.newPassword && (
                   <p className="mt-1 text-xs text-destructive">
@@ -256,7 +257,7 @@ export function TopBar() {
                 <input
                   type="password"
                   {...passwordForm.register("confirmPassword")}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
                 {passwordForm.formState.errors.confirmPassword && (
                   <p className="mt-1 text-xs text-destructive">

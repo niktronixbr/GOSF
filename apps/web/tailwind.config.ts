@@ -44,6 +44,18 @@ const config: Config = {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
+        /* Design system GOSF */
+        sidebar: "#0f172a",
+        teal: {
+          DEFAULT: "oklch(0.55 0.08 195)",
+          soft:    "oklch(0.95 0.025 195)",
+          fg:      "oklch(0.42 0.09 195)",
+        },
+        amber: {
+          DEFAULT: "oklch(0.62 0.13 60)",
+          soft:    "oklch(0.95 0.04 60)",
+          fg:      "oklch(0.42 0.10 60)",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -51,7 +63,7 @@ const config: Config = {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans: ["var(--font-geist-sans)"],
+        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
         mono: ["var(--font-geist-mono)"],
       },
     },

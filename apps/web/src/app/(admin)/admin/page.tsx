@@ -380,7 +380,7 @@ export default function AdminPage() {
           { label: "Alunos (pág.)", value: counts.students, color: "text-blue-600" },
           { label: "Professores (pág.)", value: counts.teachers, color: "text-green-600" },
         ].map(({ label, value, color }) => (
-          <div key={label} className="rounded-xl border border-border bg-card p-4">
+          <div key={label} className="stat-card animate-slide-up rounded-lg border border-border bg-white p-4 shadow-sm">
             <p className="text-xs text-muted-foreground">{label}</p>
             <p className={`mt-1 text-2xl font-bold ${color}`}>{value}</p>
           </div>
