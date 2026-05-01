@@ -1,17 +1,23 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { analyticsApi, StudentDashboard } from "@/lib/api/analytics";
+import { analyticsApi } from "@/lib/api/analytics";
 import { useAuthStore } from "@/store/auth.store";
+import { Stat } from "@/components/ui/stat";
+import { Badge } from "@/components/ui/badge";
+import { BarChart2, BookOpen, Sparkles } from "lucide-react";
 
 function ScoreBar({ label, score }: { label: string; score: number }) {
   const pct = Math.min(score, 100);
-  const color = score < 50 ? "bg-destructive" : score < 70 ? "bg-yellow-500" : "bg-green-500";
+  const color = score < 50 ? "bg-destructive" : score < 70 ? "bg-yellow-500" : "bg-primary";
+  const displayLabel = label.replace(/_/g, " ");
   return (
     <div>
-      <div className="flex justify-between text-sm mb-1">
-        <span className="text-muted-foreground capitalize">{label.replace(/_/g, " ")}</span>
-        <span className="font-medium">{score.toFixed(0)}</span>
+      <div className="flex justify-between items-center mb-1 gap-2">
+        <div className="flex items-center gap-2">
+          <Badge variant="amber" className="capitalize">{displayLabel}</Badge>
+        </div>
+        <span className="text-sm font-medium tabular-nums">{score.toFixed(0)}</span>
       </div>
       <div className="h-2 rounded-full bg-muted overflow-hidden">
         <div className={`h-full rounded-full ${color} transition-all`} style={{ width: `${pct}%` }} />
@@ -48,7 +54,7 @@ export default function StudentHomePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Olá, {firstName}!</h1>
+        <h1 className="text-[22px] font-bold tracking-tight text-foreground">Olá, {firstName}!</h1>
         <p className="text-sm text-muted-foreground mt-1">
           {data?.cycle ? `Ciclo: ${data.cycle.title}` : "Nenhum ciclo ativo no momento."}
         </p>
@@ -56,28 +62,19 @@ export default function StudentHomePage() {
 
       {avgScore !== null && (
         <div className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-            <p className="text-sm text-muted-foreground">Nota de evolução</p>
-            <p className="mt-1 text-3xl font-bold text-foreground">{avgScore}</p>
-            <p className="mt-1 text-xs text-muted-foreground">média geral do ciclo</p>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-            <p className="text-sm text-muted-foreground">Dimensões avaliadas</p>
-            <p className="mt-1 text-3xl font-bold text-foreground">{data?.scores.length ?? 0}</p>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-            <p className="text-sm text-muted-foreground">Status do plano</p>
-            <p className="mt-1 text-2xl font-bold text-foreground">
-              {data?.plan?.status === "READY" ? "Pronto" : data?.plan ? "Gerando..." : "—"}
-            </p>
-          </div>
+          <Stat icon={<BarChart2 size={18} />} label="Nota de evolução" value={avgScore} />
+          <Stat icon={<BookOpen size={18} />} label="Dimensões avaliadas" value={data?.scores.length ?? 0} />
+          <Stat
+            label="Status do plano"
+            value={data?.plan?.status === "READY" ? "Pronto" : data?.plan ? "Gerando..." : "—"}
+          />
         </div>
       )}
 
       {data?.scores.length ? (
-        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-          <h2 className="font-semibold mb-4 text-foreground">Desempenho por dimensão</h2>
-          <div className="space-y-3">
+        <div className="rounded-lg border border-border bg-white p-5 shadow-sm">
+          <h2 className="font-semibold mb-4 text-foreground text-[15px]">Desempenho por dimensão</h2>
+          <div className="space-y-4">
             {data.scores.map((s) => (
               <ScoreBar key={s.dimension} label={s.dimension} score={s.score} />
             ))}
@@ -87,8 +84,8 @@ export default function StudentHomePage() {
 
       {plan && (
         <div className="grid gap-4 lg:grid-cols-2">
-          <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-            <h2 className="font-semibold mb-3 text-foreground">Pontos fortes</h2>
+          <div className="rounded-lg border border-border bg-white p-5 shadow-sm">
+            <h2 className="font-semibold mb-3 text-foreground text-[15px]">Pontos fortes</h2>
             <ul className="space-y-2 text-sm text-muted-foreground">
               {plan.strengths.map((s, i) => (
                 <li key={i} className="flex gap-2">
@@ -98,8 +95,8 @@ export default function StudentHomePage() {
               ))}
             </ul>
           </div>
-          <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-            <h2 className="font-semibold mb-3 text-foreground">Pontos de atenção</h2>
+          <div className="rounded-lg border border-border bg-white p-5 shadow-sm">
+            <h2 className="font-semibold mb-3 text-foreground text-[15px]">Pontos de atenção</h2>
             <ul className="space-y-2 text-sm text-muted-foreground">
               {plan.attention_points.map((s, i) => (
                 <li key={i} className="flex gap-2">
@@ -113,9 +110,12 @@ export default function StudentHomePage() {
       )}
 
       {plan?.seven_day_plan && (
-        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-          <h2 className="font-semibold mb-3 text-foreground">Plano desta semana</h2>
-          <ul className="space-y-2 text-sm text-muted-foreground">
+        <div className="rounded-lg border border-border bg-sidebar p-5 shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles size={16} className="text-teal" />
+            <h2 className="font-semibold text-white text-[15px]">Plano desta semana</h2>
+          </div>
+          <ul className="space-y-2 text-sm text-white/70">
             {plan.seven_day_plan.map((item, i) => (
               <li key={i} className="flex items-start gap-3">
                 <input type="checkbox" className="mt-0.5 rounded" readOnly />
@@ -124,7 +124,7 @@ export default function StudentHomePage() {
             ))}
           </ul>
           {plan.motivation_message && (
-            <p className="mt-4 text-sm italic text-muted-foreground border-t border-border pt-3">
+            <p className="mt-4 text-sm italic text-white/50 border-t border-white/10 pt-3">
               {plan.motivation_message}
             </p>
           )}
@@ -132,7 +132,7 @@ export default function StudentHomePage() {
       )}
 
       {!data?.cycle && (
-        <div className="rounded-xl border border-border bg-card p-8 text-center text-muted-foreground">
+        <div className="rounded-lg border border-border bg-white p-8 text-center text-muted-foreground">
           Nenhum ciclo de avaliação ativo. Aguarde a abertura do próximo ciclo.
         </div>
       )}

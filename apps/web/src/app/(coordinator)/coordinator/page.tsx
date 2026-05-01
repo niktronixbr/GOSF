@@ -17,6 +17,7 @@ import { coordinatorApi } from "@/lib/api/coordinator";
 import { AlertTriangle, Users, GraduationCap, BarChart2, BookOpen } from "lucide-react";
 import { OnboardingCard } from "@/components/onboarding/OnboardingCard";
 import { BillingSuccessBanner } from "@/components/billing/BillingSuccessBanner";
+import { Stat } from "@/components/ui/stat";
 
 function scoreColor(score: number): string {
   if (score < 50) return "#ef4444";
@@ -173,38 +174,20 @@ export default function CoordinatorHomePage() {
 
       {/* KPIs */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        <KpiCard
-          label="Professores avaliados"
-          value={uniqueTeacherIds.size || (cycle ? 0 : "—")}
-          icon={Users}
-        />
-        <KpiCard
-          label="Alunos avaliados"
-          value={uniqueStudentIds.size || (cycle ? 0 : "—")}
-          icon={GraduationCap}
-        />
-        <KpiCard
+        <Stat icon={<Users size={18} />} label="Professores avaliados" value={uniqueTeacherIds.size || (cycle ? 0 : "—")} />
+        <Stat icon={<GraduationCap size={18} />} label="Alunos avaliados" value={uniqueStudentIds.size || (cycle ? 0 : "—")} />
+        <Stat
+          icon={<AlertTriangle size={18} />}
           label="Professores em risco"
           value={atRiskTeacherIds.size || (cycle ? 0 : "—")}
-          icon={AlertTriangle}
-          danger={atRiskTeacherIds.size > 0}
         />
-        <KpiCard
+        <Stat
+          icon={<AlertTriangle size={18} />}
           label="Alunos em risco"
           value={atRiskStudentIds.size || (cycle ? 0 : "—")}
-          icon={AlertTriangle}
-          danger={atRiskStudentIds.size > 0}
         />
-        <KpiCard
-          label="Ciclos cadastrados"
-          value={cycles?.length ?? "—"}
-          icon={BookOpen}
-        />
-        <KpiCard
-          label="Status do ciclo"
-          value={cycle ? "Aberto" : "Nenhum"}
-          icon={BarChart2}
-        />
+        <Stat icon={<BookOpen size={18} />} label="Ciclos cadastrados" value={cycles?.length ?? "—"} />
+        <Stat icon={<BarChart2 size={18} />} label="Status do ciclo" value={cycle ? "Aberto" : "Nenhum"} />
       </div>
 
       {/* Gráfico de dimensões */}
