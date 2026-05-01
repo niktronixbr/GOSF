@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -214,7 +214,7 @@ function BillingTab() {
   );
 }
 
-export default function CoordinatorSettingsPage() {
+function SettingsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"geral" | "assinatura">(
@@ -260,5 +260,13 @@ export default function CoordinatorSettingsPage() {
 
       {activeTab === "geral" ? <InstitutionForm /> : <BillingTab />}
     </div>
+  );
+}
+
+export default function CoordinatorSettingsPage() {
+  return (
+    <Suspense>
+      <SettingsContent />
+    </Suspense>
   );
 }

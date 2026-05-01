@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
-export function BillingSuccessBanner() {
+function BillingSuccessBannerInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [visible, setVisible] = useState(false);
@@ -26,5 +26,13 @@ export function BillingSuccessBanner() {
       <span className="text-xl">🎉</span>
       Assinatura ativada com sucesso! Bem-vindo ao GOSF.
     </div>
+  );
+}
+
+export function BillingSuccessBanner() {
+  return (
+    <Suspense>
+      <BillingSuccessBannerInner />
+    </Suspense>
   );
 }
