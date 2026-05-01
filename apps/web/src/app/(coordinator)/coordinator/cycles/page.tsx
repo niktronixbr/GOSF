@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { coordinatorApi } from "@/lib/api/coordinator";
 import { EvaluationCycle } from "@/lib/api/evaluations";
-import { Plus, Play, Square, CalendarDays } from "lucide-react";
+import { Plus, Play, Square, CalendarDays, ClipboardList, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 function statusLabel(status: string) {
@@ -54,6 +54,61 @@ function CycleCard({
           </button>
         )}
       </div>
+    </div>
+  );
+}
+
+function FormsCard() {
+  const qc = useQueryClient();
+  const { data: forms, isLoading } = useQuery({
+    queryKey: ["coordinator-forms"],
+    queryFn: () => coordinatorApi.getForms(),
+  });
+
+  const seedMutation = useMutation({
+    mutationFn: () => coordinatorApi.seedDefaultForms(),
+    onSuccess: () => {
+      toast.success("Formulários padrão criados com sucesso.");
+      qc.invalidateQueries({ queryKey: ["coordinator-forms"] });
+    },
+    onError: () => toast.error("Erro ao criar formulários."),
+  });
+
+  if (isLoading) return <div className="h-16 rounded-xl bg-muted animate-pulse" />;
+
+  const hasForms = (forms ?? []).length > 0;
+
+  if (hasForms) {
+    return (
+      <div className="rounded-xl border border-green-200 bg-green-50 p-4 flex items-center gap-3">
+        <CheckCircle2 size={18} className="text-green-600 shrink-0" />
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-green-800">Formulários configurados</p>
+          <p className="text-xs text-green-600">{forms!.length} formulário(s) disponível(is) para avaliação.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start justify-between gap-4">
+      <div className="flex items-start gap-3 min-w-0">
+        <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+        <div>
+          <p className="text-sm font-semibold text-amber-800">Formulários não configurados</p>
+          <p className="text-xs text-amber-700 mt-0.5">
+            Sem formulários, alunos e professores não conseguem realizar avaliações.
+          </p>
+        </div>
+      </div>
+      <button
+        onClick={() => seedMutation.mutate()}
+        disabled={seedMutation.isPending}
+        className="flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-50 transition-colors shrink-0"
+      >
+        <ClipboardList size={13} />
+        {seedMutation.isPending ? "Criando..." : "Usar formulários padrão"}
+      </button>
     </div>
   );
 }
@@ -115,6 +170,8 @@ export default function CoordinatorCyclesPage() {
           Novo ciclo
         </button>
       </div>
+
+      <FormsCard />
 
       {showForm && (
         <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">

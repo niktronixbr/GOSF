@@ -90,7 +90,7 @@ export class EvaluationsController {
   }
 
   @Post("forms/seed-defaults")
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.COORDINATOR)
   @HttpCode(HttpStatus.NO_CONTENT)
   seedForms(@CurrentUser() user: any) {
     return this.forms.seedDefaults(user.institutionId);

@@ -163,6 +163,13 @@ export const coordinatorApi = {
   openCycle: (id: string) => api.patch<EvaluationCycle>(`/evaluations/cycles/${id}/open`, {}),
   closeCycle: (id: string) => api.patch<EvaluationCycle>(`/evaluations/cycles/${id}/close`, {}),
 
+  // Forms
+  getForms: async () => {
+    const res = await api.get<{ id: string; title: string; targetType: string }[]>("/evaluations/forms");
+    return res;
+  },
+  seedDefaultForms: () => api.post("/evaluations/forms/seed-defaults", {}),
+
   // Analytics
   getOverview: (cycleId: string) =>
     api.get<InstitutionOverview>(`/analytics/overview?cycleId=${cycleId}`),
