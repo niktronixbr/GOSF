@@ -1,4 +1,5 @@
-import { NestFactory } from "@nestjs/core";
+import "./instrument";
+import { NestFactory, HttpAdapterHost } from "@nestjs/core";
 import {
   FastifyAdapter,
   NestFastifyApplication,
@@ -6,6 +7,7 @@ import {
 import { ValidationPipe } from "@nestjs/common";
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
 import { Logger } from "nestjs-pino";
+import { SentryGlobalFilter } from "@sentry/nestjs/setup";
 import { AppModule } from "./app.module";
 
 async function bootstrap() {
@@ -27,6 +29,9 @@ async function bootstrap() {
       transformOptions: { enableImplicitConversion: true },
     })
   );
+
+  const { httpAdapter } = app.get(HttpAdapterHost);
+  app.useGlobalFilters(new SentryGlobalFilter(httpAdapter));
 
   app.enableCors({
     origin: process.env.WEB_URL ?? "http://localhost:3000",
