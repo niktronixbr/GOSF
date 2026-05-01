@@ -20,4 +20,6 @@ export default withSentryConfig(nextConfig, {
   project: process.env.SENTRY_PROJECT ?? "gosf-web",
   silent: true,
   authToken: process.env.SENTRY_AUTH_TOKEN,
+  sourcemaps: { disable: true },
+  telemetry: false,
 });
