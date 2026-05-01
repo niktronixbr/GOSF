@@ -22,7 +22,7 @@ export class MailService {
     this.appUrl = config.get("APP_URL", "http://localhost:3002");
     this.transporter = nodemailer.createTransport({
       host: config.get("SMTP_HOST", "smtp.ethereal.email"),
-      port: config.get<number>("SMTP_PORT", 587),
+      port: parseInt(config.get("SMTP_PORT", "587"), 10),
       secure: config.get("SMTP_SECURE", "false") === "true",
       auth: {
         user: config.get("SMTP_USER", ""),
