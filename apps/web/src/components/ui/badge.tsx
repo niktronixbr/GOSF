@@ -28,7 +28,7 @@ export function Badge({ variant = "neutral", dot = false, children, className }:
       )}
     >
       {dot && (
-        <span className="h-[5px] w-[5px] rounded-full bg-current" aria-hidden />
+        <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
       )}
       {children}
     </span>
