@@ -199,6 +199,7 @@ model Student {
   evaluationsReceived StudentEvaluation[] @relation("evaluated")
   plans               StudentPlan[]
   goals               StudentGoal[]
+  grades              Grade[]
 
   @@map("students")
 }
@@ -216,6 +217,7 @@ model Teacher {
   evaluationsGiven    StudentEvaluation[]      @relation("evaluator")
   evaluationsReceived TeacherEvaluation[]      @relation("evaluated")
   developmentPlans    TeacherDevelopmentPlan[]
+  grades              Grade[]
 
   @@map("teachers")
 }
@@ -248,6 +250,7 @@ model Subject {
 
   institution      Institution       @relation(fields: [institutionId], references: [id])
   classAssignments ClassAssignment[]
+  grades           Grade[]
 
   @@index([institutionId])
   @@map("subjects")
@@ -302,6 +305,7 @@ model EvaluationCycle {
   scoreAggregates   ScoreAggregate[]
   studentPlans      StudentPlan[]
   teacherDevPlans   TeacherDevelopmentPlan[]
+  grades            Grade[]
 
   @@index([institutionId])
   @@map("evaluation_cycles")
@@ -538,4 +542,29 @@ model AuditLog {
   @@index([institutionId, createdAt])
   @@index([actorUserId])
   @@map("audit_logs")
+}
+
+// ─── Grades ───────────────────────────────────────────────────────────────────
+
+model Grade {
+  id        String   @id @default(cuid())
+  studentId String
+  subjectId String
+  cycleId   String
+  teacherId String
+  title     String
+  weight    Float
+  value     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subject Subject         @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  cycle   EvaluationCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  teacher Teacher         @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, subjectId, cycleId, title])
+  @@index([studentId, cycleId])
+  @@index([teacherId, cycleId])
+  @@map("grades")
 }
