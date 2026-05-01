@@ -1,44 +1,35 @@
-import { clsx } from "clsx";
-import type { ReactNode } from "react";
+import { cn } from "@/lib/cn";
 
 type BadgeVariant = "teal" | "amber" | "success" | "warning" | "danger" | "neutral";
-
-const variantClasses: Record<BadgeVariant, string> = {
-  teal:    "bg-teal-soft text-teal-fg",
-  amber:   "bg-amber-soft text-amber-fg",
-  success: "bg-green-50 text-green-700",
-  warning: "bg-yellow-50 text-yellow-700",
-  danger:  "bg-red-50 text-red-700",
-  neutral: "bg-muted text-muted-foreground",
-};
 
 interface BadgeProps {
   variant?: BadgeVariant;
   dot?: boolean;
-  children: ReactNode;
+  children: React.ReactNode;
   className?: string;
 }
 
-const dotColors: Record<BadgeVariant, string> = {
-  teal:    "bg-teal",
-  amber:   "bg-amber",
-  success: "bg-green-500",
-  warning: "bg-yellow-500",
-  danger:  "bg-red-500",
-  neutral: "bg-muted-foreground",
+const variantClasses: Record<BadgeVariant, string> = {
+  teal:    "bg-teal-soft text-teal-fg",
+  amber:   "bg-amber-soft text-amber-fg",
+  success: "bg-[oklch(0.95_0.04_150)] text-[oklch(0.38_0.12_150)]",
+  warning: "bg-[oklch(0.97_0.04_75)] text-[oklch(0.50_0.14_75)]",
+  danger:  "bg-[oklch(0.97_0.03_25)] text-[oklch(0.42_0.18_25)]",
+  neutral: "bg-stone-100 text-stone-500",
 };
 
 export function Badge({ variant = "neutral", dot = false, children, className }: BadgeProps) {
   return (
     <span
-      className={clsx(
-        "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5",
-        "text-[10px] font-semibold uppercase tracking-wide",
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
         variantClasses[variant],
-        className
+        className,
       )}
     >
-      {dot && <span className={clsx("h-1.5 w-1.5 rounded-full shrink-0", dotColors[variant])} />}
+      {dot && (
+        <span className="h-[5px] w-[5px] rounded-full bg-current" aria-hidden />
+      )}
       {children}
     </span>
   );
