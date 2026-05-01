@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PUBLIC_PATHS = ["/login"];
+const PUBLIC_PATHS = ["/login", "/register", "/pricing", "/forgot-password", "/reset-password"];
 
 const ROLE_PREFIXES: Record<string, string[]> = {
   STUDENT: ["/student"],
