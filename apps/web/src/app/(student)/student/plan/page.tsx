@@ -1,9 +1,95 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { analyticsApi, StudentPlanOutput } from "@/lib/api/analytics";
+import { gradesApi } from "@/lib/api/grades";
 import { Sparkles, CheckCircle2, AlertCircle, Calendar, Star, Info } from "lucide-react";
 import { toast } from "sonner";
+
+function gradesBarColor(avg: number | null) {
+  if (avg === null) return "bg-muted";
+  if (avg >= 8) return "bg-green-500";
+  if (avg >= 6) return "bg-yellow-500";
+  return "bg-red-500";
+}
+
+function gradesTextColor(avg: number | null) {
+  if (avg === null) return "text-muted-foreground";
+  if (avg >= 8) return "text-green-600";
+  if (avg >= 6) return "text-yellow-600";
+  return "text-red-600";
+}
+
+function GradesSection() {
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const { data, isLoading } = useQuery({
+    queryKey: ["student-my-grades"],
+    queryFn: () => gradesApi.getMyGrades(),
+  });
+
+  if (isLoading) return <div className="h-24 rounded-xl bg-muted animate-pulse" />;
+
+  if (!data?.subjects?.length) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+        Notas ainda não disponíveis para este ciclo.
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-3">
+      <h2 className="font-semibold text-foreground">
+        Minhas notas {data.cycleTitle ? `— ${data.cycleTitle}` : ""}
+      </h2>
+      <div className="space-y-2">
+        {data.subjects.map((subject) => (
+          <div key={subject.subjectId}>
+            <button
+              onClick={() => setExpanded(expanded === subject.subjectId ? null : subject.subjectId)}
+              className="w-full flex items-center gap-3 text-sm"
+            >
+              <span className="w-28 text-left text-muted-foreground truncate shrink-0">
+                {subject.subjectName}
+              </span>
+              <div className="flex-1 bg-muted rounded-full h-2">
+                <div
+                  className={`h-2 rounded-full transition-all ${gradesBarColor(subject.weightedAverage)}`}
+                  style={{
+                    width: `${
+                      subject.weightedAverage !== null ? (subject.weightedAverage / 10) * 100 : 0
+                    }%`,
+                  }}
+                />
+              </div>
+              <span
+                className={`w-8 text-right font-bold shrink-0 ${gradesTextColor(
+                  subject.weightedAverage,
+                )}`}
+              >
+                {subject.weightedAverage !== null ? subject.weightedAverage.toFixed(1) : "—"}
+              </span>
+            </button>
+            {expanded === subject.subjectId && subject.grades.length > 0 && (
+              <div className="ml-28 mt-1 space-y-1 pl-3 border-l-2 border-muted">
+                {subject.grades.map((g) => (
+                  <div key={g.id} className="flex justify-between text-xs text-muted-foreground">
+                    <span>
+                      {g.title}{" "}
+                      <span className="opacity-60">({(g.weight * 100).toFixed(0)}%)</span>
+                    </span>
+                    <span className={gradesTextColor(g.value)}>{g.value.toFixed(1)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function PlanSection({
   title,
@@ -164,6 +250,8 @@ export default function StudentPlanPage() {
           </button>
         )}
       </div>
+
+      <GradesSection />
 
       {!dashboard?.cycle && (
         <div className="rounded-xl border border-border bg-card p-8 text-center text-muted-foreground">

@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { coordinatorApi, ReportEntry } from "@/lib/api/coordinator";
+import { gradesApi } from "@/lib/api/grades";
 import { Download, AlertTriangle, Users, GraduationCap, ChevronDown } from "lucide-react";
 import { clsx } from "clsx";
 import { ExportPdfButton } from "@/components/reports/ExportPdfButton";
@@ -43,6 +44,12 @@ function ScoreCell({ score }: { score: number | null }) {
 export default function CoordinatorReportsPage() {
   const [selectedCycleId, setSelectedCycleId] = useState<string>("");
   const [filterType, setFilterType] = useState<FilterType>("ALL");
+  const [activeTab, setActiveTab] = useState<"evaluations" | "grades">("evaluations");
+
+  const { data: gradesOverview, isLoading: loadingGrades } = useQuery({
+    queryKey: ["coordinator-grades-overview"],
+    queryFn: () => gradesApi.getOverview(),
+  });
 
   const { data: cycles, isLoading: loadingCycles } = useQuery({
     queryKey: ["all-cycles"],
@@ -111,6 +118,32 @@ export default function CoordinatorReportsPage() {
         </div>
       </div>
 
+      <div className="flex rounded-lg border border-border bg-card shadow-sm overflow-hidden text-sm w-fit">
+        <button
+          onClick={() => setActiveTab("evaluations")}
+          className={clsx(
+            "px-4 py-2 font-medium transition-colors",
+            activeTab === "evaluations"
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:bg-accent",
+          )}
+        >
+          Avaliações
+        </button>
+        <button
+          onClick={() => setActiveTab("grades")}
+          className={clsx(
+            "px-4 py-2 font-medium transition-colors",
+            activeTab === "grades"
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:bg-accent",
+          )}
+        >
+          Notas
+        </button>
+      </div>
+
+      {activeTab === "evaluations" && <>
       <div className="flex flex-wrap gap-3">
         <div className="relative">
           <select
@@ -270,6 +303,100 @@ export default function CoordinatorReportsPage() {
           </table>
         </div>
       ))}
+      </>}
+
+      {activeTab === "grades" && (
+        <div className="space-y-4">
+          {loadingGrades ? (
+            <div className="rounded-xl border border-border bg-card p-6 animate-pulse space-y-3">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-10 rounded bg-muted" />
+              ))}
+            </div>
+          ) : !gradesOverview?.bySubject?.length ? (
+            <div className="rounded-xl border border-border bg-card p-10 text-center text-muted-foreground">
+              Nenhuma nota lançada no ciclo ativo.
+            </div>
+          ) : (
+            <div className="rounded-xl border border-border bg-card shadow-sm overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/40">
+                    <th className="text-left px-4 py-3 font-semibold text-muted-foreground">
+                      Disciplina
+                    </th>
+                    <th className="text-right px-4 py-3 font-semibold text-muted-foreground">
+                      Média
+                    </th>
+                    <th className="text-right px-4 py-3 font-semibold text-muted-foreground">
+                      Alunos
+                    </th>
+                    <th className="text-right px-4 py-3 font-semibold text-muted-foreground">
+                      Em risco
+                    </th>
+                    <th className="text-left px-4 py-3 font-semibold text-muted-foreground">
+                      Distribuição
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {gradesOverview.bySubject
+                    .slice()
+                    .sort((a, b) => a.avg - b.avg)
+                    .map((s) => (
+                      <tr
+                        key={s.subjectId}
+                        className={clsx(
+                          "border-b border-border last:border-0 hover:bg-muted/30 transition-colors",
+                          s.avg < 6 && "bg-red-50/50 dark:bg-red-900/10",
+                        )}
+                      >
+                        <td className="px-4 py-3 font-medium text-foreground">{s.subjectName}</td>
+                        <td
+                          className={clsx(
+                            "px-4 py-3 text-right font-bold",
+                            s.avg >= 8
+                              ? "text-green-600"
+                              : s.avg >= 6
+                              ? "text-yellow-600"
+                              : "text-red-600",
+                          )}
+                        >
+                          {s.avg.toFixed(1)}
+                        </td>
+                        <td className="px-4 py-3 text-right text-muted-foreground">
+                          {s.studentCount}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {s.atRiskCount > 0 ? (
+                            <span className="text-red-600 font-semibold">{s.atRiskCount}</span>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">—</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="w-32 bg-muted rounded-full h-2">
+                            <div
+                              className={clsx(
+                                "h-2 rounded-full",
+                                s.avg >= 8
+                                  ? "bg-green-500"
+                                  : s.avg >= 6
+                                  ? "bg-yellow-500"
+                                  : "bg-red-500",
+                              )}
+                              style={{ width: `${(s.avg / 10) * 100}%` }}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
