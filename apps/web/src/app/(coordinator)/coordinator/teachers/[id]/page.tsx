@@ -24,43 +24,13 @@ import {
   BookOpen,
   ClipboardList,
   TrendingUp,
-  CheckCircle,
-  XCircle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-
-function scoreColor(score: number): string {
-  if (score < 50) return "#ef4444";
-  if (score < 70) return "#f59e0b";
-  return "#22c55e";
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const active = status === "ACTIVE";
-  return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-        active ? "bg-green-100 text-green-700" : "bg-muted text-muted-foreground"
-      }`}
-    >
-      {active ? <CheckCircle size={11} /> : <XCircle size={11} />}
-      {active ? "Ativo" : "Inativo"}
-    </span>
-  );
-}
-
-function PlanBadge({ status }: { status: string }) {
-  const map: Record<string, { label: string; cls: string }> = {
-    READY: { label: "Pronto", cls: "bg-green-100 text-green-700" },
-    GENERATING: { label: "Gerando", cls: "bg-blue-100 text-blue-700" },
-    FAILED: { label: "Falhou", cls: "bg-destructive/10 text-destructive" },
-  };
-  const { label, cls } = map[status] ?? { label: status, cls: "bg-muted text-muted-foreground" };
-  return (
-    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>{label}</span>
-  );
-}
+import { useChartColors } from "@/lib/chart-colors";
+import { Chip } from "@/components/ui/chip";
+import { Card } from "@/components/ui/card";
+import { scoreVariant } from "@/lib/score-color";
 
 interface LineTooltipProps {
   active?: boolean;
@@ -71,11 +41,18 @@ interface LineTooltipProps {
 function LineTooltip({ active, payload, label }: LineTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border border-border bg-card p-3 shadow-md text-sm">
+    <div
+      className="rounded-lg p-3 shadow-md text-sm"
+      style={{
+        borderRadius: "8px",
+        border: `1px solid var(--outline-variant)`,
+        background: "var(--surface)",
+        color: "var(--foreground)",
+        fontSize: "13px",
+      }}
+    >
       <p className="text-muted-foreground mb-1">{label}</p>
-      <p className="font-bold" style={{ color: scoreColor(payload[0].value) }}>
-        {payload[0].value.toFixed(1)}
-      </p>
+      <Chip variant={scoreVariant(payload[0].value)}>{payload[0].value.toFixed(1)}</Chip>
     </div>
   );
 }
@@ -86,6 +63,7 @@ export default function TeacherProfilePage({
   params: Promise<{ id: string }>;
 }) {
   const { id: teacherId } = use(params);
+  const chartColors = useChartColors();
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["teacher-profile", teacherId],
@@ -135,6 +113,26 @@ export default function TeacherProfilePage({
     new Set(profile.cycleHistory.flatMap((c) => c.scores.map((s) => s.dimension)))
   ).sort();
 
+  const isActive = profile.status === "ACTIVE";
+
+  function planLabel(status: string): string {
+    const map: Record<string, string> = {
+      READY: "Pronto",
+      GENERATING: "Gerando",
+      FAILED: "Falhou",
+    };
+    return map[status] ?? status;
+  }
+
+  function planChipVariant(status: string): "success" | "info" | "danger" | "neutral" {
+    const map: Record<string, "success" | "info" | "danger" | "neutral"> = {
+      READY: "success",
+      GENERATING: "info",
+      FAILED: "danger",
+    };
+    return map[status] ?? "neutral";
+  }
+
   return (
     <div className="space-y-6 max-w-4xl">
       {/* Back link */}
@@ -146,7 +144,7 @@ export default function TeacherProfilePage({
       </Link>
 
       {/* Header card */}
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+      <Card>
         <div className="flex items-start gap-5 flex-wrap">
           <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center shrink-0">
             <User size={28} className="text-muted-foreground" />
@@ -154,7 +152,9 @@ export default function TeacherProfilePage({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-xl font-bold text-foreground">{profile.fullName}</h1>
-              <StatusBadge status={profile.status} />
+              <Chip variant={isActive ? "success" : "neutral"}>
+                {isActive ? "Ativo" : "Inativo"}
+              </Chip>
             </div>
             <div className="mt-2 space-y-1">
               <p className="text-sm text-muted-foreground flex items-center gap-2">
@@ -193,13 +193,13 @@ export default function TeacherProfilePage({
             </p>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Charts row */}
       {profile.cycleHistory.length > 0 && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Line chart — evolução histórica */}
-          <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+          <Card className="p-5">
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp size={16} className="text-muted-foreground" />
               <h2 className="text-sm font-semibold text-foreground">Evolução histórica</h2>
@@ -211,36 +211,49 @@ export default function TeacherProfilePage({
             ) : (
               <ResponsiveContainer width="100%" height={200}>
                 <LineChart data={chartData} margin={{ top: 4, right: 8, left: -10, bottom: 4 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    stroke={chartColors.gridLine}
+                  />
                   <XAxis
                     dataKey="name"
-                    tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                    tick={{ fontSize: 11, fill: chartColors.muted }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis
                     domain={[0, 100]}
-                    tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                    tick={{ fontSize: 11, fill: chartColors.muted }}
                     axisLine={false}
                     tickLine={false}
                   />
-                  <Tooltip content={<LineTooltip />} />
+                  <Tooltip
+                    content={<LineTooltip />}
+                    contentStyle={{
+                      borderRadius: "8px",
+                      border: `1px solid ${chartColors.gridLine}`,
+                      background: "var(--surface)",
+                      color: "var(--foreground)",
+                      fontSize: "13px",
+                    }}
+                  />
                   <Line
                     type="monotone"
                     dataKey="avg"
-                    stroke="var(--primary)"
+                    stroke={chartColors.primary}
                     strokeWidth={2.5}
-                    dot={{ r: 4, fill: "var(--primary)", strokeWidth: 0 }}
+                    dot={{ r: 4, fill: chartColors.primary, strokeWidth: 0 }}
                     activeDot={{ r: 6 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
             )}
-          </div>
+          </Card>
 
           {/* Bar chart — dimensões do último ciclo */}
           {dimensionData.length > 0 && (
-            <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+            <Card className="p-5">
               <div className="flex items-center gap-2 mb-1">
                 <ClipboardList size={16} className="text-muted-foreground" />
                 <h2 className="text-sm font-semibold text-foreground">Scores por dimensão</h2>
@@ -254,43 +267,55 @@ export default function TeacherProfilePage({
                   margin={{ top: 4, right: 8, left: -10, bottom: 4 }}
                   barCategoryGap="30%"
                 >
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                    stroke={chartColors.gridLine}
+                  />
                   <XAxis
                     dataKey="dimension"
-                    tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                    tick={{ fontSize: 11, fill: chartColors.muted }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis
                     domain={[0, 100]}
-                    tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                    tick={{ fontSize: 11, fill: chartColors.muted }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <Tooltip
                     formatter={(v: number) => [v.toFixed(1), "Score"]}
                     contentStyle={{
-                      borderRadius: 8,
-                      border: "1px solid var(--border)",
-                      background: "var(--card)",
-                      fontSize: 12,
+                      borderRadius: "8px",
+                      border: `1px solid ${chartColors.gridLine}`,
+                      background: "var(--surface)",
+                      color: "var(--foreground)",
+                      fontSize: "13px",
                     }}
                   />
                   <Bar dataKey="score" radius={[6, 6, 0, 0]} maxBarSize={48}>
-                    {dimensionData.map((entry, i) => (
-                      <Cell key={i} fill={scoreColor(entry.score)} />
-                    ))}
+                    {dimensionData.map((entry, i) => {
+                      const v = scoreVariant(entry.score);
+                      const fill =
+                        v === "success"
+                          ? chartColors.success
+                          : v === "warning"
+                          ? chartColors.warning
+                          : chartColors.danger;
+                      return <Cell key={i} fill={fill} />;
+                    })}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
-            </div>
+            </Card>
           )}
         </div>
       )}
 
       {/* Cycle history table */}
       {profile.cycleHistory.length > 0 && (
-        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+        <Card noPadding>
           <div className="px-5 py-4 border-b border-border">
             <h2 className="text-sm font-semibold text-foreground">Histórico de ciclos</h2>
           </div>
@@ -329,24 +354,14 @@ export default function TeacherProfilePage({
                       </p>
                     </td>
                     <td className="px-3 py-3 text-center">
-                      <span
-                        className="font-semibold text-sm"
-                        style={{ color: scoreColor(c.avg) }}
-                      >
-                        {c.avg.toFixed(1)}
-                      </span>
+                      <Chip variant={scoreVariant(c.avg)}>{c.avg.toFixed(1)}</Chip>
                     </td>
                     {allDimensions.map((dim) => {
                       const s = c.scores.find((x) => x.dimension === dim);
                       return (
                         <td key={dim} className="px-3 py-3 text-center">
                           {s ? (
-                            <span
-                              className="font-semibold text-sm"
-                              style={{ color: scoreColor(s.score) }}
-                            >
-                              {s.score.toFixed(1)}
-                            </span>
+                            <Chip variant={scoreVariant(s.score)}>{s.score.toFixed(1)}</Chip>
                           ) : (
                             <span className="text-xs text-muted-foreground">—</span>
                           )}
@@ -358,12 +373,12 @@ export default function TeacherProfilePage({
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Classes */}
       {profile.classAssignments.length > 0 && (
-        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+        <Card noPadding>
           <div className="px-5 py-4 border-b border-border flex items-center gap-2">
             <BookOpen size={15} className="text-muted-foreground" />
             <h2 className="text-sm font-semibold text-foreground">Turmas atribuídas</h2>
@@ -375,19 +390,19 @@ export default function TeacherProfilePage({
                   <p className="text-sm font-medium text-foreground">{a.classGroup.name}</p>
                   <p className="text-xs text-muted-foreground">{a.classGroup.academicPeriod}</p>
                 </div>
-                <span className="text-xs rounded-full bg-muted px-2.5 py-1 text-muted-foreground">
+                <Chip variant="neutral">
                   {a.subject.name}
                   {a.subject.code && ` (${a.subject.code})`}
-                </span>
+                </Chip>
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Development plans */}
       {profile.developmentPlans.length > 0 && (
-        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+        <Card noPadding>
           <div className="px-5 py-4 border-b border-border flex items-center gap-2">
             <ClipboardList size={15} className="text-muted-foreground" />
             <h2 className="text-sm font-semibold text-foreground">Planos de desenvolvimento</h2>
@@ -402,19 +417,19 @@ export default function TeacherProfilePage({
                     {format(new Date(p.createdAt), "dd/MM/yyyy", { locale: ptBR })}
                   </p>
                 </div>
-                <PlanBadge status={p.status} />
+                <Chip variant={planChipVariant(p.status)}>{planLabel(p.status)}</Chip>
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       )}
 
       {profile.cycleHistory.length === 0 && (
-        <div className="rounded-xl border border-border bg-card p-8 text-center shadow-sm">
+        <Card className="p-8 text-center">
           <p className="text-sm text-muted-foreground">
             Nenhuma avaliação registrada para este professor.
           </p>
-        </div>
+        </Card>
       )}
     </div>
   );
