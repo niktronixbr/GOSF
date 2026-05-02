@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -147,6 +148,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
         <div className="flex items-center justify-between">
           <ThemeToggle />
           <button
+            type="button"
             onClick={handleLogout}
             className="flex h-9 items-center gap-2 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-surface-container hover:text-foreground transition-colors"
           >
@@ -161,6 +163,18 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
 
 export function Sidebar() {
   const { mobileOpen, closeMobile } = useSidebarStore();
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const original = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") closeMobile(); };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = original;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [mobileOpen, closeMobile]);
 
   return (
     <>
@@ -179,7 +193,12 @@ export function Sidebar() {
             aria-hidden="true"
           />
           {/* Drawer panel */}
-          <aside className="relative flex h-full w-72 flex-col border-r border-outline-variant bg-surface z-10">
+          <aside
+            className="relative flex h-full w-72 flex-col border-r border-outline-variant bg-surface z-10"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menu principal"
+          >
             <SidebarContent onClose={closeMobile} />
           </aside>
         </div>
