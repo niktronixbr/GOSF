@@ -12,7 +12,6 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { evaluationsApi } from "@/lib/api/evaluations";
 import { coordinatorApi, ClassBenchmark } from "@/lib/api/coordinator";
 import { Users, TrendingUp, AlertTriangle, BarChart2 } from "lucide-react";
 

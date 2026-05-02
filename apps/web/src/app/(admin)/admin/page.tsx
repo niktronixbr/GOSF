@@ -7,7 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import {
-  Users,
   Plus,
   Search,
   X,
@@ -120,7 +119,7 @@ function CreateUserModal({ open, onClose }: { open: boolean; onClose: () => void
       reset();
       onClose();
     },
-    onError: (e: any) => toast.error(e?.message ?? "Erro ao criar usuário"),
+    onError: (e: Error) => toast.error(e.message ?? "Erro ao criar usuário"),
   });
 
   return (
@@ -220,7 +219,7 @@ function EditUserModal({ user, onClose }: { user: AdminUser | null; onClose: () 
       qc.invalidateQueries({ queryKey: ["admin-users"] });
       onClose();
     },
-    onError: (e: any) => toast.error(e?.message ?? "Erro ao atualizar"),
+    onError: (e: Error) => toast.error(e.message ?? "Erro ao atualizar"),
   });
 
   return (
@@ -327,7 +326,7 @@ export default function AdminPage() {
     placeholderData: (prev) => prev,
   });
 
-  const users = data?.data ?? [];
+  const users = useMemo(() => data?.data ?? [], [data]);
   const total = data?.total ?? 0;
   const totalPages = data?.totalPages ?? 1;
 

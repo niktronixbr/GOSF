@@ -39,7 +39,7 @@ function FeedbackCard({ entry }: { entry: FeedbackEntry }) {
 
         {entry.comment ? (
           <blockquote className="mt-4 rounded-lg bg-muted/50 border-l-2 border-primary/40 pl-4 pr-3 py-3 text-sm text-foreground leading-relaxed italic">
-            "{entry.comment}"
+            &ldquo;{entry.comment}&rdquo;
           </blockquote>
         ) : (
           <p className="mt-4 text-sm text-muted-foreground italic">Sem comentário nesta avaliação.</p>
@@ -102,7 +102,6 @@ export default function StudentFeedbackPage() {
     );
   }
 
-  const hasComments = feedbacks?.some((f) => f.comment);
   const total = feedbacks?.length ?? 0;
   const withComment = feedbacks?.filter((f) => f.comment).length ?? 0;
   const cycles = groupByCycle(feedbacks ?? []);

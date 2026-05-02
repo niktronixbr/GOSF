@@ -153,7 +153,7 @@ export default function CoordinatorReportsPage() {
             className="appearance-none rounded-lg border border-border bg-card px-4 py-2 pr-9 text-sm text-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
           >
             {!cycles?.length && <option value="">Sem ciclos disponíveis</option>}
-            {cycles?.map((c: any) => (
+            {cycles?.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.title}
                 {c.status === "OPEN" ? " (aberto)" : c.status === "CLOSED" ? " (fechado)" : ""}

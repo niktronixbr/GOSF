@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { UserCircle, KeyRound } from "lucide-react";
@@ -19,9 +20,12 @@ function getInitials(name: string): string {
 function AvatarPreview({ avatarUrl, fullName }: { avatarUrl: string; fullName: string }) {
   if (avatarUrl.startsWith("http")) {
     return (
-      <img
+      <Image
         src={avatarUrl}
         alt={fullName}
+        width={80}
+        height={80}
+        unoptimized
         className="h-20 w-20 rounded-full object-cover border border-border"
       />
     );

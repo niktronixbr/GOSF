@@ -75,11 +75,10 @@ function ResetPasswordForm() {
     try {
       await api.post("/auth/reset-password", { token, password: data.password }, true);
       setDone(true);
-    } catch (e: any) {
-      const msg =
-        e?.message?.includes("inválido") || e?.message?.includes("expirado")
-          ? "Link inválido ou expirado. Solicite um novo link."
-          : "Erro ao redefinir a senha. Tente novamente.";
+    } catch (e) {
+      const msg = e instanceof Error && (e.message.includes("inválido") || e.message.includes("expirado"))
+        ? "Link inválido ou expirado. Solicite um novo link."
+        : "Erro ao redefinir a senha. Tente novamente.";
       setError("root", { message: msg });
     }
   }

@@ -102,7 +102,7 @@ function TeacherStep({ onNext, onSkip }: { onNext: () => void; onSkip: () => voi
       toast.success("Professor criado com sucesso!");
       onNext();
     },
-    onError: (e: any) => toast.error(e?.message ?? "Erro ao criar professor"),
+    onError: (e: Error) => toast.error(e.message ?? "Erro ao criar professor"),
   });
 
   return (
@@ -177,7 +177,7 @@ function ClassStep({ onFinish, onSkip }: { onFinish: () => void; onSkip: () => v
       toast.success("Turma criada com sucesso!");
       onFinish();
     },
-    onError: (e: any) => toast.error(e?.message ?? "Erro ao criar turma"),
+    onError: (e: Error) => toast.error(e.message ?? "Erro ao criar turma"),
   });
 
   return (

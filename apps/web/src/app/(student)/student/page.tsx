@@ -178,7 +178,7 @@ export default function StudentHomePage() {
         <div className="rounded-xl border border-border bg-card p-5 shadow-sm animate-slide-up animate-delay-300">
           <h2 className="text-[14px] font-bold text-foreground mb-3">Plano desta semana</h2>
           <ul className="space-y-2">
-            {plan.seven_day_plan.map((item, i) => (
+            {plan.seven_day_plan.map((item) => (
               <li key={item} className="flex items-start gap-3 text-[13px] text-muted-foreground">
                 <input type="checkbox" className="mt-0.5 rounded accent-teal" readOnly />
                 {item}

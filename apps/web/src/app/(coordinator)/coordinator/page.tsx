@@ -41,36 +41,6 @@ function ScoreBadge({ score }: { score: number | null }) {
   );
 }
 
-function KpiCard({
-  label,
-  value,
-  icon: Icon,
-  danger,
-}: {
-  label: string;
-  value: string | number;
-  icon: React.ElementType;
-  danger?: boolean;
-}) {
-  return (
-    <div
-      className={`rounded-xl border p-5 shadow-sm ${
-        danger ? "border-red-200 bg-red-50" : "border-border bg-card"
-      }`}
-    >
-      <div className="flex items-center gap-2 mb-1">
-        <Icon size={15} className={danger ? "text-red-400" : "text-muted-foreground"} />
-        <p className={`text-xs font-medium ${danger ? "text-red-500" : "text-muted-foreground"}`}>
-          {label}
-        </p>
-      </div>
-      <p className={`text-3xl font-bold ${danger ? "text-red-600" : "text-foreground"}`}>
-        {value === "" ? "—" : value}
-      </p>
-    </div>
-  );
-}
-
 export default function CoordinatorHomePage() {
   const { data: cycle } = useQuery({
     queryKey: ["active-cycle"],
