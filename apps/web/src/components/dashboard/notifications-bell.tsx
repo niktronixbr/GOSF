@@ -207,7 +207,7 @@ function NotificationItem({
 
   return (
     <div
-      className={`flex gap-3 border-b border-border/60 px-4 py-3 last:border-b-0 ${
+      className={`flex gap-3 border-b border-outline-variant/60 px-4 py-3 last:border-b-0 ${
         isUnread ? "bg-primary/5" : ""
       }`}
     >
