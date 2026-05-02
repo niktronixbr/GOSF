@@ -1,32 +1,34 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guia para Claude Code neste repositório.
+
+## Contexto on-demand
+
+Para arquitetura e convenções de código, invoque as skills:
+- **`gosf-architecture`** — módulos backend, rotas frontend, modelo de dados Prisma
+- **`gosf-conventions`** — UI sem shadcn, layout padrão, validação, padrões de módulo NestJS, cliente API
 
 ## Commit e push obrigatórios
 
-Após cada implementação de feature, correção ou qualquer alteração relevante no código:
+Após cada implementação de feature, correção ou alteração relevante:
 
-1. Fazer `git add` nos arquivos modificados/criados
-2. Criar um commit com mensagem descritiva em português (estilo: `feat:`, `fix:`, `chore:`)
-3. Fazer `git push origin main`
+1. `git add` nos arquivos modificados/criados
+2. Commit com mensagem em português (`feat:`, `fix:`, `chore:`, `docs:`)
+3. `git push origin main`
 
-Não encerrar a tarefa sem commitar e fazer push. Confirmar o push ao final da resposta.
+Não encerrar a tarefa sem commitar e fazer push.
 
-## Stack
+## Stack (1-liner)
 
-- Frontend: Next.js 15 + React 19 + TypeScript + Tailwind (porta 3002) — **sem shadcn/ui**
-- Backend: NestJS (Fastify) + Prisma + PostgreSQL (porta 3001)
-- DB: PostgreSQL Docker porta 5434
-- Redis Docker porta 6379
-- Monorepo: pnpm workspaces + Turbo
+Next.js 15 + React 19 + TS + Tailwind (web :3002, sem shadcn) · NestJS Fastify + Prisma + PostgreSQL (api :3001) · Postgres :5434 + Redis :6379 (Docker) · Monorepo pnpm + Turbo.
 
 ## Comandos
 
 ```bash
-# Desenvolvimento (raiz — sobe tudo via Turbo)
+# Dev (raiz — Turbo)
 pnpm dev
 
-# Apenas frontend ou backend
+# Apenas um app
 pnpm --filter web dev
 pnpm --filter api dev
 
@@ -38,15 +40,15 @@ pnpm lint
 pnpm typecheck
 
 # Testes (backend)
-pnpm --filter api test          # unitários
+pnpm --filter api test          # unit
 pnpm --filter api test:e2e      # e2e
 
-# Banco de dados
-pnpm db:generate   # gera o Prisma Client
-pnpm db:migrate    # aplica migrations
-pnpm db:push       # sync schema sem migration
+# Banco
+pnpm db:generate   # Prisma Client
+pnpm db:migrate    # migrations
+pnpm db:push       # sync sem migration
 pnpm db:studio     # Prisma Studio
-pnpm db:seed       # popula dados iniciais
+pnpm db:seed       # dados iniciais
 
 # Docker
 pnpm docker:up
@@ -55,94 +57,11 @@ pnpm docker:down
 
 ## Notas de ambiente
 
-- `node` pode não estar no PATH do terminal bash; usar `export PATH="/c/Program Files/nodejs:$PATH"` antes de `npx` se necessário
-- Migrations Prisma: `export PATH="/c/Program Files/nodejs:$PATH" && npx prisma migrate dev --name <nome>` rodado na raiz do monorepo
+- `node` pode não estar no PATH do bash; usar `export PATH="/c/Program Files/nodejs:$PATH"` antes de `npx`
+- Migrations Prisma: `export PATH="/c/Program Files/nodejs:$PATH" && npx prisma migrate dev --name <nome>` na raiz do monorepo
 - `pnpm dev` via Turbo pode falhar com "cannot find binary path" — usar `pnpm --filter api dev` e `pnpm --filter web dev` separadamente
-- Prisma Client instalado é **6.19.x** (^6.2.1 no package.json resolveu para versão maior) — tipos mais estritos que 6.2.1
+- No PowerShell, scripts `.ps1` estão bloqueados; use `cmd /c "node_modules\.bin\<bin>.CMD <args>"` para rodar binários do node_modules
 
-## Arquitetura
+## Idioma
 
-### Estrutura do monorepo
-
-```
-apps/
-  web/    — Next.js 15 (App Router)
-  api/    — NestJS
-packages/
-  database/  — Prisma schema + client compartilhado
-  shared/    — tipos e utilitários comuns
-```
-
-### Frontend (`apps/web/src`)
-
-**Roteamento por papel** via App Router:
-- `/(auth)` — login, forgot-password, reset-password
-- `/(student)/student/*` — aluno: avaliações, metas, progresso, feedback, plano
-- `/(teacher)/teacher/*` — professor: avaliações, desenvolvimento, turmas, insights
-- `/(coordinator)/coordinator/*` — coordenador: ciclos, professores, turmas, relatórios, configurações
-- `/(admin)/admin` — gestão de usuários
-
-**Layout padrão** (student/teacher/coordinator/admin):
-```tsx
-<div className="flex h-screen overflow-hidden">
-  <Sidebar />
-  <div className="flex flex-1 flex-col overflow-hidden">
-    <TopBar />
-    <main className="flex-1 overflow-y-auto p-6 bg-muted/20">{children}</main>
-  </div>
-</div>
-```
-
-**Camadas principais:**
-- `lib/api/client.ts` — cliente HTTP base (Bearer token, auto-refresh, classe `ApiError`)
-- `lib/api/` — wrappers por domínio: analytics, evaluations, coordinator, goals, notifications, admin
-- `lib/auth/` — gerenciamento de sessão e tokens JWT
-- `store/` — estado global com Zustand (auth)
-- `features/` — componentes de feature (login-form, evaluation-form…)
-- `components/dashboard/` — sidebar, top-bar, notifications-bell
-
-**Regra:** `"use client"` somente quando necessário.
-
-### Backend (`apps/api/src`)
-
-Módulos NestJS implementados:
-- `auth` — JWT + Passport (access 15 min / refresh 7 dias) + forgot/reset password via e-mail
-- `users` — CRUD completo (create cria perfil Student/Teacher automaticamente)
-- `institutions` — multi-tenancy por `institutionId`
-- `classes` — ClassGroup, Subject, Enrollment, ClassAssignment
-- `evaluations` — ciclos (DRAFT→OPEN→CLOSED→ARCHIVED), formulários, submissões
-- `analytics` — ScoreAggregate por dimensão/ciclo
-- `ai` — planos gerados pelo Claude (Anthropic SDK)
-- `goals` — StudentGoal CRUD
-- `notifications` — CRUD de notificações in-app (findAll, countUnread, markRead, markAllRead, create)
-- `privacy` — stub LGPD
-- `audit` — stub AuditLog
-
-Infraestrutura comum:
-- `common/guards/` — JwtAuthGuard, RolesGuard
-- `common/decorators/` — @CurrentUser, @Roles
-- `common/filters/`
-- `common/mail/` — MailService (nodemailer SMTP; vars: SMTP_HOST/PORT/SECURE/USER/PASS/FROM, APP_URL)
-
-### Modelo de dados (Prisma)
-
-Entidades principais:
-- `User` (roles: STUDENT/TEACHER/COORDINATOR/ADMIN) → pertence a `Institution`
-- `Student` / `Teacher` — relação 1:1 com User
-- `ClassGroup`, `Subject`, `Enrollment`, `ClassAssignment`
-- `EvaluationCycle`, `EvaluationForm`, `EvaluationQuestion`
-- `TeacherEvaluation` (aluno avalia professor) / `StudentEvaluation` (professor avalia aluno)
-- `ScoreAggregate` — analytics computados
-- `StudentPlan` / `TeacherDevelopmentPlan` — JSON gerados por IA
-- `Notification` — notificações in-app por usuário
-- `RefreshToken`, `PasswordResetToken` — auth tokens
-- `ConsentRecord`, `DataRequest`, `AuditLog`
-
-## Padrões de código
-
-- **Sem shadcn/ui** — HTML nativo + Tailwind puro. Ver `apps/web/src/app/(student)/student/goals/page.tsx` como referência
-- Sem comentários desnecessários
-- Sem abstrações prematuras
-- `"use client"` apenas quando necessário
-- Validação com Zod nas fronteiras de entrada (frontend) e class-validator nos DTOs (backend)
-- Sempre responder em Português do Brasil
+Sempre responder em **Português do Brasil**.
