@@ -6,12 +6,21 @@ import { coordinatorApi } from "@/lib/api/coordinator";
 import { EvaluationCycle } from "@/lib/api/evaluations";
 import { Plus, Play, Square, CalendarDays, ClipboardList, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
 
-function statusLabel(status: string) {
-  if (status === "OPEN") return { label: "Aberto", cls: "bg-green-100 text-green-700" };
-  if (status === "CLOSED") return { label: "Encerrado", cls: "bg-muted text-muted-foreground" };
-  return { label: "Rascunho", cls: "bg-yellow-100 text-yellow-700" };
+function cycleStatusVariant(status: string): "success" | "warning" | "neutral" | "danger" {
+  if (status === "OPEN") return "success";
+  if (status === "DRAFT") return "warning";
+  if (status === "CLOSED") return "neutral";
+  return "neutral";
 }
+
+const cycleStatusLabel: Record<string, string> = {
+  OPEN: "Aberto",
+  DRAFT: "Rascunho",
+  CLOSED: "Encerrado",
+};
 
 function CycleCard({
   cycle,
@@ -22,7 +31,6 @@ function CycleCard({
   onOpen: (id: string) => void;
   onClose: (id: string) => void;
 }) {
-  const { label, cls } = statusLabel(cycle.status);
   return (
     <div className="rounded-xl border border-border bg-card p-5 shadow-sm flex items-start justify-between gap-4">
       <div className="space-y-1 min-w-0">
@@ -34,24 +42,28 @@ function CycleCard({
         </p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>{label}</span>
+        <Chip variant={cycleStatusVariant(cycle.status)}>
+          {cycleStatusLabel[cycle.status] ?? cycle.status}
+        </Chip>
         {cycle.status === "DRAFT" && (
-          <button
+          <Button
+            variant="primary"
+            size="sm"
             onClick={() => onOpen(cycle.id)}
-            className="flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
           >
             <Play size={11} />
             Abrir
-          </button>
+          </Button>
         )}
         {cycle.status === "OPEN" && (
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => onClose(cycle.id)}
-            className="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted transition-colors"
           >
             <Square size={11} />
             Encerrar
-          </button>
+          </Button>
         )}
       </div>
     </div>
@@ -80,35 +92,37 @@ function FormsCard() {
 
   if (hasForms) {
     return (
-      <div className="rounded-xl border border-green-200 bg-green-50 p-4 flex items-center gap-3">
-        <CheckCircle2 size={18} className="text-green-600 shrink-0" />
+      <div className="rounded-xl border border-success/30 bg-success/10 p-4 flex items-center gap-3">
+        <CheckCircle2 size={18} className="text-success shrink-0" />
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-green-800">Formulários configurados</p>
-          <p className="text-xs text-green-600">{forms!.length} formulário(s) disponível(is) para avaliação.</p>
+          <p className="text-sm font-semibold text-success">Formulários configurados</p>
+          <p className="text-xs text-success">{forms!.length} formulário(s) disponível(is) para avaliação.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start justify-between gap-4">
+    <div className="rounded-xl border border-warning/30 bg-warning/10 p-4 flex items-start justify-between gap-4">
       <div className="flex items-start gap-3 min-w-0">
-        <AlertCircle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+        <AlertCircle size={18} className="text-warning shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm font-semibold text-amber-800">Formulários não configurados</p>
-          <p className="text-xs text-amber-700 mt-0.5">
+          <p className="text-sm font-semibold text-warning">Formulários não configurados</p>
+          <p className="text-xs text-warning mt-0.5">
             Sem formulários, alunos e professores não conseguem realizar avaliações.
           </p>
         </div>
       </div>
-      <button
+      <Button
+        variant="primary"
+        size="sm"
         onClick={() => seedMutation.mutate()}
         disabled={seedMutation.isPending}
-        className="flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-50 transition-colors shrink-0"
+        className="shrink-0"
       >
         <ClipboardList size={13} />
         {seedMutation.isPending ? "Criando..." : "Usar formulários padrão"}
-      </button>
+      </Button>
     </div>
   );
 }
@@ -162,13 +176,14 @@ export default function CoordinatorCyclesPage() {
           <h1 className="text-2xl font-bold text-foreground">Ciclos de avaliação</h1>
           <p className="text-sm text-muted-foreground mt-1">Gerencie os ciclos da instituição.</p>
         </div>
-        <button
+        <Button
+          variant="primary"
           onClick={() => setShowForm((v) => !v)}
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 transition-opacity shrink-0"
+          className="shrink-0"
         >
           <Plus size={15} />
           Novo ciclo
-        </button>
+        </Button>
       </div>
 
       <FormsCard />
@@ -180,7 +195,7 @@ export default function CoordinatorCyclesPage() {
             <div>
               <label className="text-xs font-medium text-muted-foreground block mb-1">Título</label>
               <input
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-lg border border-outline-variant bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 placeholder="Ex: 2025/1 — 1º Semestre"
                 value={form.title}
                 onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
@@ -191,7 +206,7 @@ export default function CoordinatorCyclesPage() {
                 <label className="text-xs font-medium text-muted-foreground block mb-1">Início</label>
                 <input
                   type="date"
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-lg border border-outline-variant bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                   value={form.startsAt}
                   onChange={(e) => setForm((f) => ({ ...f, startsAt: e.target.value }))}
                 />
@@ -200,7 +215,7 @@ export default function CoordinatorCyclesPage() {
                 <label className="text-xs font-medium text-muted-foreground block mb-1">Fim</label>
                 <input
                   type="date"
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-lg border border-outline-variant bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                   value={form.endsAt}
                   onChange={(e) => setForm((f) => ({ ...f, endsAt: e.target.value }))}
                 />
@@ -208,19 +223,16 @@ export default function CoordinatorCyclesPage() {
             </div>
           </div>
           <div className="flex gap-2 justify-end">
-            <button
-              onClick={() => setShowForm(false)}
-              className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
-            >
+            <Button variant="ghost" onClick={() => setShowForm(false)}>
               Cancelar
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
               onClick={() => createMutation.mutate()}
               disabled={!canSubmit || createMutation.isPending}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity"
             >
               Criar
-            </button>
+            </Button>
           </div>
         </div>
       )}

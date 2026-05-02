@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { clsx } from "clsx";
+import { Button } from "@/components/ui/button";
 
 function NewClassForm({ onClose }: { onClose: () => void }) {
   const qc = useQueryClient();
@@ -42,7 +43,7 @@ function NewClassForm({ onClose }: { onClose: () => void }) {
         <div>
           <label className="text-xs font-medium text-muted-foreground block mb-1">Nome</label>
           <input
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-lg border border-outline-variant bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             placeholder="Ex: 3º A"
             value={form.name}
             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
@@ -53,7 +54,7 @@ function NewClassForm({ onClose }: { onClose: () => void }) {
             Período letivo
           </label>
           <input
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-lg border border-outline-variant bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             placeholder="Ex: 2025"
             value={form.academicPeriod}
             onChange={(e) => setForm((f) => ({ ...f, academicPeriod: e.target.value }))}
@@ -61,19 +62,16 @@ function NewClassForm({ onClose }: { onClose: () => void }) {
         </div>
       </div>
       <div className="flex justify-end gap-2">
-        <button
-          onClick={onClose}
-          className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
-        >
+        <Button variant="ghost" onClick={onClose}>
           Cancelar
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="primary"
           disabled={!form.name || !form.academicPeriod || mutation.isPending}
           onClick={() => mutation.mutate()}
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity"
         >
           Criar
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -119,7 +117,7 @@ function EnrollPanel({
         <select
           value={selectedStudentId}
           onChange={(e) => setSelectedStudentId(e.target.value)}
-          className="flex-1 appearance-none rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          className="flex-1 w-full rounded-lg border border-outline-variant bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring appearance-none"
         >
           <option value="">Selecionar aluno...</option>
           {available.map((s) => (
@@ -128,14 +126,16 @@ function EnrollPanel({
             </option>
           ))}
         </select>
-        <button
+        <Button
+          variant="primary"
+          size="md"
           disabled={!selectedStudentId || enrollMutation.isPending}
           onClick={() => enrollMutation.mutate()}
-          className="flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity shrink-0"
+          className="shrink-0"
         >
           <Plus size={14} />
           Matricular
-        </button>
+        </Button>
       </div>
       {enrolled.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-4">Nenhum aluno matriculado.</p>
@@ -150,13 +150,15 @@ function EnrollPanel({
                 <p className="text-sm font-medium text-foreground">{e.student.user.fullName}</p>
                 <p className="text-xs text-muted-foreground">{e.student.user.email}</p>
               </div>
-              <button
+              <Button
+                variant="danger"
+                size="sm"
                 onClick={() => unenrollMutation.mutate(e.student.id)}
                 disabled={unenrollMutation.isPending}
-                className="text-muted-foreground hover:text-destructive transition-colors"
+                className="p-1.5"
               >
                 <Trash2 size={14} />
-              </button>
+              </Button>
             </li>
           ))}
         </ul>
@@ -205,7 +207,7 @@ function AssignPanel({
         <select
           value={form.teacherId}
           onChange={(e) => setForm((f) => ({ ...f, teacherId: e.target.value }))}
-          className="appearance-none rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          className="w-full rounded-lg border border-outline-variant bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring appearance-none"
         >
           <option value="">Selecionar professor...</option>
           {teachers.map((t) => (
@@ -217,7 +219,7 @@ function AssignPanel({
         <select
           value={form.subjectId}
           onChange={(e) => setForm((f) => ({ ...f, subjectId: e.target.value }))}
-          className="appearance-none rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          className="w-full rounded-lg border border-outline-variant bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring appearance-none"
         >
           <option value="">Selecionar disciplina...</option>
           {subjects.map((s) => (
@@ -228,14 +230,14 @@ function AssignPanel({
           ))}
         </select>
       </div>
-      <button
+      <Button
+        variant="primary"
         disabled={!form.teacherId || !form.subjectId || assignMutation.isPending}
         onClick={() => assignMutation.mutate()}
-        className="flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity"
       >
         <Plus size={14} />
         Atribuir
-      </button>
+      </Button>
       {assignments.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-4">Nenhum professor atribuído.</p>
       ) : (
@@ -252,13 +254,15 @@ function AssignPanel({
                   {a.subject.code ? ` · ${a.subject.code}` : ""}
                 </p>
               </div>
-              <button
+              <Button
+                variant="danger"
+                size="sm"
                 onClick={() => removeMutation.mutate(a.id)}
                 disabled={removeMutation.isPending}
-                className="text-muted-foreground hover:text-destructive transition-colors"
+                className="p-1.5"
               >
                 <Trash2 size={14} />
-              </button>
+              </Button>
             </li>
           ))}
         </ul>
@@ -404,13 +408,14 @@ export default function CoordinatorClassesPage() {
             Gerencie turmas, alunos e professores da instituição.
           </p>
         </div>
-        <button
+        <Button
+          variant={showForm ? "ghost" : "primary"}
           onClick={() => setShowForm((v) => !v)}
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 transition-opacity shrink-0"
+          className="shrink-0"
         >
           {showForm ? <X size={15} /> : <Plus size={15} />}
           {showForm ? "Cancelar" : "Nova turma"}
-        </button>
+        </Button>
       </div>
 
       {showForm && <NewClassForm onClose={() => setShowForm(false)} />}
