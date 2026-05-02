@@ -6,14 +6,14 @@ const ROLE_PREFIXES: Record<string, string[]> = {
   STUDENT: ["/student"],
   TEACHER: ["/teacher"],
   COORDINATOR: ["/coordinator", "/teacher", "/student"],
-  ADMIN: ["/coordinator", "/teacher", "/student"],
+  ADMIN: ["/admin", "/coordinator", "/teacher", "/student"],
 };
 
 const ROLE_HOME: Record<string, string> = {
   STUDENT: "/student",
   TEACHER: "/teacher",
   COORDINATOR: "/coordinator",
-  ADMIN: "/coordinator",
+  ADMIN: "/admin",
 };
 
 function parseJwtPayload(token: string): Record<string, unknown> | null {
