@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Lexend } from "next/font/google";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { Providers } from "@/components/providers";
 import { Toaster } from "sonner";
 import "./globals.css";
@@ -20,10 +21,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR" className={lexend.variable} suppressHydrationWarning>
       <body className="font-sans antialiased">
-        <Providers>
-          {children}
-          <Toaster richColors position="top-right" />
-        </Providers>
+        <ThemeProvider>
+          <Providers>
+            {children}
+            <Toaster richColors position="top-right" />
+          </Providers>
+        </ThemeProvider>
       </body>
     </html>
   );
