@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Lexend } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { Toaster } from "sonner";
 import "./globals.css";
 
-const fontSans = Plus_Jakarta_Sans({
+const lexend = Lexend({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-sans",
+  display: "swap",
+  variable: "--font-lexend",
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -17,8 +18,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
-      <body className={`${fontSans.variable} font-sans antialiased`}>
+    <html lang="pt-BR" className={lexend.variable} suppressHydrationWarning>
+      <body className="font-sans antialiased">
         <Providers>
           {children}
           <Toaster richColors position="top-right" />
