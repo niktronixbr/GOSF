@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, KeyRound, UserPen } from "lucide-react";
+import { LogOut, KeyRound, UserPen, Menu } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
+import { useSidebarStore } from "@/store/sidebar.store";
 import { usersApi } from "@/lib/api/users";
 import { ApiError } from "@/lib/api/client";
 import { Avatar } from "@/components/ui/avatar";
@@ -44,6 +45,7 @@ type ProfileForm = z.infer<typeof profileSchema>;
 export function TopBar() {
   const router = useRouter();
   const { user, logout, updateUser } = useAuthStore();
+  const { toggleMobile } = useSidebarStore();
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
 
@@ -101,8 +103,18 @@ export function TopBar() {
 
   return (
     <>
-      <header className="flex h-16 items-center justify-between border-b border-outline-variant bg-surface px-6">
-        <div>
+      <header className="flex h-16 items-center gap-3 border-b border-outline-variant bg-surface px-4 lg:px-6">
+        {/* Hamburger — apenas mobile */}
+        <button
+          type="button"
+          onClick={toggleMobile}
+          className="lg:hidden flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-surface-container transition-colors shrink-0"
+          aria-label="Abrir menu"
+        >
+          <Menu size={20} />
+        </button>
+
+        <div className="flex-1">
           <h1 className="text-lg font-semibold text-foreground">
             Olá, {firstName}
           </h1>
