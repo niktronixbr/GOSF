@@ -12,6 +12,7 @@ export function QueryError({
       <p className="text-sm font-medium text-error mb-3">{message}</p>
       {onRetry && (
         <button
+          type="button"
           onClick={onRetry}
           className="text-xs font-semibold text-error underline-offset-2 hover:underline"
         >
