@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 import { billingApi } from "@/lib/api/billing";
 import { ApiError } from "@/lib/api/client";
+import { useAuthStore } from "@/store/auth.store";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
@@ -45,10 +46,16 @@ const plans = [
   },
 ];
 
+const CAN_SUBSCRIBE_ROLES = ["COORDINATOR", "ADMIN"] as const;
+
 export function PricingCards() {
   const router = useRouter();
+  const user = useAuthStore((s) => s.user);
   const [interval, setInterval] = useState<"month" | "year">("month");
   const [loading, setLoading] = useState<string | null>(null);
+
+  const canSubscribe =
+    !user || CAN_SUBSCRIBE_ROLES.includes(user.role as (typeof CAN_SUBSCRIBE_ROLES)[number]);
 
   async function handleSubscribe(planKey: string) {
     if (planKey === "enterprise") {
@@ -73,6 +80,7 @@ export function PricingCards() {
       {/* Interval toggle */}
       <div className="flex items-center justify-center gap-2">
         <button
+          type="button"
           onClick={() => setInterval("month")}
           className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${
             interval === "month"
@@ -83,6 +91,7 @@ export function PricingCards() {
           Mensal
         </button>
         <button
+          type="button"
           onClick={() => setInterval("year")}
           className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${
             interval === "year"
@@ -144,14 +153,20 @@ export function PricingCards() {
             </ul>
 
             {/* CTA */}
-            <Button
-              variant={plan.popular ? "primary" : "secondary"}
-              onClick={() => handleSubscribe(plan.key)}
-              disabled={loading === plan.key}
-              className="w-full"
-            >
-              {loading === plan.key ? "Aguarde..." : plan.cta}
-            </Button>
+            {canSubscribe ? (
+              <Button
+                variant={plan.popular ? "primary" : "secondary"}
+                onClick={() => handleSubscribe(plan.key)}
+                disabled={loading === plan.key}
+                className="w-full"
+              >
+                {loading === plan.key ? "Aguarde..." : plan.cta}
+              </Button>
+            ) : (
+              <p className="text-center text-xs text-muted-foreground">
+                Contratação disponível apenas para coordenadores.
+              </p>
+            )}
           </Card>
         ))}
       </div>
