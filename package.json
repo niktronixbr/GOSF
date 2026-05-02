@@ -16,11 +16,13 @@
     "db:studio": "pnpm --filter @gosf/database studio",
     "db:seed": "pnpm --filter @gosf/database seed",
     "docker:up": "docker compose up -d",
-    "docker:down": "docker compose down"
+    "docker:down": "docker compose down",
+    "prepare": "husky"
   },
   "devDependencies": {
+    "@types/node": "^22.10.2",
+    "husky": "^9.1.7",
     "turbo": "^2.3.3",
-    "typescript": "^5.7.2",
-    "@types/node": "^22.10.2"
+    "typescript": "^5.7.2"
   }
 }

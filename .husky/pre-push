@@ -1,0 +1,2 @@
+echo "Verificando tipos antes do push..."
+pnpm --filter api typecheck && pnpm --filter web typecheck
