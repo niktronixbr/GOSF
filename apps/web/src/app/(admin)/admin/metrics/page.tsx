@@ -6,6 +6,7 @@ import { adminApi, type AdminMetrics } from "@/lib/api/admin";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { SkeletonTable } from "@/components/ui/skeleton";
 
 function StatCard({
   label,
@@ -83,8 +84,8 @@ export default function AdminMetricsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-20 text-sm text-muted-foreground">
-        Carregando métricas...
+      <div className="space-y-4">
+        <SkeletonTable rows={3} />
       </div>
     );
   }

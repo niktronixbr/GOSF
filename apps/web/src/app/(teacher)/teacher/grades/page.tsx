@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { Button } from "@/components/ui/button";
 import { scoreVariant } from "@/lib/score-color";
+import { EmptyState } from "@/components/ui/empty-state";
+import { SkeletonTable } from "@/components/ui/skeleton";
 
 function gradeColor(avg: number | null) {
   if (avg === null) return "text-muted-foreground";
@@ -292,15 +294,12 @@ export default function TeacherGradesPage() {
       </div>
 
       {isLoading ? (
-        <div className="space-y-3 animate-pulse">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-20 rounded-xl bg-muted" />
-          ))}
-        </div>
+        <SkeletonTable rows={4} />
       ) : !groups?.length ? (
-        <div className="rounded-xl border border-border bg-card p-8 text-center text-muted-foreground">
-          Nenhuma turma encontrada. Você precisa ser atribuído a uma turma pelo coordenador.
-        </div>
+        <EmptyState
+          title="Nenhuma nota lançada"
+          description="Selecione uma turma e lance as notas dos alunos."
+        />
       ) : (
         <div className="space-y-3">
           {groups.map((group) => (
