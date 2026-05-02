@@ -160,7 +160,7 @@ export default function TeacherDevelopmentPage() {
           <Sparkles size={32} className="mx-auto text-muted-foreground" />
           <p className="font-medium text-foreground">Nenhum plano gerado ainda.</p>
           <p className="text-sm text-muted-foreground">
-            Clique em "Gerar plano" para que a IA crie seu plano de desenvolvimento com base nas avaliações deste ciclo.
+            Clique em &ldquo;Gerar plano&rdquo; para que a IA crie seu plano de desenvolvimento com base nas avaliações deste ciclo.
           </p>
         </div>
       )}

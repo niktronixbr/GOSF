@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    /* Neutros Stone — off-white quente */
+    /* Neutros — Stone (subtom marrom-quente) */
     --background:         30 5% 98%;
     --foreground:         20 7% 10%;
     --card:               0 0% 100%;
@@ -13,26 +13,53 @@
     --popover-foreground: 20 7% 10%;
 
     /* Primary → teal */
-    --primary:            185 32% 40%;
+    --primary:            186 30% 38%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary → amber soft */
+    /* Secondary → âmbar soft */
     --secondary:            40 55% 94%;
-    --secondary-foreground: 30 35% 30%;
+    --secondary-foreground: 30 35% 28%;
 
-    --muted:              30 6% 95%;
-    --muted-foreground:   20 5% 45%;
+    /* Muted → stone quente */
+    --muted:            30 6% 95%;
+    --muted-foreground: 20 5% 45%;
 
-    --accent:             30 6% 95%;
-    --accent-foreground:  20 7% 10%;
+    /* Accent → teal soft */
+    --accent:            186 40% 95%;
+    --accent-foreground: 186 30% 32%;
 
-    --destructive:            0 84.2% 60.2%;
+    /* Destrutivo */
+    --destructive:            0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border:  30 5% 91%;
-    --input:   30 6% 84%;
-    --ring:    185 32% 40%;
-    --radius:  0.5rem;
+    /* Bordas e inputs */
+    --border: 30 5% 91%;
+    --input:  30 6% 84%;
+    --ring:   186 30% 38%;
+
+    --radius: 0.625rem;
+  }
+
+  .dark {
+    --background:         222 47% 6%;
+    --foreground:         210 20% 98%;
+    --card:               222 47% 8%;
+    --card-foreground:    210 20% 98%;
+    --popover:            222 47% 8%;
+    --popover-foreground: 210 20% 98%;
+    --primary:            186 35% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary:          40 20% 18%;
+    --secondary-foreground: 40 30% 75%;
+    --muted:              220 20% 14%;
+    --muted-foreground:   218 10% 60%;
+    --accent:             186 30% 15%;
+    --accent-foreground:  186 40% 75%;
+    --destructive:        0 60% 40%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 20% 18%;
+    --input:  220 20% 18%;
+    --ring:   186 35% 55%;
   }
 }
 
@@ -41,30 +68,20 @@
   body { @apply bg-background text-foreground; }
 }
 
-/* Animações de entrada */
 @keyframes slide-up {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.animate-slide-up {
-  animation: slide-up 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
+@layer utilities {
+  .animate-slide-up {
+    animation: slide-up 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
 
-/* Hover elevation para stat cards */
-.stat-card {
-  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
-              box-shadow 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  .animate-delay-75  { animation-delay: 75ms; }
+  .animate-delay-100 { animation-delay: 100ms; }
+  .animate-delay-150 { animation-delay: 150ms; }
+  .animate-delay-200 { animation-delay: 200ms; }
+  .animate-delay-250 { animation-delay: 250ms; }
+  .animate-delay-300 { animation-delay: 300ms; }
 }
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 1px 3px rgba(15,23,42,0.07), 0 4px 12px rgba(15,23,42,0.05);
-}
-
-/* Stagger delays para listas animadas */
-.animate-slide-up:nth-child(1) { animation-delay: 0ms; }
-.animate-slide-up:nth-child(2) { animation-delay: 60ms; }
-.animate-slide-up:nth-child(3) { animation-delay: 120ms; }
-.animate-slide-up:nth-child(4) { animation-delay: 180ms; }
-.animate-slide-up:nth-child(5) { animation-delay: 240ms; }
-.animate-slide-up:nth-child(6) { animation-delay: 300ms; }

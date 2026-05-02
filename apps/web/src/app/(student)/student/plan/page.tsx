@@ -92,7 +92,7 @@ function FullPlan({ plan }: { plan: StudentPlanOutput }) {
       {plan.motivation_message && (
         <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
           <p className="text-sm italic text-muted-foreground text-center leading-relaxed">
-            "{plan.motivation_message}"
+            &ldquo;{plan.motivation_message}&rdquo;
           </p>
         </div>
       )}
@@ -176,7 +176,7 @@ export default function StudentPlanPage() {
           <Sparkles size={32} className="mx-auto text-muted-foreground" />
           <p className="font-medium text-foreground">Nenhum plano gerado ainda.</p>
           <p className="text-sm text-muted-foreground">
-            Clique em "Gerar plano" para que a IA crie seu plano personalizado com base nas avaliações deste ciclo.
+            Clique em &ldquo;Gerar plano&rdquo; para que a IA crie seu plano personalizado com base nas avaliações deste ciclo.
           </p>
         </div>
       )}
