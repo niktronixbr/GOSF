@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { coordinatorApi } from "@/lib/api/coordinator";
 import { OnboardingStepSubjects } from "./OnboardingStepSubjects";
@@ -32,12 +32,16 @@ export function OnboardingCard() {
   const { data: teachers } = useQuery({ queryKey: ["onboarding-teachers"], queryFn: () => coordinatorApi.getTeacherOptions() });
   const { data: students } = useQuery({ queryKey: ["onboarding-students"], queryFn: () => coordinatorApi.getStudentOptions() });
 
-  const completed = new Set<StepKey>([
-    ...(subjects && subjects.length > 0 ? ["subjects" as StepKey] : []),
-    ...(classes && classes.length > 0 ? ["classes" as StepKey] : []),
-    ...(teachers && teachers.length > 0 ? ["teachers" as StepKey] : []),
-    ...(students && students.length > 0 ? ["students" as StepKey] : []),
-  ]);
+  const completed = useMemo(
+    () =>
+      new Set<StepKey>([
+        ...(subjects && subjects.length > 0 ? ["subjects" as StepKey] : []),
+        ...(classes && classes.length > 0 ? ["classes" as StepKey] : []),
+        ...(teachers && teachers.length > 0 ? ["teachers" as StepKey] : []),
+        ...(students && students.length > 0 ? ["students" as StepKey] : []),
+      ]),
+    [subjects, classes, teachers, students],
+  );
 
   const allDone = completed.size === 4;
 
@@ -49,13 +53,16 @@ export function OnboardingCard() {
     }
   }, [allDone, done]);
 
-  // Auto-open first incomplete step
+  const hasAutoOpenedRef = useRef(false);
   useEffect(() => {
-    if (!expanded && !allDone) {
-      const first = STEPS.find((s) => !completed.has(s.key));
-      if (first) setExpanded(first.key);
+    if (hasAutoOpenedRef.current || allDone) return;
+    if (!subjects || !classes || !teachers || !students) return;
+    const first = STEPS.find((s) => !completed.has(s.key));
+    if (first) {
+      setExpanded(first.key);
+      hasAutoOpenedRef.current = true;
     }
-  }, [subjects, classes, teachers, students]);
+  }, [subjects, classes, teachers, students, allDone, completed]);
 
   function handleComplete(nextKey?: StepKey) {
     if (nextKey) setExpanded(nextKey);
@@ -106,7 +113,6 @@ export function OnboardingCard() {
         {STEPS.map((step, i) => {
           const isCompleted = completed.has(step.key);
           const isActive = expanded === step.key;
-          const nextStep = STEPS[i + 1];
           return (
             <button
               key={step.key}
