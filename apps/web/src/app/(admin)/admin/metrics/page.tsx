@@ -3,6 +3,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { BarChart2, Users, RefreshCw, BookOpen, Brain, Activity } from "lucide-react";
 import { adminApi, type AdminMetrics } from "@/lib/api/admin";
+import { ProgressBar } from "@/components/ui/progress-bar";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 function StatCard({
   label,
@@ -16,11 +19,11 @@ function StatCard({
   color?: string;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-5">
+    <Card>
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className={`mt-1 text-3xl font-bold ${color}`}>{value}</p>
       {sub && <p className="mt-1 text-xs text-muted-foreground">{sub}</p>}
-    </div>
+    </Card>
   );
 }
 
@@ -28,12 +31,12 @@ function RoleBar({
   label,
   value,
   total,
-  color,
+  variant,
 }: {
   label: string;
   value: number;
   total: number;
-  color: string;
+  variant: "primary" | "secondary" | "success" | "warning" | "danger";
 }) {
   const pct = total > 0 ? Math.round((value / total) * 100) : 0;
   return (
@@ -44,9 +47,7 @@ function RoleBar({
           {value} <span className="text-muted-foreground">({pct}%)</span>
         </span>
       </div>
-      <div className="h-2 w-full rounded-full bg-muted">
-        <div className={`h-2 rounded-full ${color}`} style={{ width: `${pct}%` }} />
-      </div>
+      <ProgressBar value={value} max={total} variant={variant} />
     </div>
   );
 }
@@ -55,23 +56,20 @@ function CycleBar({
   label,
   value,
   total,
-  color,
+  variant,
 }: {
   label: string;
   value: number;
   total: number;
-  color: string;
+  variant: "primary" | "secondary" | "success" | "warning" | "danger";
 }) {
-  const pct = total > 0 ? Math.round((value / total) * 100) : 0;
   return (
     <div>
       <div className="mb-1 flex justify-between text-xs">
         <span className="text-muted-foreground">{label}</span>
         <span className="font-medium text-foreground">{value}</span>
       </div>
-      <div className="h-2 w-full rounded-full bg-muted">
-        <div className={`h-2 rounded-full ${color}`} style={{ width: `${pct}%` }} />
-      </div>
+      <ProgressBar value={value} max={total} variant={variant} />
     </div>
   );
 }
@@ -117,14 +115,16 @@ export default function AdminMetricsPage() {
           <h1 className="text-2xl font-bold">Métricas da instituição</h1>
           <p className="text-sm text-muted-foreground">Visão geral operacional</p>
         </div>
-        <button
+        <Button
           onClick={() => refetch()}
           disabled={isFetching}
-          className="ml-auto flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50"
+          variant="ghost"
+          size="sm"
+          className="ml-auto gap-2"
         >
           <RefreshCw size={14} className={isFetching ? "animate-spin" : ""} />
           Atualizar
-        </button>
+        </Button>
       </div>
 
       <div>
@@ -140,42 +140,42 @@ export default function AdminMetricsPage() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-5">
+      <Card>
         <h2 className="mb-4 text-sm font-semibold">Distribuição por papel</h2>
         <div className="space-y-3">
-          <RoleBar label="Alunos" value={data.users.byRole.STUDENT} total={totalRoleUsers} color="bg-blue-500" />
-          <RoleBar label="Professores" value={data.users.byRole.TEACHER} total={totalRoleUsers} color="bg-green-500" />
-          <RoleBar label="Coordenadores" value={data.users.byRole.COORDINATOR} total={totalRoleUsers} color="bg-purple-500" />
-          <RoleBar label="Admins" value={data.users.byRole.ADMIN} total={totalRoleUsers} color="bg-orange-500" />
+          <RoleBar label="Alunos" value={data.users.byRole.STUDENT} total={totalRoleUsers} variant="primary" />
+          <RoleBar label="Professores" value={data.users.byRole.TEACHER} total={totalRoleUsers} variant="success" />
+          <RoleBar label="Coordenadores" value={data.users.byRole.COORDINATOR} total={totalRoleUsers} variant="secondary" />
+          <RoleBar label="Admins" value={data.users.byRole.ADMIN} total={totalRoleUsers} variant="warning" />
         </div>
-      </div>
+      </Card>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="rounded-xl border border-border bg-card p-5">
+        <Card>
           <div className="mb-4 flex items-center gap-2">
             <BookOpen size={16} className="text-muted-foreground" />
             <h2 className="text-sm font-semibold">Ciclos de avaliação</h2>
           </div>
           <p className="mb-4 text-3xl font-bold">{data.cycles.total}</p>
           <div className="space-y-3">
-            <CycleBar label="Rascunho" value={data.cycles.byStatus.DRAFT} total={totalCycles} color="bg-zinc-400" />
-            <CycleBar label="Aberto" value={data.cycles.byStatus.OPEN} total={totalCycles} color="bg-emerald-500" />
-            <CycleBar label="Fechado" value={data.cycles.byStatus.CLOSED} total={totalCycles} color="bg-blue-500" />
-            <CycleBar label="Arquivado" value={data.cycles.byStatus.ARCHIVED} total={totalCycles} color="bg-slate-400" />
+            <CycleBar label="Rascunho" value={data.cycles.byStatus.DRAFT} total={totalCycles} variant="secondary" />
+            <CycleBar label="Aberto" value={data.cycles.byStatus.OPEN} total={totalCycles} variant="success" />
+            <CycleBar label="Fechado" value={data.cycles.byStatus.CLOSED} total={totalCycles} variant="primary" />
+            <CycleBar label="Arquivado" value={data.cycles.byStatus.ARCHIVED} total={totalCycles} variant="secondary" />
           </div>
-        </div>
+        </Card>
 
         <div className="space-y-4">
-          <div className="rounded-xl border border-border bg-card p-5">
+          <Card>
             <div className="mb-3 flex items-center gap-2">
               <Activity size={16} className="text-muted-foreground" />
               <h2 className="text-sm font-semibold">Submissões de avaliação</h2>
             </div>
             <p className="text-3xl font-bold text-indigo-600">{data.evaluations.totalSubmissions}</p>
             <p className="mt-1 text-xs text-muted-foreground">alunos avaliando professores + professores avaliando alunos</p>
-          </div>
+          </Card>
 
-          <div className="rounded-xl border border-border bg-card p-5">
+          <Card>
             <div className="mb-3 flex items-center gap-2">
               <Brain size={16} className="text-muted-foreground" />
               <h2 className="text-sm font-semibold">Planos de IA gerados</h2>
@@ -190,7 +190,7 @@ export default function AdminMetricsPage() {
                 <p className="text-xs text-muted-foreground">para professores</p>
               </div>
             </div>
-          </div>
+          </Card>
         </div>
       </div>
     </div>

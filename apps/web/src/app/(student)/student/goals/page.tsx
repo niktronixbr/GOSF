@@ -4,18 +4,15 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { goalsApi, StudentGoal, GoalStatus } from "@/lib/api/goals";
 import { toast } from "sonner";
-import { Target, Plus, CheckCircle2, Circle, Clock, Pencil, Trash2, X } from "lucide-react";
+import { Target, Plus, CheckCircle2, Circle, Clock, Pencil, Trash2 } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Chip } from "@/components/ui/chip";
+import { Button } from "@/components/ui/button";
 
 const STATUS_LABELS: Record<GoalStatus, string> = {
   PENDING: "Pendente",
   IN_PROGRESS: "Em andamento",
   DONE: "Concluída",
-};
-
-const STATUS_COLORS: Record<GoalStatus, string> = {
-  PENDING: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
-  IN_PROGRESS: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  DONE: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
 };
 
 const STATUS_ICONS: Record<GoalStatus, React.ReactNode> = {
@@ -29,6 +26,12 @@ const STATUS_CYCLE: Record<GoalStatus, GoalStatus> = {
   IN_PROGRESS: "DONE",
   DONE: "PENDING",
 };
+
+function goalStatusVariant(status: GoalStatus): "neutral" | "info" | "success" | "danger" {
+  if (status === "DONE") return "success";
+  if (status === "IN_PROGRESS") return "info";
+  return "neutral";
+}
 
 function formatDate(iso: string | null) {
   if (!iso) return null;
@@ -50,39 +53,6 @@ interface GoalFormData {
   title: string;
   description: string;
   dueDate: string;
-}
-
-function Modal({
-  open,
-  onClose,
-  title,
-  children,
-}: {
-  open: boolean;
-  onClose: () => void;
-  title: string;
-  children: React.ReactNode;
-}) {
-  if (!open) return null;
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
-      <div className="w-full max-w-md rounded-2xl border border-border bg-card shadow-xl">
-        <div className="flex items-center justify-between border-b border-border px-5 py-4">
-          <h2 className="font-semibold text-foreground">{title}</h2>
-          <button
-            onClick={onClose}
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <X size={18} />
-          </button>
-        </div>
-        <div className="p-5">{children}</div>
-      </div>
-    </div>
-  );
 }
 
 function GoalForm({
@@ -151,13 +121,13 @@ function GoalForm({
         >
           Cancelar
         </button>
-        <button
+        <Button
           type="submit"
+          variant="primary"
           disabled={loading || !form.title.trim()}
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity"
         >
           {loading ? "Salvando..." : "Salvar"}
-        </button>
+        </Button>
       </div>
     </form>
   );
@@ -223,11 +193,9 @@ function GoalCard({
         )}
 
         <div className="flex items-center gap-2 mt-2 flex-wrap">
-          <span
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[goal.status]}`}
-          >
+          <Chip variant={goalStatusVariant(goal.status)}>
             {STATUS_LABELS[goal.status]}
-          </span>
+          </Chip>
 
           {goal.dueDate && (
             <span
@@ -336,13 +304,14 @@ export default function StudentGoalsPage() {
           </div>
         </div>
 
-        <button
+        <Button
+          variant="primary"
+          size="sm"
           onClick={() => setCreateOpen(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
         >
           <Plus size={16} />
           Nova meta
-        </button>
+        </Button>
       </div>
 
       {goals.length > 0 && (
@@ -375,13 +344,15 @@ export default function StudentGoalsPage() {
           <p className="text-sm text-muted-foreground max-w-xs">
             Crie sua primeira meta para acompanhar seus objetivos acadêmicos.
           </p>
-          <button
+          <Button
+            variant="primary"
+            size="sm"
             onClick={() => setCreateOpen(true)}
-            className="mt-1 flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
+            className="mt-1"
           >
             <Plus size={15} />
             Criar primeira meta
-          </button>
+          </Button>
         </div>
       )}
 
@@ -436,32 +407,50 @@ export default function StudentGoalsPage() {
         </section>
       )}
 
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Nova meta">
-        <GoalForm
-          onSubmit={handleCreate}
-          loading={createMut.isPending}
-          onCancel={() => setCreateOpen(false)}
-        />
-      </Modal>
-
-      <Modal
-        open={!!editingGoal}
-        onClose={() => setEditingGoal(null)}
-        title="Editar meta"
+      <Dialog
+        open={createOpen}
+        onOpenChange={(open) => {
+          if (!open) setCreateOpen(false);
+        }}
       >
-        {editingGoal && (
-          <GoalForm
-            initial={{
-              title: editingGoal.title,
-              description: editingGoal.description ?? "",
-              dueDate: editingGoal.dueDate ? editingGoal.dueDate.split("T")[0] : "",
-            }}
-            onSubmit={handleEdit}
-            loading={updateMut.isPending}
-            onCancel={() => setEditingGoal(null)}
-          />
-        )}
-      </Modal>
+        <DialogContent>
+          <DialogTitle>Nova meta</DialogTitle>
+          <div className="mt-4">
+            <GoalForm
+              onSubmit={handleCreate}
+              loading={createMut.isPending}
+              onCancel={() => setCreateOpen(false)}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!editingGoal}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingGoal(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogTitle>Editar meta</DialogTitle>
+          {editingGoal && (
+            <div className="mt-4">
+              <GoalForm
+                initial={{
+                  title: editingGoal.title,
+                  description: editingGoal.description ?? "",
+                  dueDate: editingGoal.dueDate ? editingGoal.dueDate.split("T")[0] : "",
+                }}
+                onSubmit={handleEdit}
+                loading={updateMut.isPending}
+                onCancel={() => setEditingGoal(null)}
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

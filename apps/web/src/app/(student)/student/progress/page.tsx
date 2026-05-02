@@ -12,6 +12,9 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { useChartColors } from "@/lib/chart-colors";
+import { Chip } from "@/components/ui/chip";
+import { scoreVariant } from "@/lib/score-color";
 
 const DIMENSION_COLORS: Record<string, string> = {
   participacao: "#6366f1",
@@ -48,6 +51,8 @@ function scoreLabel(score: number) {
 }
 
 export default function StudentProgressPage() {
+  const chartColors = useChartColors();
+
   const { data: history, isLoading } = useQuery({
     queryKey: ["student-history"],
     queryFn: () => analyticsApi.studentHistory(),
@@ -142,25 +147,26 @@ export default function StudentProgressPage() {
         <h2 className="font-semibold text-foreground mb-4">Evolução por dimensão</h2>
         <ResponsiveContainer width="100%" height={280}>
           <LineChart data={chartData} margin={{ top: 4, right: 16, bottom: 4, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+            <CartesianGrid strokeDasharray="3 3" stroke={chartColors.gridLine} />
             <XAxis
               dataKey="cycle"
-              tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+              tick={{ fontSize: 12, fill: chartColors.muted }}
               tickLine={false}
               axisLine={false}
             />
             <YAxis
               domain={[0, 100]}
-              tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+              tick={{ fontSize: 12, fill: chartColors.muted }}
               tickLine={false}
               axisLine={false}
               width={30}
             />
             <Tooltip
               contentStyle={{
-                background: "hsl(var(--card))",
-                border: "1px solid hsl(var(--border))",
                 borderRadius: "8px",
+                border: `1px solid ${chartColors.gridLine}`,
+                background: "var(--surface)",
+                color: "var(--foreground)",
                 fontSize: "13px",
               }}
               formatter={(value: number, name: string) => [
@@ -214,9 +220,9 @@ export default function StudentProgressPage() {
                     return (
                       <td key={c.cycleId} className="py-2 text-right px-2">
                         {s ? (
-                          <span className={`font-medium ${scoreLabel(s.score).color}`}>
+                          <Chip variant={scoreVariant(s.score)}>
                             {s.score.toFixed(0)}
-                          </span>
+                          </Chip>
                         ) : (
                           <span className="text-muted-foreground">—</span>
                         )}

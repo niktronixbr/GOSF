@@ -19,6 +19,9 @@ import {
   type DataRequestType,
   type DataRequestWithUser,
 } from "@/lib/api/privacy";
+import { Chip } from "@/components/ui/chip";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 const TYPE_LABELS: Record<DataRequestType, string> = {
   ACCESS: "Acesso",
@@ -35,12 +38,15 @@ const STATUS_LABELS: Record<DataRequestStatus, string> = {
   REJECTED: "Recusada",
 };
 
-const STATUS_TONE: Record<DataRequestStatus, string> = {
-  PENDING: "bg-yellow-100 text-yellow-700",
-  IN_PROGRESS: "bg-blue-100 text-blue-700",
-  COMPLETED: "bg-green-100 text-green-700",
-  REJECTED: "bg-red-100 text-red-700",
-};
+function privacyStatusVariant(
+  status: DataRequestStatus,
+): "warning" | "info" | "success" | "danger" | "neutral" {
+  if (status === "PENDING") return "warning";
+  if (status === "IN_PROGRESS") return "info";
+  if (status === "COMPLETED") return "success";
+  if (status === "REJECTED") return "danger";
+  return "neutral";
+}
 
 const STATUS_ICON: Record<DataRequestStatus, React.ReactNode> = {
   PENDING: <Clock size={12} />,
@@ -82,28 +88,34 @@ function RequestActions({
   return (
     <div className="flex gap-2 flex-wrap">
       {request.status === "PENDING" && (
-        <button
+        <Button
           onClick={() => onUpdate("IN_PROGRESS")}
           disabled={disabled}
-          className="flex items-center gap-1 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+          variant="ghost"
+          size="sm"
+          className="gap-1"
         >
           <Play size={11} /> Iniciar análise
-        </button>
+        </Button>
       )}
-      <button
+      <Button
         onClick={() => onUpdate("COMPLETED")}
         disabled={disabled}
-        className="flex items-center gap-1 rounded-md border border-green-200 bg-green-50 px-2 py-1 text-xs font-medium text-green-700 hover:bg-green-100 disabled:opacity-50"
+        variant="primary"
+        size="sm"
+        className="gap-1"
       >
         <Check size={11} /> Concluir
-      </button>
-      <button
+      </Button>
+      <Button
         onClick={() => onUpdate("REJECTED")}
         disabled={disabled}
-        className="flex items-center gap-1 rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
+        variant="danger"
+        size="sm"
+        className="gap-1"
       >
         <XIcon size={11} /> Recusar
-      </button>
+      </Button>
     </div>
   );
 }
@@ -157,10 +169,10 @@ export default function AdminPrivacyPage() {
       <div className="flex items-center gap-2 flex-wrap">
         <button
           onClick={() => setStatusFilter("ALL")}
-          className={`rounded-full px-3 py-1 text-xs font-medium border ${
+          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
             statusFilter === "ALL"
-              ? "bg-primary text-primary-foreground border-primary"
-              : "border-border bg-card hover:bg-muted/40"
+              ? "bg-primary text-on-primary"
+              : "text-muted-foreground hover:bg-surface-container"
           }`}
         >
           Todas
@@ -169,10 +181,10 @@ export default function AdminPrivacyPage() {
           <button
             key={s}
             onClick={() => setStatusFilter(s)}
-            className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium border ${
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               statusFilter === s
-                ? "bg-primary text-primary-foreground border-primary"
-                : "border-border bg-card hover:bg-muted/40"
+                ? "bg-primary text-on-primary"
+                : "text-muted-foreground hover:bg-surface-container"
             }`}
           >
             {STATUS_ICON[s]}
@@ -186,7 +198,7 @@ export default function AdminPrivacyPage() {
         ))}
       </div>
 
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <Card noPadding>
         {isLoading ? (
           <p className="p-8 text-center text-sm text-muted-foreground">
             Carregando…
@@ -233,12 +245,10 @@ export default function AdminPrivacyPage() {
                     )}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_TONE[req.status]}`}
-                    >
+                    <Chip variant={privacyStatusVariant(req.status)}>
                       {STATUS_ICON[req.status]}
                       {STATUS_LABELS[req.status]}
-                    </span>
+                    </Chip>
                   </td>
                   <td className="px-4 py-3">
                     <RequestActions
@@ -254,7 +264,7 @@ export default function AdminPrivacyPage() {
             </tbody>
           </table>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

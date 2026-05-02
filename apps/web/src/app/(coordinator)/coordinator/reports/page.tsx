@@ -7,6 +7,10 @@ import { gradesApi } from "@/lib/api/grades";
 import { Download, AlertTriangle, Users, GraduationCap, ChevronDown } from "lucide-react";
 import { clsx } from "clsx";
 import { ExportPdfButton } from "@/components/reports/ExportPdfButton";
+import { Chip } from "@/components/ui/chip";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { scoreVariant } from "@/lib/score-color";
 
 type FilterType = "ALL" | "STUDENT" | "TEACHER";
 
@@ -26,19 +30,13 @@ function exportCsv(rows: ReportEntry[], cycleTitle: string) {
   });
 
   const csv = [header.join(";"), ...lines].join("\n");
-  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
   a.download = `relatorio-${cycleTitle.replace(/\s+/g, "-").toLowerCase()}.csv`;
   a.click();
   URL.revokeObjectURL(url);
-}
-
-function ScoreCell({ score }: { score: number | null }) {
-  if (score === null) return <span className="text-muted-foreground text-xs">—</span>;
-  const color = score >= 70 ? "text-green-600" : score >= 50 ? "text-yellow-600" : "text-red-600";
-  return <span className={clsx("font-semibold text-sm", color)}>{score.toFixed(1)}</span>;
 }
 
 export default function CoordinatorReportsPage() {
@@ -107,14 +105,15 @@ export default function CoordinatorReportsPage() {
             atRiskCount={atRiskCount}
             disabled={!report || filtered.length === 0}
           />
-          <button
+          <Button
+            variant="secondary"
+            size="md"
             onClick={() => report && selectedCycle && exportCsv(filtered, selectedCycle.title)}
             disabled={!report || filtered.length === 0}
-            className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground hover:bg-accent disabled:opacity-40 transition-colors shrink-0"
           >
             <Download size={15} />
             Exportar CSV
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -124,8 +123,8 @@ export default function CoordinatorReportsPage() {
           className={clsx(
             "px-4 py-2 font-medium transition-colors",
             activeTab === "evaluations"
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:bg-accent",
+              ? "bg-primary text-on-primary"
+              : "text-muted-foreground hover:bg-surface-container",
           )}
         >
           Avaliações
@@ -135,8 +134,8 @@ export default function CoordinatorReportsPage() {
           className={clsx(
             "px-4 py-2 font-medium transition-colors",
             activeTab === "grades"
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:bg-accent",
+              ? "bg-primary text-on-primary"
+              : "text-muted-foreground hover:bg-surface-container",
           )}
         >
           Notas
@@ -177,8 +176,8 @@ export default function CoordinatorReportsPage() {
                 className={clsx(
                   "px-4 py-2 font-medium transition-colors",
                   filterType === type
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-accent"
+                    ? "bg-primary text-on-primary"
+                    : "text-muted-foreground hover:bg-surface-container"
                 )}
               >
                 {labels[type]}
@@ -190,20 +189,20 @@ export default function CoordinatorReportsPage() {
 
       {selectedCycleId && report && (
         <div className="grid grid-cols-3 gap-4">
-          <div className="rounded-xl border border-border bg-card p-4 shadow-sm flex items-center gap-3">
+          <Card className="p-4 flex items-center gap-3">
             <GraduationCap size={20} className="text-muted-foreground shrink-0" />
             <div>
               <p className="text-xs text-muted-foreground">Alunos</p>
               <p className="text-xl font-bold text-foreground">{studentCount}</p>
             </div>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-4 shadow-sm flex items-center gap-3">
+          </Card>
+          <Card className="p-4 flex items-center gap-3">
             <Users size={20} className="text-muted-foreground shrink-0" />
             <div>
               <p className="text-xs text-muted-foreground">Professores</p>
               <p className="text-xl font-bold text-foreground">{teacherCount}</p>
             </div>
-          </div>
+          </Card>
           <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-4 shadow-sm flex items-center gap-3">
             <AlertTriangle size={20} className="text-red-500 shrink-0" />
             <div>
@@ -215,21 +214,21 @@ export default function CoordinatorReportsPage() {
       )}
 
       {!selectedCycleId && !loadingCycles && (
-        <div className="rounded-xl border border-border bg-card p-10 text-center text-muted-foreground">
+        <Card className="p-10 text-center text-muted-foreground">
           Selecione um ciclo para visualizar o relatório.
-        </div>
+        </Card>
       )}
 
       {selectedCycleId && (loadingReport ? (
-        <div className="rounded-xl border border-border bg-card p-6 animate-pulse space-y-3">
+        <Card className="p-6 animate-pulse space-y-3">
           {[...Array(5)].map((_, i) => <div key={i} className="h-10 rounded bg-muted" />)}
-        </div>
+        </Card>
       ) : filtered.length === 0 ? (
-        <div className="rounded-xl border border-border bg-card p-10 text-center text-muted-foreground">
+        <Card className="p-10 text-center text-muted-foreground">
           Nenhum dado para o ciclo selecionado.
-        </div>
+        </Card>
       ) : (
-        <div className="rounded-xl border border-border bg-card shadow-sm overflow-x-auto">
+        <Card noPadding className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/40">
@@ -270,25 +269,29 @@ export default function CoordinatorReportsPage() {
                       {row.fullName}
                     </td>
                     <td className="px-4 py-3">
-                      <span
-                        className={clsx(
-                          "rounded-full px-2 py-0.5 text-xs font-medium",
-                          row.type === "STUDENT"
-                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                            : "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
-                        )}
-                      >
+                      <Chip variant={row.type === "STUDENT" ? "info" : "neutral"}>
                         {row.type === "STUDENT" ? "Aluno" : "Professor"}
-                      </span>
+                      </Chip>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <ScoreCell score={row.avgScore} />
+                      {row.avgScore === null ? (
+                        <span className="text-muted-foreground text-xs">—</span>
+                      ) : (
+                        <Chip variant={scoreVariant(row.avgScore)}>{row.avgScore.toFixed(1)}</Chip>
+                      )}
                     </td>
-                    {allDimensions.map((d) => (
-                      <td key={d} className="px-4 py-3 text-right">
-                        <ScoreCell score={dimMap[d] ?? null} />
-                      </td>
-                    ))}
+                    {allDimensions.map((d) => {
+                      const score = dimMap[d] ?? null;
+                      return (
+                        <td key={d} className="px-4 py-3 text-right">
+                          {score === null ? (
+                            <span className="text-muted-foreground text-xs">—</span>
+                          ) : (
+                            <Chip variant={scoreVariant(score)}>{score.toFixed(1)}</Chip>
+                          )}
+                        </td>
+                      );
+                    })}
                     <td className="px-4 py-3 text-center">
                       {row.atRisk ? (
                         <AlertTriangle size={14} className="inline text-red-500" />
@@ -301,24 +304,24 @@ export default function CoordinatorReportsPage() {
               })}
             </tbody>
           </table>
-        </div>
+        </Card>
       ))}
       </>}
 
       {activeTab === "grades" && (
         <div className="space-y-4">
           {loadingGrades ? (
-            <div className="rounded-xl border border-border bg-card p-6 animate-pulse space-y-3">
+            <Card className="p-6 animate-pulse space-y-3">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="h-10 rounded bg-muted" />
               ))}
-            </div>
+            </Card>
           ) : !gradesOverview?.bySubject?.length ? (
-            <div className="rounded-xl border border-border bg-card p-10 text-center text-muted-foreground">
+            <Card className="p-10 text-center text-muted-foreground">
               Nenhuma nota lançada no ciclo ativo.
-            </div>
+            </Card>
           ) : (
-            <div className="rounded-xl border border-border bg-card shadow-sm overflow-x-auto">
+            <Card noPadding className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-muted/40">
@@ -393,7 +396,7 @@ export default function CoordinatorReportsPage() {
                     ))}
                 </tbody>
               </table>
-            </div>
+            </Card>
           )}
         </div>
       )}

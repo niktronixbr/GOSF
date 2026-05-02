@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { coordinatorApi, TeacherClassAssignment } from "@/lib/api/coordinator";
 import { BookOpen, GraduationCap, Tag } from "lucide-react";
+import { Chip } from "@/components/ui/chip";
 
 function ClassCard({ item }: { item: TeacherClassAssignment }) {
   return (
@@ -17,10 +18,10 @@ function ClassCard({ item }: { item: TeacherClassAssignment }) {
             <p className="text-xs text-muted-foreground">Período: {item.classGroup.academicPeriod}</p>
           </div>
         </div>
-        <span className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
-          <GraduationCap size={14} />
+        <Chip variant="neutral" className="shrink-0">
+          <GraduationCap size={13} />
           {item.classGroup._count.enrollments} alunos
-        </span>
+        </Chip>
       </div>
       <div className="flex items-center gap-2">
         <Tag size={13} className="text-muted-foreground shrink-0" />

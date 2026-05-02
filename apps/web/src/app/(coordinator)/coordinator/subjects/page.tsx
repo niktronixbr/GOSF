@@ -4,35 +4,9 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { coordinatorApi, SubjectInfo } from "@/lib/api/coordinator";
 import { toast } from "sonner";
-import { BookMarked, Plus, Trash2, X, Search } from "lucide-react";
-
-function Modal({
-  open,
-  onClose,
-  children,
-}: {
-  open: boolean;
-  onClose: () => void;
-  children: React.ReactNode;
-}) {
-  if (!open) return null;
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
-      <div className="w-full max-w-md rounded-2xl border border-border bg-card shadow-xl">
-        <div className="flex items-center justify-between border-b border-border px-5 py-4">
-          <h2 className="font-semibold text-foreground">Nova disciplina</h2>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-            <X size={18} />
-          </button>
-        </div>
-        <div className="p-5">{children}</div>
-      </div>
-    </div>
-  );
-}
+import { BookMarked, Plus, Trash2, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 function CreateForm({
   onSubmit,
@@ -47,7 +21,7 @@ function CreateForm({
   const [code, setCode] = useState("");
 
   const inputClass =
-    "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary";
+    "w-full rounded-lg border border-outline-variant bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring";
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -81,63 +55,14 @@ function CreateForm({
         <p className="text-xs text-muted-foreground">Opcional. Usado para identificação rápida.</p>
       </div>
       <div className="flex gap-2 justify-end">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
-        >
+        <Button type="button" variant="ghost" onClick={onCancel}>
           Cancelar
-        </button>
-        <button
-          type="submit"
-          disabled={loading || !name.trim()}
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity"
-        >
+        </Button>
+        <Button type="submit" variant="primary" disabled={loading || !name.trim()}>
           {loading ? "Criando..." : "Criar"}
-        </button>
+        </Button>
       </div>
     </form>
-  );
-}
-
-function ConfirmDeleteDialog({
-  subject,
-  onConfirm,
-  onCancel,
-  loading,
-}: {
-  subject: SubjectInfo;
-  onConfirm: () => void;
-  onCancel: () => void;
-  loading: boolean;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-sm rounded-2xl border border-border bg-card shadow-xl p-6 flex flex-col gap-4">
-        <div>
-          <h2 className="font-semibold text-foreground">Excluir disciplina?</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            A disciplina <span className="font-medium text-foreground">{subject.name}</span> será
-            removida. Esta ação não pode ser desfeita.
-          </p>
-        </div>
-        <div className="flex gap-2 justify-end">
-          <button
-            onClick={onCancel}
-            className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={onConfirm}
-            disabled={loading}
-            className="rounded-lg bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground hover:opacity-90 disabled:opacity-50 transition-opacity"
-          >
-            {loading ? "Excluindo..." : "Excluir"}
-          </button>
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -192,20 +117,20 @@ export default function CoordinatorSubjectsPage() {
             </p>
           </div>
         </div>
-        <button
+        <Button
+          variant="primary"
           onClick={() => setCreateOpen(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
         >
           <Plus size={16} />
           Nova disciplina
-        </button>
+        </Button>
       </div>
 
       {subjects.length > 0 && (
         <div className="relative">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
-            className="w-full rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-lg border border-outline-variant bg-input pl-9 pr-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             placeholder="Buscar disciplina ou código..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -230,13 +155,14 @@ export default function CoordinatorSubjectsPage() {
           <p className="text-sm text-muted-foreground max-w-xs">
             Crie disciplinas para vinculá-las às turmas e professores.
           </p>
-          <button
+          <Button
+            variant="primary"
+            className="mt-1"
             onClick={() => setCreateOpen(true)}
-            className="mt-1 flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
           >
             <Plus size={15} />
             Criar primeira disciplina
-          </button>
+          </Button>
         </div>
       )}
 
@@ -267,34 +193,55 @@ export default function CoordinatorSubjectsPage() {
                   )}
                 </div>
               </div>
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setDeleteTarget(subject)}
-                className="text-muted-foreground hover:text-destructive p-1.5 rounded-md hover:bg-muted transition-colors"
                 title="Excluir disciplina"
+                className="text-muted-foreground hover:text-destructive"
               >
                 <Trash2 size={15} />
-              </button>
+              </Button>
             </div>
           ))}
         </div>
       )}
 
-      <Modal open={createOpen} onClose={() => setCreateOpen(false)}>
-        <CreateForm
-          onSubmit={createMut.mutate}
-          loading={createMut.isPending}
-          onCancel={() => setCreateOpen(false)}
-        />
-      </Modal>
+      <Dialog open={createOpen} onOpenChange={(open) => !open && setCreateOpen(false)}>
+        <DialogContent className="max-w-md">
+          <DialogTitle>Nova disciplina</DialogTitle>
+          <div className="mt-4">
+            <CreateForm
+              onSubmit={createMut.mutate}
+              loading={createMut.isPending}
+              onCancel={() => setCreateOpen(false)}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
 
-      {deleteTarget && (
-        <ConfirmDeleteDialog
-          subject={deleteTarget}
-          onConfirm={() => deleteMut.mutate(deleteTarget.id)}
-          onCancel={() => setDeleteTarget(null)}
-          loading={deleteMut.isPending}
-        />
-      )}
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogTitle>Excluir disciplina</DialogTitle>
+          <p className="text-sm text-muted-foreground mt-2">
+            A disciplina <span className="font-medium text-foreground">{deleteTarget?.name}</span> será
+            removida. Esta ação não pode ser desfeita.
+          </p>
+          <div className="flex gap-3 mt-4">
+            <Button variant="ghost" onClick={() => setDeleteTarget(null)} className="flex-1">
+              Cancelar
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => deleteTarget && deleteMut.mutate(deleteTarget.id)}
+              disabled={deleteMut.isPending}
+              className="flex-1"
+            >
+              {deleteMut.isPending ? "Excluindo..." : "Excluir"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

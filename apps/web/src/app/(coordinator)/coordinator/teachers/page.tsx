@@ -7,25 +7,32 @@ import { evaluationsApi } from "@/lib/api/evaluations";
 import { coordinatorApi, TeacherWithScores } from "@/lib/api/coordinator";
 import { BarChart2, User, ChevronRight, Search } from "lucide-react";
 import { PaginationControls } from "@/components/ui/pagination-controls";
+import { Chip } from "@/components/ui/chip";
+import { Card } from "@/components/ui/card";
+import { scoreVariant } from "@/lib/score-color";
 
 const LIMIT = 20;
 
-function ScoreBadge({ score }: { score: number | null }) {
-  if (score === null) return <span className="text-xs text-muted-foreground">Sem dados</span>;
-  const color =
-    score < 50 ? "text-destructive" : score < 70 ? "text-yellow-600" : "text-green-600";
-  return <span className={`font-semibold text-sm ${color}`}>{score.toFixed(0)}</span>;
+type PlanChipVariant = "success" | "warning" | "info" | "danger" | "neutral";
+
+function planVariant(status: string | null): PlanChipVariant {
+  if (!status) return "neutral";
+  const map: Record<string, PlanChipVariant> = {
+    READY: "success",
+    GENERATING: "info",
+    FAILED: "danger",
+  };
+  return map[status] ?? "neutral";
 }
 
-function PlanBadge({ status }: { status: string | null }) {
-  if (!status) return <span className="text-xs text-muted-foreground">—</span>;
-  const map: Record<string, { label: string; cls: string }> = {
-    READY: { label: "Pronto", cls: "bg-green-100 text-green-700" },
-    GENERATING: { label: "Gerando", cls: "bg-blue-100 text-blue-700" },
-    FAILED: { label: "Falhou", cls: "bg-destructive/10 text-destructive" },
+function planLabel(status: string | null): string {
+  if (!status) return "—";
+  const map: Record<string, string> = {
+    READY: "Pronto",
+    GENERATING: "Gerando",
+    FAILED: "Falhou",
   };
-  const { label, cls } = map[status] ?? { label: status, cls: "bg-muted text-muted-foreground" };
-  return <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>{label}</span>;
+  return map[status] ?? status;
 }
 
 function TeacherRow({ teacher }: { teacher: TeacherWithScores }) {
@@ -46,9 +53,17 @@ function TeacherRow({ teacher }: { teacher: TeacherWithScores }) {
       <div className="text-right space-y-1 shrink-0">
         <div className="flex items-center justify-end gap-1">
           <BarChart2 size={12} className="text-muted-foreground" />
-          <ScoreBadge score={teacher.avgScore} />
+          {teacher.avgScore === null ? (
+            <span className="text-xs text-muted-foreground">Sem dados</span>
+          ) : (
+            <Chip variant={scoreVariant(teacher.avgScore)}>{teacher.avgScore.toFixed(0)}</Chip>
+          )}
         </div>
-        <PlanBadge status={teacher.planStatus} />
+        {teacher.planStatus === null ? (
+          <span className="text-xs text-muted-foreground">—</span>
+        ) : (
+          <Chip variant={planVariant(teacher.planStatus)}>{planLabel(teacher.planStatus)}</Chip>
+        )}
       </div>
       <ChevronRight size={16} className="text-muted-foreground shrink-0" />
     </Link>
@@ -112,20 +127,20 @@ export default function CoordinatorTeachersPage() {
       </div>
 
       <div className="grid grid-cols-3 gap-4">
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        <Card className="p-4">
           <p className="text-xs text-muted-foreground">Total</p>
           <p className="mt-1 text-2xl font-bold text-foreground">{isLoading ? "—" : total}</p>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        </Card>
+        <Card className="p-4">
           <p className="text-xs text-muted-foreground">Média geral</p>
           <p className="mt-1 text-2xl font-bold text-foreground">
             {isLoading ? "—" : avgGlobal ?? "—"}
           </p>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        </Card>
+        <Card className="p-4">
           <p className="text-xs text-muted-foreground">Em risco</p>
           <p className="mt-1 text-2xl font-bold text-destructive">{isLoading ? "—" : atRisk}</p>
-        </div>
+        </Card>
       </div>
 
       {/* Search */}
@@ -142,7 +157,7 @@ export default function CoordinatorTeachersPage() {
         />
       </div>
 
-      <div className="rounded-xl border border-border bg-card px-5 shadow-sm">
+      <Card noPadding className="px-5">
         {isLoading ? (
           <div className="space-y-3 animate-pulse py-4">
             {[...Array(4)].map((_, i) => (
@@ -156,7 +171,7 @@ export default function CoordinatorTeachersPage() {
         ) : (
           teachers.map((t) => <TeacherRow key={t.id} teacher={t} />)
         )}
-      </div>
+      </Card>
 
       <PaginationControls
         page={page}

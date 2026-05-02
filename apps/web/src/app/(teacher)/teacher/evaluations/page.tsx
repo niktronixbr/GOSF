@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { evaluationsApi, StudentTarget } from "@/lib/api/evaluations";
 import { CheckCircle, Clock, User } from "lucide-react";
+import { Chip } from "@/components/ui/chip";
 
 function StudentCard({ student }: { student: StudentTarget }) {
   return (
@@ -28,15 +29,15 @@ function StudentCard({ student }: { student: StudentTarget }) {
 
         <div className="flex-shrink-0">
           {student.evaluated ? (
-            <span className="flex items-center gap-1 text-xs font-medium text-green-600">
-              <CheckCircle size={14} />
+            <Chip variant="success">
+              <CheckCircle size={12} />
               Avaliado
-            </span>
+            </Chip>
           ) : (
-            <span className="flex items-center gap-1 text-xs font-medium text-yellow-600">
-              <Clock size={14} />
+            <Chip variant="warning">
+              <Clock size={12} />
               Pendente
-            </span>
+            </Chip>
           )}
         </div>
       </div>

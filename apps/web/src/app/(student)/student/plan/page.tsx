@@ -6,12 +6,14 @@ import { analyticsApi, StudentPlanOutput } from "@/lib/api/analytics";
 import { gradesApi } from "@/lib/api/grades";
 import { Sparkles, CheckCircle2, AlertCircle, Calendar, Star, Info } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { ProgressBar } from "@/components/ui/progress-bar";
 
-function gradesBarColor(avg: number | null) {
-  if (avg === null) return "bg-muted";
-  if (avg >= 8) return "bg-green-500";
-  if (avg >= 6) return "bg-yellow-500";
-  return "bg-red-500";
+function gradesBarVariant(avg: number | null): "success" | "warning" | "danger" | "primary" {
+  if (avg === null) return "primary";
+  if (avg >= 8) return "success";
+  if (avg >= 6) return "warning";
+  return "danger";
 }
 
 function gradesTextColor(avg: number | null) {
@@ -53,14 +55,11 @@ function GradesSection() {
               <span className="w-28 text-left text-muted-foreground truncate shrink-0">
                 {subject.subjectName}
               </span>
-              <div className="flex-1 bg-muted rounded-full h-2">
-                <div
-                  className={`h-2 rounded-full transition-all ${gradesBarColor(subject.weightedAverage)}`}
-                  style={{
-                    width: `${
-                      subject.weightedAverage !== null ? (subject.weightedAverage / 10) * 100 : 0
-                    }%`,
-                  }}
+              <div className="flex-1">
+                <ProgressBar
+                  value={subject.weightedAverage ?? 0}
+                  max={10}
+                  variant={gradesBarVariant(subject.weightedAverage)}
                 />
               </div>
               <span
@@ -240,14 +239,16 @@ export default function StudentPlanPage() {
         </div>
 
         {dashboard?.cycle && (
-          <button
+          <Button
+            variant="primary"
+            size="sm"
             onClick={() => generateMutation.mutate()}
             disabled={generateMutation.isPending || plan?.status === "GENERATING"}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity shrink-0"
+            className="shrink-0"
           >
             <Sparkles size={15} />
             {plan ? "Regenerar" : "Gerar plano"}
-          </button>
+          </Button>
         )}
       </div>
 

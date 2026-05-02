@@ -3,7 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { evaluationsApi, TeacherTarget } from "@/lib/api/evaluations";
-import { CheckCircle, Clock, User } from "lucide-react";
+import { User } from "lucide-react";
+import { Chip } from "@/components/ui/chip";
 
 function TeacherCard({ teacher }: { teacher: TeacherTarget }) {
   return (
@@ -30,15 +31,9 @@ function TeacherCard({ teacher }: { teacher: TeacherTarget }) {
 
         <div className="flex-shrink-0">
           {teacher.evaluated ? (
-            <span className="flex items-center gap-1 text-xs font-medium text-green-600">
-              <CheckCircle size={14} />
-              Avaliado
-            </span>
+            <Chip variant="success">Avaliado</Chip>
           ) : (
-            <span className="flex items-center gap-1 text-xs font-medium text-yellow-600">
-              <Clock size={14} />
-              Pendente
-            </span>
+            <Chip variant="warning">Pendente</Chip>
           )}
         </div>
       </div>

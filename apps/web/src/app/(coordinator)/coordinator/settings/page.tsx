@@ -10,6 +10,8 @@ import { coordinatorApi } from "@/lib/api/coordinator";
 import { billingApi, BillingStatus } from "@/lib/api/billing";
 import { toast } from "sonner";
 import { Save, Building2, CreditCard } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
 
 const schema = z.object({
   name: z.string().min(2, "Nome deve ter ao menos 2 caracteres"),
@@ -25,11 +27,18 @@ const statusLabels: Record<string, string> = {
   SUSPENDED: "Suspensa",
 };
 
-const billingStatusConfig: Record<string, { label: string; className: string }> = {
-  TRIAL: { label: "Em trial", className: "bg-yellow-100 text-yellow-800" },
-  ACTIVE: { label: "Ativo", className: "bg-emerald-100 text-emerald-800" },
-  SUSPENDED: { label: "Suspenso", className: "bg-red-100 text-red-800" },
-  INACTIVE: { label: "Cancelado", className: "bg-gray-100 text-gray-600" },
+const billingStatusVariant: Record<string, "success" | "warning" | "danger" | "neutral"> = {
+  TRIAL: "warning",
+  ACTIVE: "success",
+  SUSPENDED: "danger",
+  INACTIVE: "neutral",
+};
+
+const billingStatusLabel: Record<string, string> = {
+  TRIAL: "Em trial",
+  ACTIVE: "Ativo",
+  SUSPENDED: "Suspenso",
+  INACTIVE: "Cancelado",
 };
 
 const planLabels: Record<string, string> = {
@@ -84,7 +93,7 @@ function InstitutionForm() {
           <label className="text-sm font-medium text-foreground block">Nome da instituição</label>
           <input
             {...register("name")}
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-lg border border-outline-variant bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             placeholder="Nome da instituição"
           />
           {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
@@ -96,7 +105,7 @@ function InstitutionForm() {
             value={institution?.slug ?? ""}
             readOnly
             disabled
-            className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-sm text-muted-foreground cursor-not-allowed"
+            className="w-full rounded-lg border border-outline-variant bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring cursor-not-allowed opacity-60"
           />
           <p className="text-xs text-muted-foreground">O slug é gerado automaticamente e não pode ser alterado.</p>
         </div>
@@ -105,7 +114,7 @@ function InstitutionForm() {
           <label className="text-sm font-medium text-foreground block">Status</label>
           <select
             {...register("status")}
-            className="w-full appearance-none rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full rounded-lg border border-outline-variant bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring appearance-none"
           >
             {Object.entries(statusLabels).map(([value, label]) => (
               <option key={value} value={value}>{label}</option>
@@ -116,14 +125,14 @@ function InstitutionForm() {
       </div>
 
       <div className="flex justify-end">
-        <button
+        <Button
           type="submit"
+          variant="primary"
           disabled={!isDirty || mutation.isPending}
-          className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity"
         >
           <Save size={15} />
           {mutation.isPending ? "Salvando..." : "Salvar"}
-        </button>
+        </Button>
       </div>
     </form>
   );
@@ -151,12 +160,13 @@ function BillingTab() {
   if (isLoading) return <SkeletonForm />;
 
   const billing = data as BillingStatus;
-  const statusCfg = billingStatusConfig[billing.status] ?? billingStatusConfig.INACTIVE;
+  const chipVariant = billingStatusVariant[billing.status] ?? "neutral";
+  const chipLabel = billingStatusLabel[billing.status] ?? billing.status;
 
   return (
     <div className="space-y-4 max-w-lg">
       {billing.status === "SUSPENDED" && (
-        <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-800">
+        <div className="rounded-lg bg-error/10 border border-error/30 px-4 py-3 text-sm text-error">
           Sua assinatura está suspensa por falha no pagamento. Atualize seu método de pagamento para continuar usando o GOSF.
         </div>
       )}
@@ -169,9 +179,7 @@ function BillingTab() {
               {billing.planName ? planLabels[billing.planName] ?? billing.planName : "Trial"}
             </p>
           </div>
-          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${statusCfg.className}`}>
-            {statusCfg.label}
-          </span>
+          <Chip variant={chipVariant}>{chipLabel}</Chip>
         </div>
 
         {billing.billingInterval && (
@@ -187,20 +195,20 @@ function BillingTab() {
         )}
 
         {billing.status === "TRIAL" && billing.trialEndsAt && (
-          <p className="text-sm text-amber-700 font-medium">
+          <p className="text-sm text-warning font-medium">
             Trial encerra em {new Date(billing.trialEndsAt).toLocaleDateString("pt-BR")}
           </p>
         )}
 
         {billing.stripeSubscriptionId ? (
-          <button
+          <Button
+            variant="secondary"
             onClick={handleManage}
             disabled={portalLoading}
-            className="flex items-center gap-2 rounded-lg border border-primary text-primary px-4 py-2 text-sm font-semibold hover:bg-primary/5 disabled:opacity-50 transition-colors"
           >
             <CreditCard size={15} />
             {portalLoading ? "Abrindo..." : "Gerenciar assinatura"}
-          </button>
+          </Button>
         ) : (
           <a
             href="/pricing"
@@ -246,10 +254,10 @@ function SettingsContent() {
           <button
             key={key}
             onClick={() => selectTab(key)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+            className={`flex items-center gap-2 px-4 py-2.5 -mb-px transition-colors ${
               activeTab === key
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
+                ? "border-b-2 border-primary pb-2 text-sm font-semibold text-primary"
+                : "border-b-2 border-transparent pb-2 text-sm font-medium text-muted-foreground hover:text-foreground"
             }`}
           >
             <Icon size={15} />

@@ -3,22 +3,19 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { gradesApi, ClassSubjectGroup, StudentGradeEntry } from "@/lib/api/grades";
-import { ChevronDown, ChevronRight, Plus, Trash2, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Plus, Trash2 } from "lucide-react";
 import clsx from "clsx";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { ProgressBar } from "@/components/ui/progress-bar";
+import { Button } from "@/components/ui/button";
+import { scoreVariant } from "@/lib/score-color";
 
 function gradeColor(avg: number | null) {
   if (avg === null) return "text-muted-foreground";
   if (avg >= 8) return "text-green-600";
   if (avg >= 6) return "text-yellow-600";
   return "text-red-600";
-}
-
-function gradeBarColor(avg: number | null) {
-  if (avg === null) return "bg-muted";
-  if (avg >= 8) return "bg-green-500";
-  if (avg >= 6) return "bg-yellow-500";
-  return "bg-red-500";
 }
 
 function GradeModal({
@@ -78,39 +75,35 @@ function GradeModal({
   const totalWeight = student.grades.reduce((sum, g) => sum + g.weight * 100, 0);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="bg-card rounded-xl shadow-xl w-full max-w-md border border-border">
-        <div className="flex items-center justify-between p-5 border-b border-border">
-          <div>
-            <p className="font-semibold text-foreground">{student.fullName}</p>
-            {student.weightedAverage !== null && (
-              <p className={clsx("text-sm font-medium", gradeColor(student.weightedAverage))}>
-                Média atual: {student.weightedAverage.toFixed(1)}
-              </p>
-            )}
-          </div>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-            <X size={18} />
-          </button>
-        </div>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-md">
+        <DialogTitle>{student.fullName}</DialogTitle>
+        {student.weightedAverage !== null && (
+          <p className={clsx("text-sm font-medium mb-4", gradeColor(student.weightedAverage))}>
+            Média atual: {student.weightedAverage.toFixed(1)}
+          </p>
+        )}
 
-        <div className="p-5 space-y-4">
+        <div className="space-y-4">
           {student.grades.length > 0 ? (
             <div className="space-y-2">
               {student.grades.map((g) => (
-                <div key={g.id} className="flex items-center justify-between bg-muted/40 rounded-lg px-3 py-2 text-sm">
-                  <span className="font-medium">{g.title}</span>
-                  <div className="flex items-center gap-3">
-                    <span className="text-muted-foreground text-xs">{(g.weight * 100).toFixed(0)}%</span>
-                    <span className={clsx("font-bold", gradeColor(g.value))}>{g.value.toFixed(1)}</span>
-                    <button
-                      onClick={() => deleteMutation.mutate(g.id)}
-                      disabled={deleteMutation.isPending}
-                      className="text-muted-foreground hover:text-red-500 transition-colors"
-                    >
-                      <Trash2 size={13} />
-                    </button>
+                <div key={g.id} className="space-y-1">
+                  <div className="flex items-center justify-between bg-muted/40 rounded-lg px-3 py-2 text-sm">
+                    <span className="font-medium">{g.title}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-muted-foreground text-xs">{(g.weight * 100).toFixed(0)}%</span>
+                      <span className={clsx("font-bold", gradeColor(g.value))}>{g.value.toFixed(1)}</span>
+                      <button
+                        onClick={() => deleteMutation.mutate(g.id)}
+                        disabled={deleteMutation.isPending}
+                        className="text-muted-foreground hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
                   </div>
+                  <ProgressBar value={g.value} max={10} variant={scoreVariant(g.value * 10)} />
                 </div>
               ))}
               <p className="text-xs text-muted-foreground">
@@ -154,18 +147,19 @@ function GradeModal({
                 onChange={(e) => setValue(e.target.value)}
               />
             </div>
-            <button
+            <Button
+              variant="primary"
+              className="w-full"
               onClick={() => upsertMutation.mutate()}
               disabled={!canSave || upsertMutation.isPending}
-              className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity"
             >
               <Plus size={14} />
               {upsertMutation.isPending ? "Salvando..." : "Salvar nota"}
-            </button>
+            </Button>
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -233,10 +227,11 @@ function ClassCard({ group }: { group: ClassSubjectGroup }) {
                 <div className="flex items-center gap-2">
                   {student.weightedAverage !== null ? (
                     <>
-                      <div className="w-16 bg-muted rounded-full h-1.5">
-                        <div
-                          className={clsx("h-1.5 rounded-full", gradeBarColor(student.weightedAverage))}
-                          style={{ width: `${(student.weightedAverage / 10) * 100}%` }}
+                      <div className="w-16">
+                        <ProgressBar
+                          value={student.weightedAverage}
+                          max={10}
+                          variant={scoreVariant(student.weightedAverage * 10)}
                         />
                       </div>
                       <span
@@ -268,17 +263,14 @@ function ClassCard({ group }: { group: ClassSubjectGroup }) {
       )}
 
       {selectedStudent && !group.cycleId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-card rounded-xl p-6 border border-border text-center space-y-3">
-            <p className="font-medium">Nenhum ciclo ativo.</p>
+        <Dialog open onOpenChange={(open) => { if (!open) setSelectedStudent(null); }}>
+          <DialogContent className="max-w-sm">
+            <DialogTitle>Nenhum ciclo ativo</DialogTitle>
             <p className="text-sm text-muted-foreground">
               Abra um ciclo de avaliação para lançar notas.
             </p>
-            <button onClick={() => setSelectedStudent(null)} className="text-sm text-primary underline">
-              Fechar
-            </button>
-          </div>
-        </div>
+          </DialogContent>
+        </Dialog>
       )}
     </>
   );

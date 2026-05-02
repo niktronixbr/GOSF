@@ -14,25 +14,10 @@ import {
 } from "recharts";
 import { coordinatorApi, ClassBenchmark } from "@/lib/api/coordinator";
 import { Users, TrendingUp, AlertTriangle, BarChart2 } from "lucide-react";
-
-function scoreColor(score: number | null): string {
-  if (score === null) return "#94a3b8";
-  if (score < 50) return "#ef4444";
-  if (score < 70) return "#f59e0b";
-  return "#22c55e";
-}
-
-function ScoreBadge({ score }: { score: number | null }) {
-  if (score === null)
-    return <span className="text-xs text-muted-foreground">Sem dados</span>;
-  const color =
-    score < 50
-      ? "text-destructive"
-      : score < 70
-      ? "text-yellow-600"
-      : "text-green-600";
-  return <span className={`font-semibold text-sm ${color}`}>{score.toFixed(1)}</span>;
-}
+import { useChartColors } from "@/lib/chart-colors";
+import { Chip } from "@/components/ui/chip";
+import { Card } from "@/components/ui/card";
+import { scoreVariant } from "@/lib/score-color";
 
 interface TooltipProps {
   active?: boolean;
@@ -44,12 +29,21 @@ function CustomTooltip({ active, payload }: TooltipProps) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
-    <div className="rounded-lg border border-border bg-card p-3 shadow-md text-sm space-y-1">
+    <div
+      className="rounded-lg p-3 shadow-md text-sm space-y-1"
+      style={{
+        borderRadius: "8px",
+        border: "1px solid var(--outline-variant)",
+        background: "var(--surface)",
+        color: "var(--foreground)",
+        fontSize: "13px",
+      }}
+    >
       <p className="font-semibold text-foreground">{d.className}</p>
       <p className="text-muted-foreground">{d.academicPeriod}</p>
       <p className="text-foreground">
         Média:{" "}
-        <span className="font-bold" style={{ color: scoreColor(d.avgScore) }}>
+        <span className="font-bold">
           {d.avgScore !== null ? d.avgScore.toFixed(1) : "—"}
         </span>
       </p>
@@ -60,6 +54,7 @@ function CustomTooltip({ active, payload }: TooltipProps) {
 
 export default function BenchmarkingPage() {
   const [selectedCycleId, setSelectedCycleId] = useState<string>("");
+  const chartColors = useChartColors();
 
   const { data: cycles } = useQuery({
     queryKey: ["cycles"],
@@ -94,6 +89,13 @@ export default function BenchmarkingPage() {
     new Set(benchmarking?.flatMap((c) => c.dimensions.map((d) => d.dimension)) ?? [])
   ).sort();
 
+  function barFill(avgScore: number | null): string {
+    if (avgScore === null) return chartColors.muted;
+    if (avgScore < 50) return chartColors.danger;
+    if (avgScore < 70) return chartColors.warning;
+    return chartColors.success;
+  }
+
   return (
     <div className="space-y-6 max-w-5xl">
       <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -120,7 +122,7 @@ export default function BenchmarkingPage() {
 
       {/* Stats cards */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        <Card className="p-4">
           <div className="flex items-center gap-2 mb-1">
             <BarChart2 size={14} className="text-muted-foreground" />
             <p className="text-xs text-muted-foreground">Média geral</p>
@@ -128,8 +130,8 @@ export default function BenchmarkingPage() {
           <p className="text-2xl font-bold text-foreground">
             {isLoading ? "—" : globalAvg ?? "—"}
           </p>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        </Card>
+        <Card className="p-4">
           <div className="flex items-center gap-2 mb-1">
             <TrendingUp size={14} className="text-green-600" />
             <p className="text-xs text-muted-foreground">Melhor turma</p>
@@ -140,8 +142,8 @@ export default function BenchmarkingPage() {
           {best && (
             <p className="text-xs text-green-600 font-semibold">{best.avgScore!.toFixed(1)}</p>
           )}
-        </div>
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        </Card>
+        <Card className="p-4">
           <div className="flex items-center gap-2 mb-1">
             <TrendingUp size={14} className="text-destructive rotate-180" />
             <p className="text-xs text-muted-foreground">Pior turma</p>
@@ -152,8 +154,8 @@ export default function BenchmarkingPage() {
           {worst && (
             <p className="text-xs text-destructive font-semibold">{worst.avgScore!.toFixed(1)}</p>
           )}
-        </div>
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        </Card>
+        <Card className="p-4">
           <div className="flex items-center gap-2 mb-1">
             <AlertTriangle size={14} className="text-destructive" />
             <p className="text-xs text-muted-foreground">Turmas em risco</p>
@@ -161,11 +163,11 @@ export default function BenchmarkingPage() {
           <p className="text-2xl font-bold text-destructive">
             {isLoading ? "—" : atRisk}
           </p>
-        </div>
+        </Card>
       </div>
 
       {/* Bar chart */}
-      <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+      <Card className="p-5">
         <h2 className="text-sm font-semibold text-foreground mb-4">
           Score médio por turma
         </h2>
@@ -182,23 +184,30 @@ export default function BenchmarkingPage() {
               margin={{ top: 4, right: 8, left: -10, bottom: 8 }}
               barCategoryGap="30%"
             >
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+              <CartesianGrid
+                strokeDasharray="3 3"
+                vertical={false}
+                stroke={chartColors.gridLine}
+              />
               <XAxis
                 dataKey="name"
-                tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                tick={{ fontSize: 11, fill: chartColors.muted }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
                 domain={[0, 100]}
-                tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                tick={{ fontSize: 11, fill: chartColors.muted }}
                 axisLine={false}
                 tickLine={false}
               />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: "var(--accent)", opacity: 0.4 }} />
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{ fill: "var(--accent)", opacity: 0.4 }}
+              />
               <Bar dataKey="score" radius={[6, 6, 0, 0]} maxBarSize={56}>
                 {chartData.map((entry, index) => (
-                  <Cell key={index} fill={scoreColor(entry.avgScore)} />
+                  <Cell key={index} fill={barFill(entry.avgScore)} />
                 ))}
               </Bar>
             </BarChart>
@@ -218,11 +227,11 @@ export default function BenchmarkingPage() {
             <span className="inline-block w-3 h-3 rounded-sm bg-slate-400" /> Sem dados
           </span>
         </div>
-      </div>
+      </Card>
 
       {/* Dimension breakdown table */}
       {allDimensions.length > 0 && (
-        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+        <Card noPadding>
           <div className="px-5 py-4 border-b border-border">
             <h2 className="text-sm font-semibold text-foreground">Detalhamento por dimensão</h2>
           </div>
@@ -273,13 +282,22 @@ export default function BenchmarkingPage() {
                         {c.studentCount}
                       </td>
                       <td className="px-3 py-3 text-center">
-                        <ScoreBadge score={c.avgScore} />
+                        {c.avgScore === null ? (
+                          <span className="text-xs text-muted-foreground">Sem dados</span>
+                        ) : (
+                          <Chip variant={scoreVariant(c.avgScore)}>{c.avgScore.toFixed(1)}</Chip>
+                        )}
                       </td>
                       {allDimensions.map((dim) => {
                         const d = c.dimensions.find((x) => x.dimension === dim);
+                        const dimAvg = d?.avg ?? null;
                         return (
                           <td key={dim} className="px-3 py-3 text-center">
-                            <ScoreBadge score={d?.avg ?? null} />
+                            {dimAvg === null ? (
+                              <span className="text-xs text-muted-foreground">Sem dados</span>
+                            ) : (
+                              <Chip variant={scoreVariant(dimAvg)}>{dimAvg.toFixed(1)}</Chip>
+                            )}
                           </td>
                         );
                       })}
@@ -289,7 +307,7 @@ export default function BenchmarkingPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       )}
     </div>
   );
