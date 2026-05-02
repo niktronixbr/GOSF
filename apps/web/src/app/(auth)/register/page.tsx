@@ -6,11 +6,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useSearchParams } from "next/navigation";
 import { z } from "zod";
+import { GraduationCap } from "lucide-react";
 import { toast } from "sonner";
 import { api, ApiError } from "@/lib/api/client";
 import { institutionsApi } from "@/lib/api/institutions";
 import { billingApi } from "@/lib/api/billing";
 import { useAuthStore } from "@/store/auth.store";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 const schema = z
   .object({
@@ -35,7 +38,7 @@ function toSlug(name: string) {
   return name
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .replace(/\s+/g, "-")
     .replace(/[^a-z0-9-]/g, "")
     .replace(/-+/g, "-")
@@ -84,7 +87,7 @@ function RegisterForm() {
       const res = await api.post<{ accessToken: string; refreshToken: string }>(
         "/auth/login",
         { institutionSlug: values.slug, email: values.adminEmail, password: values.adminPassword },
-        true
+        true,
       );
       const redirectTo = login(res.accessToken, res.refreshToken);
       if (planParam && intervalParam) {
@@ -106,166 +109,194 @@ function RegisterForm() {
     }
   }
 
-  const inputClass =
-    "w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring";
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
-      <div className="w-full max-w-lg">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">GOSF</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Plataforma de inteligência educacional
-          </p>
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      {planParam && (
+        <div className="rounded-lg bg-primary/10 border border-primary/20 px-4 py-3 text-sm text-foreground">
+          Você está assinando o plano{" "}
+          <span className="font-semibold capitalize">{planParam}</span>
+          {" "}— após o cadastro, você será redirecionado para o pagamento.
         </div>
+      )}
 
-        <div className="rounded-xl border border-border bg-card p-8 shadow-sm">
-          <h2 className="mb-1 text-xl font-semibold text-card-foreground">Cadastrar nova escola</h2>
-          <p className="mb-6 text-sm text-muted-foreground">
-            Crie a conta da sua instituição e comece a usar o GOSF.
-          </p>
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        Dados da escola
+      </p>
 
-          {planParam && (
-            <div className="mb-4 rounded-lg bg-indigo-50 border border-indigo-200 px-4 py-3 text-sm text-indigo-800">
-              Você está assinando o plano{" "}
-              <span className="font-semibold capitalize">{planParam}</span>
-              {" "}— após o cadastro, você será redirecionado para o pagamento.
-            </div>
-          )}
-
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Dados da escola
-            </p>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                Nome da escola
-              </label>
-              <input
-                {...form.register("name")}
-                placeholder="ex: Escola Estadual João da Silva"
-                className={inputClass}
-              />
-              {form.formState.errors.name && (
-                <p className="mt-1 text-xs text-destructive">{form.formState.errors.name.message}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                Identificador (slug)
-              </label>
-              <input
-                {...form.register("slug")}
-                placeholder="ex: escola-joao-silva"
-                className={inputClass}
-              />
-              <p className="mt-1 text-xs text-muted-foreground">
-                Usado no login: apenas letras minúsculas, números e hífens.
-              </p>
-              {form.formState.errors.slug && (
-                <p className="mt-1 text-xs text-destructive">{form.formState.errors.slug.message}</p>
-              )}
-            </div>
-
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pt-2">
-              Administrador
-            </p>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                Nome completo
-              </label>
-              <input
-                {...form.register("adminName")}
-                placeholder="ex: Maria Souza"
-                autoComplete="name"
-                className={inputClass}
-              />
-              {form.formState.errors.adminName && (
-                <p className="mt-1 text-xs text-destructive">
-                  {form.formState.errors.adminName.message}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">E-mail</label>
-              <input
-                {...form.register("adminEmail")}
-                type="email"
-                placeholder="admin@escola.com"
-                autoComplete="email"
-                className={inputClass}
-              />
-              {form.formState.errors.adminEmail && (
-                <p className="mt-1 text-xs text-destructive">
-                  {form.formState.errors.adminEmail.message}
-                </p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Senha</label>
-                <input
-                  {...form.register("adminPassword")}
-                  type="password"
-                  placeholder="••••••••"
-                  autoComplete="new-password"
-                  className={inputClass}
-                />
-                {form.formState.errors.adminPassword && (
-                  <p className="mt-1 text-xs text-destructive">
-                    {form.formState.errors.adminPassword.message}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
-                  Confirmar senha
-                </label>
-                <input
-                  {...form.register("confirmPassword")}
-                  type="password"
-                  placeholder="••••••••"
-                  autoComplete="new-password"
-                  className={inputClass}
-                />
-                {form.formState.errors.confirmPassword && (
-                  <p className="mt-1 text-xs text-destructive">
-                    {form.formState.errors.confirmPassword.message}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full rounded-md bg-primary py-2 text-sm font-semibold text-primary-foreground shadow hover:opacity-90 disabled:opacity-50 transition-opacity"
-            >
-              {isSubmitting ? "Cadastrando..." : "Criar conta"}
-            </button>
-          </form>
-        </div>
-
-        <p className="mt-4 text-center text-sm text-muted-foreground">
-          Já tem conta?{" "}
-          <Link href="/login" className="text-primary hover:underline font-medium">
-            Fazer login
-          </Link>
-        </p>
+      <div>
+        <label className="block text-sm font-semibold text-foreground mb-1.5">
+          Nome da escola
+        </label>
+        <Input
+          {...form.register("name")}
+          placeholder="ex: Escola Estadual João da Silva"
+        />
+        {form.formState.errors.name && (
+          <p className="mt-1 text-xs text-error">{form.formState.errors.name.message}</p>
+        )}
       </div>
-    </div>
+
+      <div>
+        <label className="block text-sm font-semibold text-foreground mb-1.5">
+          Identificador (slug)
+        </label>
+        <Input
+          {...form.register("slug")}
+          placeholder="ex: escola-joao-silva"
+        />
+        <p className="mt-1 text-xs text-muted-foreground">
+          Usado no login: apenas letras minúsculas, números e hífens.
+        </p>
+        {form.formState.errors.slug && (
+          <p className="mt-1 text-xs text-error">{form.formState.errors.slug.message}</p>
+        )}
+      </div>
+
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pt-2">
+        Administrador
+      </p>
+
+      <div>
+        <label className="block text-sm font-semibold text-foreground mb-1.5">
+          Nome completo
+        </label>
+        <Input
+          {...form.register("adminName")}
+          placeholder="ex: Maria Souza"
+          autoComplete="name"
+        />
+        {form.formState.errors.adminName && (
+          <p className="mt-1 text-xs text-error">
+            {form.formState.errors.adminName.message}
+          </p>
+        )}
+      </div>
+
+      <div>
+        <label className="block text-sm font-semibold text-foreground mb-1.5">E-mail</label>
+        <Input
+          {...form.register("adminEmail")}
+          type="email"
+          placeholder="admin@escola.com"
+          autoComplete="email"
+        />
+        {form.formState.errors.adminEmail && (
+          <p className="mt-1 text-xs text-error">
+            {form.formState.errors.adminEmail.message}
+          </p>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-sm font-semibold text-foreground mb-1.5">Senha</label>
+          <Input
+            {...form.register("adminPassword")}
+            type="password"
+            placeholder="••••••••"
+            autoComplete="new-password"
+          />
+          {form.formState.errors.adminPassword && (
+            <p className="mt-1 text-xs text-error">
+              {form.formState.errors.adminPassword.message}
+            </p>
+          )}
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-foreground mb-1.5">
+            Confirmar senha
+          </label>
+          <Input
+            {...form.register("confirmPassword")}
+            type="password"
+            placeholder="••••••••"
+            autoComplete="new-password"
+          />
+          {form.formState.errors.confirmPassword && (
+            <p className="mt-1 text-xs text-error">
+              {form.formState.errors.confirmPassword.message}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <Button type="submit" disabled={isSubmitting} className="w-full">
+        {isSubmitting ? "Cadastrando..." : "Criar conta"}
+      </Button>
+    </form>
   );
 }
 
 export default function RegisterPage() {
   return (
-    <Suspense>
-      <RegisterForm />
-    </Suspense>
+    <div className="min-h-screen grid lg:grid-cols-2">
+      {/* Hero side - bg primary marrom */}
+      <div className="relative hidden lg:flex flex-col justify-between bg-primary px-10 py-10 text-primary-foreground">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15">
+            <GraduationCap size={20} />
+          </div>
+          <div>
+            <p className="font-bold text-lg">GOSF</p>
+            <p className="text-xs uppercase tracking-wider opacity-75">Academic Excellence</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <h1 className="text-3xl font-bold leading-tight">
+            Inteligência relacional<br />para educação de excelência
+          </h1>
+          <p className="text-base opacity-80 max-w-md">
+            Avaliações cruzadas, planos personalizados por IA e dashboards claros
+            para alunos, professores e coordenação.
+          </p>
+        </div>
+
+        <div className="flex gap-8">
+          {[
+            { value: "1.2k+", label: "Escolas" },
+            { value: "98%", label: "Adesão" },
+            { value: "LGPD", label: "Compliance" },
+          ].map(({ value, label }) => (
+            <div key={label}>
+              <p className="text-xl font-bold">{value}</p>
+              <p className="text-xs opacity-75 uppercase tracking-wider">{label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Form side */}
+      <div className="flex items-center justify-center bg-background px-6 py-12">
+        <div className="w-full max-w-sm space-y-8">
+          <div className="flex items-center gap-2 lg:hidden">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <GraduationCap size={16} />
+            </div>
+            <span className="text-base font-bold">GOSF</span>
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-bold text-foreground">
+              Cadastrar instituição
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Crie a conta da sua escola e comece hoje mesmo
+            </p>
+          </div>
+
+          <Suspense>
+            <RegisterForm />
+          </Suspense>
+
+          <p className="text-center text-xs text-muted-foreground">
+            Já tem conta?{" "}
+            <Link href="/login" className="text-primary hover:underline font-semibold">
+              Entrar
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }

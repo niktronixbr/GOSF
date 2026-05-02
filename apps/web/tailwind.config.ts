@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import tailwindcssAnimate from "tailwindcss-animate";
 
 const config: Config = {
   darkMode: ["class"],
@@ -11,68 +12,94 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
-        },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
+        background: "var(--background)",
+        foreground: "var(--foreground)",
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
+          DEFAULT: "var(--primary)",
+          foreground: "var(--primary-foreground)",
+          container: "var(--primary-container)",
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
+          DEFAULT: "var(--secondary)",
+          foreground: "var(--secondary-foreground)",
+          container: "var(--secondary-container)",
+        },
+        tertiary: {
+          DEFAULT: "var(--tertiary)",
+          foreground: "var(--tertiary-foreground)",
+          container: "var(--tertiary-container)",
+        },
+        surface: {
+          DEFAULT: "var(--surface)",
+          container: "var(--surface-container)",
+          "container-high": "var(--surface-container-high)",
+          "container-low": "var(--surface-container-low)",
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          DEFAULT: "var(--muted)",
+          foreground: "var(--muted-foreground)",
         },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
+        card: {
+          DEFAULT: "var(--card)",
+          foreground: "var(--card-foreground)",
+        },
+        popover: {
+          DEFAULT: "var(--popover)",
+          foreground: "var(--popover-foreground)",
+        },
+        border: "var(--border)",
+        input: "var(--input)",
+        ring: "var(--ring)",
+        outline: {
+          DEFAULT: "var(--outline)",
+          variant: "var(--outline-variant)",
         },
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+          DEFAULT: "var(--destructive)",
+          foreground: "var(--destructive-foreground)",
         },
-        border: "hsl(var(--border))",
-        input:  "hsl(var(--input))",
-        ring:   "hsl(var(--ring))",
-
-        /* Novos tokens diretos */
-        sidebar: "#0f172a",
-        teal: {
-          DEFAULT: "oklch(0.55 0.08 195)",
-          soft:    "oklch(0.95 0.025 195)",
-          fg:      "oklch(0.42 0.09 195)",
+        error: {
+          DEFAULT: "var(--error)",
+          foreground: "var(--error-foreground)",
+          container: "var(--error-container)",
         },
-        amber: {
-          DEFAULT: "oklch(0.62 0.13 60)",
-          soft:    "oklch(0.95 0.04 60)",
-          fg:      "oklch(0.42 0.10 60)",
+        success: {
+          DEFAULT: "var(--success)",
+          foreground: "var(--success-foreground)",
+          container: "var(--success-container)",
         },
+        warning: {
+          DEFAULT: "var(--warning)",
+          foreground: "var(--warning-foreground)",
+          container: "var(--warning-container)",
+        },
+        accent: {
+          DEFAULT: "var(--accent)",
+          foreground: "var(--accent-foreground)",
+        },
+        "on-primary-container": "var(--on-primary-container)",
+        "on-secondary-container": "var(--on-secondary-container)",
+        "on-tertiary-container": "var(--on-tertiary-container)",
+        "on-error-container": "var(--on-error-container)",
+        "on-success-container": "var(--on-success-container)",
+        "on-warning-container": "var(--on-warning-container)",
+        "on-surface-variant": "var(--on-surface-variant)",
       },
       fontFamily: {
-        sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+        sans: ["var(--font-lexend)", "system-ui", "sans-serif"],
         mono: ["ui-monospace", "SFMono-Regular", "monospace"],
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
-      },
-      boxShadow: {
-        teal: "0 4px 14px oklch(0.55 0.08 195 / 0.2)",
+        sm: "var(--radius-sm)",
+        DEFAULT: "var(--radius)",
+        md: "var(--radius-md)",
+        lg: "var(--radius-lg)",
+        xl: "var(--radius-xl)",
+        pill: "var(--radius-pill)",
       },
     },
   },
-  plugins: [],
+  plugins: [tailwindcssAnimate],
 };
 
 export default config;

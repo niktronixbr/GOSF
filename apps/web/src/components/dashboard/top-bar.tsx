@@ -1,16 +1,24 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, KeyRound, ChevronDown, UserPen } from "lucide-react";
+import { LogOut, KeyRound, UserPen } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { NotificationsBell } from "./notifications-bell";
 import { useAuthStore } from "@/store/auth.store";
 import { usersApi } from "@/lib/api/users";
 import { ApiError } from "@/lib/api/client";
+import { Avatar } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { NotificationsBell } from "./notifications-bell";
 
 const passwordSchema = z
   .object({
@@ -32,25 +40,17 @@ type PasswordForm = z.infer<typeof passwordSchema>;
 type ProfileForm = z.infer<typeof profileSchema>;
 
 export function TopBar() {
-  const { user, logout, updateUser } = useAuthStore();
   const router = useRouter();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const { user, logout, updateUser } = useAuthStore();
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   const passwordForm = useForm<PasswordForm>({ resolver: zodResolver(passwordSchema) });
   const profileForm = useForm<ProfileForm>({ resolver: zodResolver(profileSchema) });
 
-  useEffect(() => {
-    function onClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", onClick);
-    return () => document.removeEventListener("mousedown", onClick);
-  }, []);
+  if (!user) return null;
+
+  const firstName = user.fullName?.split(" ")[0] ?? "Usuário";
 
   async function handleLogout() {
     await logout();
@@ -58,13 +58,11 @@ export function TopBar() {
   }
 
   function openPasswordModal() {
-    setMenuOpen(false);
     passwordForm.reset();
     setPasswordModalOpen(true);
   }
 
   function openProfileModal() {
-    setMenuOpen(false);
     profileForm.reset({ fullName: user?.fullName ?? "", avatarUrl: "" });
     setProfileModalOpen(true);
   }
@@ -99,55 +97,47 @@ export function TopBar() {
     }
   }
 
-  const initials = user?.fullName
-    ? user.fullName.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase()
-    : "?";
-
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-end border-b border-border bg-white px-6 gap-3">
-        <NotificationsBell />
+      <header className="flex h-16 items-center justify-between border-b border-outline-variant bg-surface px-6">
+        <div>
+          <h1 className="text-lg font-semibold text-foreground">
+            Olá, {firstName}
+          </h1>
+          <p className="text-xs text-muted-foreground">
+            {/* mensagem secundária dinâmica - deixar vazia por ora */}
+          </p>
+        </div>
 
-        <div className="relative" ref={menuRef}>
-          <button
-            onClick={() => setMenuOpen((v) => !v)}
-            className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-muted transition-colors"
-          >
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-soft text-xs font-semibold text-amber-fg">
-              {initials}
-            </span>
-            <span className="hidden sm:block text-sm font-medium max-w-[140px] truncate">
-              {user?.fullName}
-            </span>
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-          </button>
+        <div className="flex items-center gap-2">
+          <NotificationsBell />
 
-          {menuOpen && (
-            <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-border bg-white shadow-md z-50 py-1">
-              <button
-                onClick={openProfileModal}
-                className="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors"
-              >
-                <UserPen className="h-4 w-4" />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="rounded-full focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background">
+                <Avatar
+                  name={user.fullName}
+                  src={null}
+                  size="md"
+                />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onSelect={openProfileModal}>
+                <UserPen size={14} />
                 Editar perfil
-              </button>
-              <button
-                onClick={openPasswordModal}
-                className="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors"
-              >
-                <KeyRound className="h-4 w-4" />
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={openPasswordModal}>
+                <KeyRound size={14} />
                 Trocar senha
-              </button>
-              <hr className="my-1 border-border" />
-              <button
-                onClick={handleLogout}
-                className="flex w-full items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-muted transition-colors"
-              >
-                <LogOut className="h-4 w-4" />
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={handleLogout} danger>
+                <LogOut size={14} />
                 Sair
-              </button>
-            </div>
-          )}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
@@ -157,26 +147,26 @@ export function TopBar() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
           onClick={(e) => e.target === e.currentTarget && setProfileModalOpen(false)}
         >
-          <div className="w-full max-w-sm rounded-xl border border-border bg-white p-6 shadow-xl">
-            <h2 className="mb-4 text-lg font-semibold">Editar perfil</h2>
+          <div className="w-full max-w-sm rounded-xl border border-outline-variant bg-surface p-6 shadow-xl">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">Editar perfil</h2>
 
             <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
               <div>
-                <label className="mb-1 block text-sm font-medium">Nome completo</label>
+                <label className="mb-1 block text-sm font-medium text-foreground">Nome completo</label>
                 <input
                   type="text"
                   {...profileForm.register("fullName")}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal/50"
+                  className="w-full rounded-lg border border-outline-variant bg-surface-container px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 />
                 {profileForm.formState.errors.fullName && (
-                  <p className="mt-1 text-xs text-destructive">
+                  <p className="mt-1 text-xs text-error">
                     {profileForm.formState.errors.fullName.message}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium">
+                <label className="mb-1 block text-sm font-medium text-foreground">
                   URL do avatar{" "}
                   <span className="text-muted-foreground font-normal">(opcional)</span>
                 </label>
@@ -184,10 +174,10 @@ export function TopBar() {
                   type="text"
                   placeholder="https://..."
                   {...profileForm.register("avatarUrl")}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal/50"
+                  className="w-full rounded-lg border border-outline-variant bg-surface-container px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 />
                 {profileForm.formState.errors.avatarUrl && (
-                  <p className="mt-1 text-xs text-destructive">
+                  <p className="mt-1 text-xs text-error">
                     {profileForm.formState.errors.avatarUrl.message}
                   </p>
                 )}
@@ -197,14 +187,14 @@ export function TopBar() {
                 <button
                   type="button"
                   onClick={() => setProfileModalOpen(false)}
-                  className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
+                  className="flex-1 rounded-lg border border-outline-variant px-4 py-2 text-sm font-medium text-foreground hover:bg-surface-container transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={profileForm.formState.isSubmitting}
-                  className="flex-1 rounded-lg bg-teal px-4 py-2 text-sm font-semibold text-white shadow-teal hover:brightness-110 disabled:opacity-50 transition-all"
+                  className="flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
                 >
                   {profileForm.formState.isSubmitting ? "Salvando..." : "Salvar"}
                 </button>
@@ -220,47 +210,47 @@ export function TopBar() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
           onClick={(e) => e.target === e.currentTarget && setPasswordModalOpen(false)}
         >
-          <div className="w-full max-w-sm rounded-xl border border-border bg-white p-6 shadow-xl">
-            <h2 className="mb-4 text-lg font-semibold">Trocar senha</h2>
+          <div className="w-full max-w-sm rounded-xl border border-outline-variant bg-surface p-6 shadow-xl">
+            <h2 className="mb-4 text-lg font-semibold text-foreground">Trocar senha</h2>
 
             <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
               <div>
-                <label className="mb-1 block text-sm font-medium">Senha atual</label>
+                <label className="mb-1 block text-sm font-medium text-foreground">Senha atual</label>
                 <input
                   type="password"
                   {...passwordForm.register("currentPassword")}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal/50"
+                  className="w-full rounded-lg border border-outline-variant bg-surface-container px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 />
                 {passwordForm.formState.errors.currentPassword && (
-                  <p className="mt-1 text-xs text-destructive">
+                  <p className="mt-1 text-xs text-error">
                     {passwordForm.formState.errors.currentPassword.message}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium">Nova senha</label>
+                <label className="mb-1 block text-sm font-medium text-foreground">Nova senha</label>
                 <input
                   type="password"
                   {...passwordForm.register("newPassword")}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal/50"
+                  className="w-full rounded-lg border border-outline-variant bg-surface-container px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 />
                 {passwordForm.formState.errors.newPassword && (
-                  <p className="mt-1 text-xs text-destructive">
+                  <p className="mt-1 text-xs text-error">
                     {passwordForm.formState.errors.newPassword.message}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium">Confirmar nova senha</label>
+                <label className="mb-1 block text-sm font-medium text-foreground">Confirmar nova senha</label>
                 <input
                   type="password"
                   {...passwordForm.register("confirmPassword")}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal/50"
+                  className="w-full rounded-lg border border-outline-variant bg-surface-container px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                 />
                 {passwordForm.formState.errors.confirmPassword && (
-                  <p className="mt-1 text-xs text-destructive">
+                  <p className="mt-1 text-xs text-error">
                     {passwordForm.formState.errors.confirmPassword.message}
                   </p>
                 )}
@@ -270,14 +260,14 @@ export function TopBar() {
                 <button
                   type="button"
                   onClick={() => setPasswordModalOpen(false)}
-                  className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
+                  className="flex-1 rounded-lg border border-outline-variant px-4 py-2 text-sm font-medium text-foreground hover:bg-surface-container transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={passwordForm.formState.isSubmitting}
-                  className="flex-1 rounded-lg bg-teal px-4 py-2 text-sm font-semibold text-white shadow-teal hover:brightness-110 disabled:opacity-50 transition-all"
+                  className="flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
                 >
                   {passwordForm.formState.isSubmitting ? "Salvando..." : "Salvar"}
                 </button>

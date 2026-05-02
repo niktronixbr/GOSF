@@ -4,62 +4,137 @@
 
 @layer base {
   :root {
-    /* Neutros — Stone (subtom marrom-quente) */
-    --background:         30 5% 98%;
-    --foreground:         20 7% 10%;
-    --card:               0 0% 100%;
-    --card-foreground:    20 7% 10%;
-    --popover:            0 0% 100%;
-    --popover-foreground: 20 7% 10%;
+    /* Cores primárias e variantes — EduPulse light mode */
+    --primary: #703e0e;
+    --primary-foreground: #ffffff;
+    --primary-container: #ffdcc3;
+    --on-primary-container: #2f1500;
 
-    /* Primary → teal */
-    --primary:            186 30% 38%;
-    --primary-foreground: 0 0% 100%;
+    --secondary: #0061a5;
+    --secondary-foreground: #ffffff;
+    --secondary-container: #d2e4ff;
+    --on-secondary-container: #001d37;
 
-    /* Secondary → âmbar soft */
-    --secondary:            40 55% 94%;
-    --secondary-foreground: 30 35% 28%;
+    --tertiary: #6c4100;
+    --tertiary-foreground: #ffffff;
+    --tertiary-container: #ffddba;
+    --on-tertiary-container: #2b1700;
 
-    /* Muted → stone quente */
-    --muted:            30 6% 95%;
-    --muted-foreground: 20 5% 45%;
+    /* Surfaces */
+    --background: #f8f9ff;
+    --foreground: #0d1c2e;
+    --surface: #ffffff;
+    --surface-container: #e5eeff;
+    --surface-container-high: #dce9ff;
+    --surface-container-low: #eff4ff;
+    --on-surface: #0d1c2e;
+    --on-surface-variant: #52443a;
 
-    /* Accent → teal soft */
-    --accent:            186 40% 95%;
-    --accent-foreground: 186 30% 32%;
+    /* Borders */
+    --outline: #847469;
+    --outline-variant: #d7c3b6;
 
-    /* Destrutivo */
-    --destructive:            0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
+    /* Estados semânticos */
+    --error: #ba1a1a;
+    --error-foreground: #ffffff;
+    --error-container: #ffdad6;
+    --on-error-container: #93000a;
 
-    /* Bordas e inputs */
-    --border: 30 5% 91%;
-    --input:  30 6% 84%;
-    --ring:   186 30% 38%;
+    --success: #2e7d32;
+    --success-foreground: #ffffff;
+    --success-container: #c8e6c9;
+    --on-success-container: #1b5e20;
 
-    --radius: 0.625rem;
+    --warning: #ed6c02;
+    --warning-foreground: #ffffff;
+    --warning-container: #ffe0b2;
+    --on-warning-container: #663d00;
+
+    /* Aliases para compat com componentes que usam variável genérica */
+    --muted: var(--surface-container);
+    --muted-foreground: var(--on-surface-variant);
+    --border: var(--outline-variant);
+    --input: var(--surface-container);
+    --ring: var(--primary);
+    --card: var(--surface);
+    --card-foreground: var(--on-surface);
+    --popover: var(--surface);
+    --popover-foreground: var(--on-surface);
+    --accent: var(--surface-container);
+    --accent-foreground: var(--on-surface);
+    --destructive: var(--error);
+    --destructive-foreground: var(--error-foreground);
+
+    /* Radius */
+    --radius-sm: 0.25rem;
+    --radius: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --radius-pill: 9999px;
   }
 
   .dark {
-    --background:         222 47% 6%;
-    --foreground:         210 20% 98%;
-    --card:               222 47% 8%;
-    --card-foreground:    210 20% 98%;
-    --popover:            222 47% 8%;
-    --popover-foreground: 210 20% 98%;
-    --primary:            186 35% 55%;
-    --primary-foreground: 0 0% 100%;
-    --secondary:          40 20% 18%;
-    --secondary-foreground: 40 30% 75%;
-    --muted:              220 20% 14%;
-    --muted-foreground:   218 10% 60%;
-    --accent:             186 30% 15%;
-    --accent-foreground:  186 40% 75%;
-    --destructive:        0 60% 40%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 220 20% 18%;
-    --input:  220 20% 18%;
-    --ring:   186 35% 55%;
+    /* Cores primárias — EduPulse dark mode (inverse-* tokens) */
+    --primary: #ffb77f;
+    --primary-foreground: #2f1500;
+    --primary-container: #6c3a0a;
+    --on-primary-container: #ffdcc3;
+
+    --secondary: #9fcaff;
+    --secondary-foreground: #001d37;
+    --secondary-container: #00497e;
+    --on-secondary-container: #d2e4ff;
+
+    --tertiary: #ffb866;
+    --tertiary-foreground: #2b1700;
+    --tertiary-container: #673d00;
+    --on-tertiary-container: #ffddba;
+
+    /* Surfaces (dark navy) */
+    --background: #0d1c2e;
+    --foreground: #eaf1ff;
+    --surface: #223144;
+    --surface-container: #2c3a4d;
+    --surface-container-high: #354357;
+    --surface-container-low: #1a2940;
+    --on-surface: #eaf1ff;
+    --on-surface-variant: #aab4c2;
+
+    /* Borders */
+    --outline: #52617a;
+    --outline-variant: #3a4759;
+
+    /* Estados semânticos (cores ajustadas pra dark) */
+    --error: #ffb4ab;
+    --error-foreground: #690005;
+    --error-container: #93000a;
+    --on-error-container: #ffdad6;
+
+    --success: #81c784;
+    --success-foreground: #0c2d10;
+    --success-container: #1b5e20;
+    --on-success-container: #c8e6c9;
+
+    --warning: #ffb74d;
+    --warning-foreground: #663d00;
+    --warning-container: #663d00;
+    --on-warning-container: #ffe0b2;
+
+    /* Aliases (mesmos do :root, herdam do dark) */
+    --muted: var(--surface-container);
+    --muted-foreground: var(--on-surface-variant);
+    --border: var(--outline-variant);
+    --input: var(--surface-container);
+    --ring: var(--primary);
+    --card: var(--surface);
+    --card-foreground: var(--on-surface);
+    --popover: var(--surface);
+    --popover-foreground: var(--on-surface);
+    --accent: var(--surface-container);
+    --accent-foreground: var(--on-surface);
+    --destructive: var(--error);
+    --destructive-foreground: var(--error-foreground);
   }
 }
 

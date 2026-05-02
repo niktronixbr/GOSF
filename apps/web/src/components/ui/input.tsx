@@ -1,36 +1,22 @@
-import { clsx } from "clsx";
-import type { InputHTMLAttributes } from "react";
+import { InputHTMLAttributes, forwardRef } from "react";
+import { cn } from "@/lib/cn";
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
-  hint?: string;
-  error?: string;
-}
-
-export function Input({ label, hint, error, className, id, ...props }: InputProps) {
-  const inputId = id ?? label?.toLowerCase().replace(/\s+/g, "-");
-
-  return (
-    <div className="flex flex-col gap-1">
-      {label && (
-        <label htmlFor={inputId} className="text-sm font-medium text-foreground">
-          {label}
-        </label>
-      )}
+export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
+  ({ className, ...props }, ref) => {
+    return (
       <input
-        id={inputId}
-        className={clsx(
-          "h-9 w-full rounded-lg border border-border bg-background px-3 text-sm",
+        ref={ref}
+        className={cn(
+          "h-10 w-full rounded-lg border border-transparent bg-input px-3 text-sm text-foreground",
           "placeholder:text-muted-foreground",
-          "focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary",
+          "focus:bg-card focus:border-primary focus:border-2 focus:outline-none",
           "disabled:opacity-50 disabled:cursor-not-allowed",
-          error && "border-destructive focus:ring-destructive/30",
-          className
+          "transition-colors",
+          className,
         )}
         {...props}
       />
-      {error && <p className="text-xs text-destructive">{error}</p>}
-      {!error && hint && <p className="text-xs text-muted-foreground">{hint}</p>}
-    </div>
-  );
-}
+    );
+  },
+);
+Input.displayName = "Input";

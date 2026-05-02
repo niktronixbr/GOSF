@@ -5,8 +5,10 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { KeyRound, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { GraduationCap, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { api } from "@/lib/api/client";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 const schema = z.object({
   institutionSlug: z.string().min(1, "Obrigatório"),
@@ -37,107 +39,135 @@ export default function ForgotPasswordPage() {
     }
   }
 
-  if (sent) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
-        <div className="w-full max-w-md rounded-xl border border-border bg-card p-8 shadow-sm text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
-            <CheckCircle2 className="text-emerald-600 dark:text-emerald-400" size={28} />
+  return (
+    <div className="min-h-screen grid lg:grid-cols-2">
+      {/* Hero side - bg primary marrom */}
+      <div className="relative hidden lg:flex flex-col justify-between bg-primary px-10 py-10 text-primary-foreground">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15">
+            <GraduationCap size={20} />
           </div>
-          <h2 className="text-xl font-semibold text-foreground">Verifique seu e-mail</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Se o e-mail estiver cadastrado, você receberá em instantes as instruções para
-            redefinir sua senha. O link expira em <strong>1 hora</strong>.
+          <div>
+            <p className="font-bold text-lg">GOSF</p>
+            <p className="text-xs uppercase tracking-wider opacity-75">Academic Excellence</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <h1 className="text-3xl font-bold leading-tight">
+            Inteligência relacional<br />para educação de excelência
+          </h1>
+          <p className="text-base opacity-80 max-w-md">
+            Avaliações cruzadas, planos personalizados por IA e dashboards claros
+            para alunos, professores e coordenação.
           </p>
-          <Link
-            href="/login"
-            className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
-          >
-            <ArrowLeft size={14} />
-            Voltar para o login
-          </Link>
+        </div>
+
+        <div className="flex gap-8">
+          {[
+            { value: "1.2k+", label: "Escolas" },
+            { value: "98%", label: "Adesão" },
+            { value: "LGPD", label: "Compliance" },
+          ].map(({ value, label }) => (
+            <div key={label}>
+              <p className="text-xl font-bold">{value}</p>
+              <p className="text-xs opacity-75 uppercase tracking-wider">{label}</p>
+            </div>
+          ))}
         </div>
       </div>
-    );
-  }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
-      <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">GOSF</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Plataforma de inteligência educacional
-          </p>
-        </div>
-
-        <div className="rounded-xl border border-border bg-card p-8 shadow-sm">
-          <div className="mb-6 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-              <KeyRound className="text-primary" size={20} />
+      {/* Form side */}
+      <div className="flex items-center justify-center bg-background px-6 py-12">
+        <div className="w-full max-w-sm space-y-8">
+          <div className="flex items-center gap-2 lg:hidden">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <GraduationCap size={16} />
             </div>
-            <div>
-              <h2 className="text-lg font-semibold text-card-foreground">Esqueci minha senha</h2>
-              <p className="text-xs text-muted-foreground">
-                Enviaremos um link de redefinição por e-mail
-              </p>
-            </div>
+            <span className="text-base font-bold">GOSF</span>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-foreground">
-                Slug da instituição
-              </label>
-              <input
-                {...register("institutionSlug")}
-                placeholder="ex: escola-demo"
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              {errors.institutionSlug && (
-                <p className="mt-1 text-xs text-destructive">{errors.institutionSlug.message}</p>
-              )}
+          {sent ? (
+            <div className="text-center space-y-4">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-success-container">
+                <CheckCircle2 className="text-on-success-container" size={32} />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-foreground">Verifique seu e-mail</h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Se o e-mail estiver cadastrado, você receberá em instantes as instruções para
+                  redefinir sua senha. O link expira em <strong>1 hora</strong>.
+                </p>
+              </div>
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+              >
+                <ArrowLeft size={14} />
+                Voltar para o login
+              </Link>
             </div>
+          ) : (
+            <>
+              <div>
+                <h2 className="text-2xl font-bold text-foreground">
+                  Recuperar senha
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Enviaremos um link no seu e-mail
+                </p>
+              </div>
 
-            <div>
-              <label className="mb-1 block text-sm font-medium text-foreground">
-                Seu e-mail
-              </label>
-              <input
-                {...register("email")}
-                type="email"
-                placeholder="usuario@escola.com"
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              {errors.email && (
-                <p className="mt-1 text-xs text-destructive">{errors.email.message}</p>
-              )}
-            </div>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-foreground mb-1.5">
+                    Slug da instituição
+                  </label>
+                  <Input
+                    {...register("institutionSlug")}
+                    placeholder="ex: escola-demo"
+                  />
+                  {errors.institutionSlug && (
+                    <p className="mt-1 text-xs text-error">{errors.institutionSlug.message}</p>
+                  )}
+                </div>
 
-            {errors.root && (
-              <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
-                {errors.root.message}
+                <div>
+                  <label className="block text-sm font-semibold text-foreground mb-1.5">
+                    Seu e-mail
+                  </label>
+                  <Input
+                    {...register("email")}
+                    type="email"
+                    placeholder="usuario@escola.com"
+                  />
+                  {errors.email && (
+                    <p className="mt-1 text-xs text-error">{errors.email.message}</p>
+                  )}
+                </div>
+
+                {errors.root && (
+                  <p className="rounded-lg bg-error-container px-3 py-2 text-xs text-on-error-container">
+                    {errors.root.message}
+                  </p>
+                )}
+
+                <Button type="submit" disabled={isSubmitting} className="w-full">
+                  {isSubmitting ? "Enviando..." : "Enviar instruções"}
+                </Button>
+              </form>
+
+              <p className="text-center text-xs text-muted-foreground">
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <ArrowLeft size={13} />
+                  Voltar para login
+                </Link>
               </p>
-            )}
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity"
-            >
-              {isSubmitting ? "Enviando..." : "Enviar instruções"}
-            </button>
-          </form>
-
-          <div className="mt-5 text-center">
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ArrowLeft size={13} />
-              Voltar para o login
-            </Link>
-          </div>
+            </>
+          )}
         </div>
       </div>
     </div>
