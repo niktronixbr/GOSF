@@ -30,7 +30,7 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
     >
       <div
         className={clsx(
-          "w-full max-w-sm rounded-xl border border-border bg-white shadow-xl animate-slide-up",
+          "w-full max-w-sm rounded-xl border border-outline-variant bg-surface shadow-xl animate-slide-up text-foreground",
           className
         )}
       >
