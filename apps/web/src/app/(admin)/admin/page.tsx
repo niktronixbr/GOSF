@@ -333,8 +333,8 @@ export default function AdminPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <div className="rounded-xl bg-indigo-100 p-3 dark:bg-indigo-900/30">
-          <ShieldCheck className="text-indigo-600 dark:text-indigo-400" size={24} />
+        <div className="rounded-xl bg-surface-container p-3">
+          <ShieldCheck className="text-primary" size={24} />
         </div>
         <div>
           <h1 className="text-2xl font-bold">Gestão de usuários</h1>

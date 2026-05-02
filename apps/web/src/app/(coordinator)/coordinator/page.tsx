@@ -209,8 +209,10 @@ export default function CoordinatorHomePage() {
                 formatter={(value: number) => [`${value.toFixed(1)}`, ""]}
                 contentStyle={{
                   borderRadius: "8px",
-                  border: "1px solid #e5e7eb",
+                  border: `1px solid ${chartColors.gridLine}`,
                   fontSize: "13px",
+                  background: "var(--surface)",
+                  color: "var(--foreground)",
                 }}
               />
               <Legend

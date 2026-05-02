@@ -11,6 +11,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { usersApi } from "@/lib/api/users";
 import { ApiError } from "@/lib/api/client";
 import { Avatar } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -182,20 +183,12 @@ export function TopBar() {
               )}
             </div>
             <div className="flex gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setProfileModalOpen(false)}
-                className="flex-1 rounded-lg border border-outline-variant px-4 py-2 text-sm font-medium text-foreground hover:bg-surface-container transition-colors"
-              >
+              <Button type="button" variant="ghost" onClick={() => setProfileModalOpen(false)} className="flex-1">
                 Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={profileForm.formState.isSubmitting}
-                className="flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary hover:bg-primary/90 disabled:opacity-50 transition-colors"
-              >
+              </Button>
+              <Button type="submit" variant="primary" disabled={profileForm.formState.isSubmitting} className="flex-1">
                 {profileForm.formState.isSubmitting ? "Salvando..." : "Salvar"}
-              </button>
+              </Button>
             </div>
           </form>
         </DialogContent>
@@ -255,20 +248,12 @@ export function TopBar() {
               )}
             </div>
             <div className="flex gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setPasswordModalOpen(false)}
-                className="flex-1 rounded-lg border border-outline-variant px-4 py-2 text-sm font-medium text-foreground hover:bg-surface-container transition-colors"
-              >
+              <Button type="button" variant="ghost" onClick={() => setPasswordModalOpen(false)} className="flex-1">
                 Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={passwordForm.formState.isSubmitting}
-                className="flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary hover:bg-primary/90 disabled:opacity-50 transition-colors"
-              >
+              </Button>
+              <Button type="submit" variant="primary" disabled={passwordForm.formState.isSubmitting} className="flex-1">
                 {passwordForm.formState.isSubmitting ? "Salvando..." : "Salvar"}
-              </button>
+              </Button>
             </div>
           </form>
         </DialogContent>
