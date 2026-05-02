@@ -1,8 +1,9 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { analyticsApi, TeacherPlanOutput } from "@/lib/api/analytics";
-import { Sparkles, CheckCircle2, Star, TrendingUp, Lightbulb, Target, ArrowRight } from "lucide-react";
+import { Sparkles, CheckCircle2, Star, TrendingUp, Lightbulb, Target, ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
@@ -106,12 +107,23 @@ export default function TeacherDevelopmentPage() {
   const generateMutation = useMutation({
     mutationFn: () => analyticsApi.generateTeacherPlan(cycleId),
     onSuccess: () => {
-      toast.success("Plano em geração! Aguarde alguns segundos.");
       refetch();
       queryClient.invalidateQueries({ queryKey: ["teacher-dashboard"] });
     },
     onError: () => toast.error("Erro ao gerar plano. Tente novamente."),
   });
+
+  const isGenerating = generateMutation.isPending || plan?.status === "GENERATING";
+
+  const prevPlanStatus = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (prevPlanStatus.current === "GENERATING" && plan?.status === "READY") {
+      toast.success("Plano de desenvolvimento pronto!", {
+        description: "A IA concluiu a análise. Confira seu plano abaixo.",
+      });
+    }
+    prevPlanStatus.current = plan?.status;
+  }, [plan?.status]);
 
   const isLoading = loadingDash || loadingPlan;
 
@@ -143,11 +155,13 @@ export default function TeacherDevelopmentPage() {
             variant="primary"
             size="md"
             onClick={() => generateMutation.mutate()}
-            disabled={generateMutation.isPending || plan?.status === "GENERATING"}
-            className="shrink-0"
+            disabled={isGenerating}
+            className={`shrink-0 ${isGenerating ? "cursor-wait" : ""}`}
           >
-            <Sparkles size={15} />
-            {plan ? "Regenerar" : "Gerar plano"}
+            {isGenerating
+              ? <Loader2 size={15} className="animate-spin" />
+              : <Sparkles size={15} />}
+            {isGenerating ? "Gerando..." : plan ? "Regenerar" : "Gerar plano"}
           </Button>
         )}
       </div>
