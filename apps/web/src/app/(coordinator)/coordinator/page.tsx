@@ -15,33 +15,24 @@ import {
 import { evaluationsApi } from "@/lib/api/evaluations";
 import { coordinatorApi } from "@/lib/api/coordinator";
 import { gradesApi } from "@/lib/api/grades";
-import { AlertTriangle, Users, GraduationCap, BarChart2, BookOpen } from "lucide-react";
+import { AlertTriangle, Users, GraduationCap, BarChart2, BookOpen, Lightbulb } from "lucide-react";
 import { OnboardingCard } from "@/components/onboarding/OnboardingCard";
 import { BillingSuccessBanner } from "@/components/billing/BillingSuccessBanner";
-import { Stat } from "@/components/ui/stat";
+import { StatCard } from "@/components/ui/stat-card";
+import { Card } from "@/components/ui/card";
+import { Chip } from "@/components/ui/chip";
+import { InsightCard } from "@/components/ui/insight-card";
+import { useChartColors } from "@/lib/chart-colors";
 
-function scoreColor(score: number): string {
-  if (score < 50) return "#ef4444";
-  if (score < 70) return "#f59e0b";
-  return "#22c55e";
-}
-
-function ScoreBadge({ score }: { score: number | null }) {
-  if (score === null) return <span className="text-xs text-muted-foreground">—</span>;
-  const cls =
-    score < 50
-      ? "bg-red-100 text-red-700"
-      : score < 70
-      ? "bg-yellow-100 text-yellow-700"
-      : "bg-green-100 text-green-700";
-  return (
-    <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${cls}`}>
-      {score.toFixed(1)}
-    </span>
-  );
+function scoreVariant(score: number): "success" | "warning" | "danger" {
+  if (score >= 70) return "success";
+  if (score >= 50) return "warning";
+  return "danger";
 }
 
 export default function CoordinatorHomePage() {
+  const chartColors = useChartColors();
+
   const { data: cycle } = useQuery({
     queryKey: ["active-cycle"],
     queryFn: () => evaluationsApi.getActiveCycle(),
@@ -150,49 +141,44 @@ export default function CoordinatorHomePage() {
 
       {/* KPIs */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        <Stat icon={<Users size={18} />} label="Professores avaliados" value={uniqueTeacherIds.size || (cycle ? 0 : "—")} />
-        <Stat icon={<GraduationCap size={18} />} label="Alunos avaliados" value={uniqueStudentIds.size || (cycle ? 0 : "—")} />
-        <Stat
+        <StatCard icon={<Users size={18} />} label="Professores avaliados" value={uniqueTeacherIds.size || (cycle ? 0 : "—")} />
+        <StatCard icon={<GraduationCap size={18} />} label="Alunos avaliados" value={uniqueStudentIds.size || (cycle ? 0 : "—")} />
+        <StatCard
           icon={<AlertTriangle size={18} />}
           label="Professores em risco"
           value={atRiskTeacherIds.size || (cycle ? 0 : "—")}
         />
-        <Stat
+        <StatCard
           icon={<AlertTriangle size={18} />}
           label="Alunos em risco"
           value={atRiskStudentIds.size || (cycle ? 0 : "—")}
         />
-        <Stat icon={<BookOpen size={18} />} label="Ciclos cadastrados" value={cycles?.length ?? "—"} />
-        <Stat icon={<BarChart2 size={18} />} label="Status do ciclo" value={cycle ? "Aberto" : "Nenhum"} />
+        <StatCard icon={<BookOpen size={18} />} label="Ciclos cadastrados" value={cycles?.length ?? "—"} />
+        <StatCard icon={<BarChart2 size={18} />} label="Status do ciclo" value={cycle ? "Aberto" : "Nenhum"} />
       </div>
 
+      {/* at-risk subjects */}
       {gradesOverview?.atRiskSubjects && gradesOverview.atRiskSubjects.length > 0 && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start justify-between gap-4">
-          <div className="flex items-start gap-3 min-w-0">
-            <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-semibold text-amber-800">
-                {gradesOverview.atRiskSubjects.length} disciplina(s) com média abaixo de 6.0
-              </p>
-              <p className="text-xs text-amber-700 mt-0.5">
-                {gradesOverview.atRiskSubjects
-                  .map((s) => `${s.subjectName} (${s.avg.toFixed(1)})`)
-                  .join(" · ")}
-              </p>
-            </div>
+        <div className="rounded-xl border border-warning/40 bg-warning/10 p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <AlertTriangle size={16} className="text-warning" />
+            <span className="text-sm font-semibold text-warning uppercase tracking-wide">
+              Disciplinas em risco
+            </span>
           </div>
-          <a
-            href="/coordinator/reports"
-            className="text-xs font-semibold text-amber-700 hover:text-amber-900 underline shrink-0"
-          >
-            Ver relatório →
-          </a>
+          <div className="flex flex-wrap gap-2">
+            {gradesOverview.atRiskSubjects.map((s) => (
+              <Chip key={s.subjectId} variant="warning">
+                {s.subjectName} — média {s.avg.toFixed(1)}
+              </Chip>
+            ))}
+          </div>
         </div>
       )}
 
       {/* Gráfico de dimensões */}
       {hasCycleData && dimensionData.length > 0 && (
-        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+        <Card>
           <h2 className="font-semibold text-foreground mb-1">Score médio por dimensão</h2>
           <p className="text-xs text-muted-foreground mb-4">
             Média institucional no ciclo atual — escala 0–100
@@ -203,18 +189,18 @@ export default function CoordinatorHomePage() {
               layout="vertical"
               margin={{ top: 0, right: 24, left: 8, bottom: 0 }}
             >
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" />
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={chartColors.gridLine} />
               <XAxis
                 type="number"
                 domain={[0, 100]}
-                tick={{ fontSize: 11, fill: "#6b7280" }}
+                tick={{ fontSize: 11, fill: chartColors.muted }}
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis
                 type="category"
                 dataKey="dimension"
-                tick={{ fontSize: 12, fill: "#374151" }}
+                tick={{ fontSize: 12, fill: chartColors.foreground }}
                 tickLine={false}
                 axisLine={false}
                 width={90}
@@ -238,20 +224,20 @@ export default function CoordinatorHomePage() {
               <Bar
                 dataKey="professores"
                 name="professores"
-                fill="#6366f1"
+                fill={chartColors.primary}
                 radius={[0, 4, 4, 0]}
                 maxBarSize={18}
               />
               <Bar
                 dataKey="alunos"
                 name="alunos"
-                fill="#22c55e"
+                fill={chartColors.secondary}
                 radius={[0, 4, 4, 0]}
                 maxBarSize={18}
               />
             </BarChart>
           </ResponsiveContainer>
-        </div>
+        </Card>
       )}
 
       {cycle && !hasCycleData && (
@@ -262,7 +248,7 @@ export default function CoordinatorHomePage() {
 
       {/* Rankings */}
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+        <Card>
           <h2 className="font-semibold mb-3 text-foreground">Professores em atenção</h2>
           {lowTeachers.length === 0 ? (
             <p className="text-sm text-muted-foreground">
@@ -273,14 +259,18 @@ export default function CoordinatorHomePage() {
               {lowTeachers.map((t) => (
                 <div key={t.id} className="flex items-center justify-between text-sm">
                   <span className="text-foreground truncate">{t.fullName}</span>
-                  <ScoreBadge score={t.avgScore} />
+                  {t.avgScore !== null ? (
+                    <Chip variant={scoreVariant(t.avgScore)}>{t.avgScore.toFixed(1)}</Chip>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
                 </div>
               ))}
             </div>
           )}
-        </div>
+        </Card>
 
-        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+        <Card>
           <h2 className="font-semibold mb-3 text-foreground">Professores em destaque</h2>
           {topTeachers.length === 0 ? (
             <p className="text-sm text-muted-foreground">
@@ -300,20 +290,31 @@ export default function CoordinatorHomePage() {
                         className="h-full rounded-full"
                         style={{
                           width: `${t.avgScore ?? 0}%`,
-                          backgroundColor: scoreColor(t.avgScore ?? 0),
+                          backgroundColor:
+                            t.avgScore !== null
+                              ? t.avgScore >= 70
+                                ? chartColors.success
+                                : t.avgScore >= 50
+                                ? chartColors.warning
+                                : chartColors.danger
+                              : chartColors.muted,
                         }}
                       />
                     </div>
-                    <ScoreBadge score={t.avgScore} />
+                    {t.avgScore !== null ? (
+                      <Chip variant={scoreVariant(t.avgScore)}>{t.avgScore.toFixed(1)}</Chip>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </div>
+        </Card>
 
         {/* Alunos em risco */}
-        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+        <Card>
           <h2 className="font-semibold mb-3 text-foreground">Alunos em risco</h2>
           {atRiskStudents.length === 0 ? (
             <p className="text-sm text-muted-foreground">
@@ -324,7 +325,11 @@ export default function CoordinatorHomePage() {
               {atRiskStudents.slice(0, 5).map((s) => (
                 <div key={s.id} className="flex items-center justify-between text-sm">
                   <span className="text-foreground truncate">{s.fullName}</span>
-                  <ScoreBadge score={s.avgScore} />
+                  {s.avgScore !== null ? (
+                    <Chip variant={scoreVariant(s.avgScore)}>{s.avgScore.toFixed(1)}</Chip>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
                 </div>
               ))}
               {atRiskStudents.length > 5 && (
@@ -334,10 +339,10 @@ export default function CoordinatorHomePage() {
               )}
             </div>
           )}
-        </div>
+        </Card>
 
         {/* Professores em risco */}
-        <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+        <Card>
           <h2 className="font-semibold mb-3 text-foreground">Professores em risco</h2>
           {atRiskTeachersList.length === 0 ? (
             <p className="text-sm text-muted-foreground">
@@ -348,7 +353,11 @@ export default function CoordinatorHomePage() {
               {atRiskTeachersList.slice(0, 5).map((t) => (
                 <div key={t.id} className="flex items-center justify-between text-sm">
                   <span className="text-foreground truncate">{t.fullName}</span>
-                  <ScoreBadge score={t.avgScore} />
+                  {t.avgScore !== null ? (
+                    <Chip variant={scoreVariant(t.avgScore)}>{t.avgScore.toFixed(1)}</Chip>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
                 </div>
               ))}
               {atRiskTeachersList.length > 5 && (
@@ -358,8 +367,21 @@ export default function CoordinatorHomePage() {
               )}
             </div>
           )}
-        </div>
+        </Card>
       </div>
+
+      <InsightCard
+        variant="tertiary"
+        label="AÇÕES RECOMENDADAS"
+        icon={<Lightbulb size={16} />}
+        title="Próximos passos"
+        description="Com base nos dados do ciclo atual."
+        subItems={[
+          { label: "Alunos em risco", text: "Acompanhe os alunos abaixo de 50 pontos e agende intervenções." },
+          { label: "Benchmarking", text: "Compare o desempenho das turmas para identificar melhores práticas." },
+          { label: "Relatórios", text: "Exporte os dados do ciclo para compartilhar com a direção." },
+        ]}
+      />
     </div>
   );
 }
