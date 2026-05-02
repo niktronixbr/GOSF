@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import { evaluationsApi } from "@/lib/api/evaluations";
 import { coordinatorApi } from "@/lib/api/coordinator";
+import { gradesApi } from "@/lib/api/grades";
 import { AlertTriangle, Users, GraduationCap, BarChart2, BookOpen } from "lucide-react";
 import { OnboardingCard } from "@/components/onboarding/OnboardingCard";
 import { BillingSuccessBanner } from "@/components/billing/BillingSuccessBanner";
@@ -97,6 +98,11 @@ export default function CoordinatorHomePage() {
     queryKey: ["coordinator-reports", cycle?.id],
     queryFn: () => coordinatorApi.getReports(cycle!.id),
     enabled: !!cycle?.id,
+  });
+
+  const { data: gradesOverview } = useQuery({
+    queryKey: ["coordinator-grades-overview"],
+    queryFn: () => gradesApi.getOverview(),
   });
 
   // Dimensão médias para o gráfico
@@ -189,6 +195,30 @@ export default function CoordinatorHomePage() {
         <Stat icon={<BookOpen size={18} />} label="Ciclos cadastrados" value={cycles?.length ?? "—"} />
         <Stat icon={<BarChart2 size={18} />} label="Status do ciclo" value={cycle ? "Aberto" : "Nenhum"} />
       </div>
+
+      {gradesOverview?.atRiskSubjects && gradesOverview.atRiskSubjects.length > 0 && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start justify-between gap-4">
+          <div className="flex items-start gap-3 min-w-0">
+            <AlertTriangle size={18} className="text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-amber-800">
+                {gradesOverview.atRiskSubjects.length} disciplina(s) com média abaixo de 6.0
+              </p>
+              <p className="text-xs text-amber-700 mt-0.5">
+                {gradesOverview.atRiskSubjects
+                  .map((s) => `${s.subjectName} (${s.avg.toFixed(1)})`)
+                  .join(" · ")}
+              </p>
+            </div>
+          </div>
+          <a
+            href="/coordinator/reports"
+            className="text-xs font-semibold text-amber-700 hover:text-amber-900 underline shrink-0"
+          >
+            Ver relatório →
+          </a>
+        </div>
+      )}
 
       {/* Gráfico de dimensões */}
       {hasCycleData && dimensionData.length > 0 && (

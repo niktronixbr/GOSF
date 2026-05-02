@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Home, BookOpen, BookMarked, BarChart2, MessageSquare,
+  Home, BookOpen, BookMarked, BarChart2, BarChart3, MessageSquare,
   Target, Users, Settings, LogOut, ShieldCheck, GitCompare, FileClock,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -25,6 +25,7 @@ const teacherNav: NavItem[] = [
   { href: "/teacher",              label: "Início",            icon: Home },
   { href: "/teacher/classes",      label: "Minhas turmas",     icon: Users },
   { href: "/teacher/evaluations",  label: "Avaliações",        icon: MessageSquare },
+  { href: "/teacher/grades",       label: "Notas",             icon: BarChart3 },
   { href: "/teacher/development",  label: "Meu desenvolvimento", icon: Target },
   { href: "/teacher/insights",     label: "Insights",          icon: BarChart2 },
 ];
