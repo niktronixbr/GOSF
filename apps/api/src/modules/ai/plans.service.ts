@@ -33,12 +33,37 @@ export class PlansService {
       select: { comment: true, submittedAt: true },
     });
 
+    const gradeRows = await this.db.grade.findMany({
+      where: { studentId: student.id, cycleId },
+      include: { subject: { select: { name: true } } },
+    });
+
+    const gradeGroups = new Map<
+      string,
+      { subject: string; assessments: { title: string; weight: number; value: number }[] }
+    >();
+    for (const g of gradeRows) {
+      if (!gradeGroups.has(g.subjectId)) {
+        gradeGroups.set(g.subjectId, { subject: g.subject.name, assessments: [] });
+      }
+      gradeGroups.get(g.subjectId)!.assessments.push({ title: g.title, weight: g.weight, value: g.value });
+    }
+    const grades = Array.from(gradeGroups.values()).map(({ subject, assessments }) => {
+      const totalWeight = assessments.reduce((sum, a) => sum + a.weight, 0);
+      const weightedAverage =
+        totalWeight > 0
+          ? assessments.reduce((sum, a) => sum + a.value * a.weight, 0) / totalWeight
+          : null;
+      return { subject, assessments, weightedAverage };
+    });
+
     const snapshot = {
       studentName: student.user.fullName,
       cycleId,
       scores: scores.map((s) => ({ dimension: s.dimension, score: s.score })),
       comments: evaluations.filter((e) => e.comment).map((e) => e.comment),
       totalEvaluations: evaluations.length,
+      grades,
     };
 
     const plan = await this.db.studentPlan.create({

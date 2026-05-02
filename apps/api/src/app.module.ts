@@ -18,6 +18,7 @@ import { NotificationsModule } from "./modules/notifications/notifications.modul
 import { PrivacyModule } from "./modules/privacy/privacy.module";
 import { AuditModule } from "./modules/audit/audit.module";
 import { GoalsModule } from "./modules/goals/goals.module";
+import { GradesModule } from "./modules/grades/grades.module";
 import { HealthModule } from "./modules/health/health.module";
 import { BillingModule } from "./modules/billing/billing.module";
 import { AdminModule } from "./modules/admin/admin.module";
@@ -61,6 +62,7 @@ import { DatabaseModule } from "./common/database/database.module";
     PrivacyModule,
     AuditModule,
     GoalsModule,
+    GradesModule,
     HealthModule,
     BillingModule,
     AdminModule,
