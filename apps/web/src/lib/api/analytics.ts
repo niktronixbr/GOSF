@@ -59,7 +59,6 @@ export interface FeedbackEntry {
   cycleId: string;
   cycleTitle: string;
   submittedAt: string;
-  teacherName: string;
   comment: string | null;
   dimensions: { dimension: string; score: number }[];
 }

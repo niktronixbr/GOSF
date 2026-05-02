@@ -249,7 +249,6 @@ export class AnalyticsService {
       where: { studentId: student.id },
       include: {
         cycle: { select: { id: true, title: true, startsAt: true } },
-        teacher: { include: { user: { select: { fullName: true } } } },
         form: { include: { questions: { select: { id: true, dimension: true, questionText: true } } } },
       },
       orderBy: { submittedAt: "desc" },
@@ -275,7 +274,6 @@ export class AnalyticsService {
         cycleId: ev.cycleId,
         cycleTitle: ev.cycle.title,
         submittedAt: ev.submittedAt,
-        teacherName: ev.teacher.user.fullName,
         comment: ev.comment ?? null,
         dimensions,
       };
