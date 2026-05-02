@@ -132,6 +132,7 @@ export function NotificationsBell() {
   return (
     <div ref={ref} className="relative">
       <button
+        type="button"
         onClick={() => setOpen((o) => !o)}
         className="relative flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-surface-container hover:text-foreground transition-colors"
         aria-label="Notificações"
@@ -151,18 +152,21 @@ export function NotificationsBell() {
             <div className="flex items-center gap-2">
               {unread > 0 && (
                 <button
+                  type="button"
                   onClick={() => markAllRead.mutate()}
                   disabled={markAllRead.isPending}
                   className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-surface-container transition-colors disabled:opacity-50"
-                  title="Marcar todas como lidas"
+                  aria-label="Marcar todas como lidas"
                 >
                   <CheckCheck size={13} />
                   Todas lidas
                 </button>
               )}
               <button
+                type="button"
                 onClick={() => setOpen(false)}
                 className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-surface-container transition-colors"
+                aria-label="Fechar notificações"
               >
                 <X size={14} />
               </button>
@@ -224,9 +228,10 @@ function NotificationItem({
           </div>
           {isUnread && (
             <button
+              type="button"
               onClick={onMarkRead}
               className="shrink-0 flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-surface-container hover:text-primary transition-colors mt-0.5"
-              title="Marcar como lida"
+              aria-label="Marcar como lida"
             >
               <Check size={13} />
             </button>
