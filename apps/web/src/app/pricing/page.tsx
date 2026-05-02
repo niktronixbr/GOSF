@@ -7,13 +7,13 @@ export const metadata = {
 
 export default function PricingPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-5xl px-6 py-20">
         <div className="text-center mb-14">
-          <h1 className="text-4xl font-bold text-gray-900 tracking-tight">
+          <h1 className="text-4xl font-bold text-foreground tracking-tight">
             Planos simples e transparentes
           </h1>
-          <p className="mt-4 text-lg text-gray-500 max-w-xl mx-auto">
+          <p className="mt-4 text-lg text-muted-foreground max-w-xl mx-auto">
             Sem surpresas. Escolha o plano certo para o tamanho da sua escola e comece hoje.
           </p>
         </div>
