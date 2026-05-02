@@ -4,14 +4,16 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { FileClock, Search, User as UserIcon, Globe } from "lucide-react";
 import { auditApi, type AuditFilters } from "@/lib/api/audit";
+import { Chip } from "@/components/ui/chip";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
-function methodTone(method: string): string {
-  if (method.startsWith("POST")) return "bg-green-100 text-green-700";
-  if (method.startsWith("PATCH") || method.startsWith("PUT")) return "bg-blue-100 text-blue-700";
-  if (method.startsWith("DELETE")) return "bg-red-100 text-red-700";
-  if (method === "LOGIN") return "bg-emerald-100 text-emerald-700";
-  if (method === "LOGOUT") return "bg-gray-200 text-gray-700";
-  return "bg-muted text-muted-foreground";
+function methodVariant(method: string): "info" | "success" | "warning" | "danger" | "neutral" {
+  if (method === "GET") return "info";
+  if (method === "POST") return "success";
+  if (method === "PUT" || method === "PATCH") return "warning";
+  if (method === "DELETE") return "danger";
+  return "neutral";
 }
 
 export default function AuditPage() {
@@ -42,51 +44,47 @@ export default function AuditPage() {
       </div>
 
       {/* Filtros */}
-      <div className="rounded-xl border border-border bg-card p-4 grid grid-cols-1 md:grid-cols-5 gap-3">
-        <input
-          type="text"
-          placeholder="Ação (ex: LOGIN, POST)"
-          value={draft.action ?? ""}
-          onChange={(e) => setDraft({ ...draft, action: e.target.value })}
-          className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
-        />
-        <input
-          type="text"
-          placeholder="Recurso (ex: users)"
-          value={draft.resourceType ?? ""}
-          onChange={(e) => setDraft({ ...draft, resourceType: e.target.value })}
-          className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
-        />
-        <input
-          type="date"
-          value={draft.from ?? ""}
-          onChange={(e) => setDraft({ ...draft, from: e.target.value })}
-          className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
-        />
-        <input
-          type="date"
-          value={draft.to ?? ""}
-          onChange={(e) => setDraft({ ...draft, to: e.target.value })}
-          className="rounded-lg border border-border bg-background px-3 py-2 text-sm"
-        />
-        <div className="flex gap-2">
-          <button
-            onClick={apply}
-            className="flex items-center justify-center gap-1 flex-1 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
-          >
-            <Search size={14} /> Filtrar
-          </button>
-          <button
-            onClick={clear}
-            className="rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground hover:bg-muted"
-          >
-            Limpar
-          </button>
+      <Card>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+          <input
+            type="text"
+            placeholder="Ação (ex: LOGIN, POST)"
+            value={draft.action ?? ""}
+            onChange={(e) => setDraft({ ...draft, action: e.target.value })}
+            className="rounded-lg border border-outline-variant bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+          <input
+            type="text"
+            placeholder="Recurso (ex: users)"
+            value={draft.resourceType ?? ""}
+            onChange={(e) => setDraft({ ...draft, resourceType: e.target.value })}
+            className="rounded-lg border border-outline-variant bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+          <input
+            type="date"
+            value={draft.from ?? ""}
+            onChange={(e) => setDraft({ ...draft, from: e.target.value })}
+            className="rounded-lg border border-outline-variant bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+          <input
+            type="date"
+            value={draft.to ?? ""}
+            onChange={(e) => setDraft({ ...draft, to: e.target.value })}
+            className="rounded-lg border border-outline-variant bg-input px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+          <div className="flex gap-2">
+            <Button onClick={apply} size="sm" variant="primary" className="flex-1 gap-1">
+              <Search size={14} /> Filtrar
+            </Button>
+            <Button onClick={clear} size="sm" variant="ghost">
+              Limpar
+            </Button>
+          </div>
         </div>
-      </div>
+      </Card>
 
       {/* Tabela */}
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <Card noPadding>
         {isLoading ? (
           <p className="p-8 text-center text-sm text-muted-foreground">Carregando…</p>
         ) : !logs || logs.length === 0 ? (
@@ -111,11 +109,9 @@ export default function AuditPage() {
                     {new Date(log.createdAt).toLocaleString("pt-BR")}
                   </td>
                   <td className="px-4 py-3">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${methodTone(log.action.split(" ")[0])}`}
-                    >
+                    <Chip variant={methodVariant(log.action.split(" ")[0])}>
                       {log.action}
-                    </span>
+                    </Chip>
                   </td>
                   <td className="px-4 py-3 text-foreground">
                     {log.resourceType}
@@ -146,7 +142,7 @@ export default function AuditPage() {
             </tbody>
           </table>
         )}
-      </div>
+      </Card>
     </div>
   );
 }
