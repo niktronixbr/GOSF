@@ -9,14 +9,22 @@ import { toast } from "sonner";
 import {
   Plus,
   Search,
-  X,
   Pencil,
   PowerOff,
   Power,
   ShieldCheck,
+  Users,
+  UserCheck,
+  GraduationCap,
+  BookOpen,
 } from "lucide-react";
 import { adminApi, type AdminUser, type UserRole, type UserStatus } from "@/lib/api/admin";
 import { PaginationControls } from "@/components/ui/pagination-controls";
+import { StatCard } from "@/components/ui/stat-card";
+import { Card } from "@/components/ui/card";
+import { Chip } from "@/components/ui/chip";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -34,19 +42,19 @@ const statusLabels: Record<UserStatus, string> = {
   PENDING_VERIFICATION: "Pendente",
 };
 
-const roleColors: Record<UserRole, string> = {
-  STUDENT: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  TEACHER: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  COORDINATOR: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  ADMIN: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
-};
+function roleChipVariant(role: UserRole): "info" | "success" | "warning" | "neutral" {
+  if (role === "STUDENT") return "info";
+  if (role === "TEACHER") return "success";
+  if (role === "COORDINATOR") return "warning";
+  return "neutral";
+}
 
-const statusColors: Record<UserStatus, string> = {
-  ACTIVE: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-  INACTIVE: "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400",
-  SUSPENDED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  PENDING_VERIFICATION: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-};
+function statusChipVariant(status: UserStatus): "success" | "neutral" | "danger" | "warning" {
+  if (status === "ACTIVE") return "success";
+  if (status === "SUSPENDED") return "danger";
+  if (status === "PENDING_VERIFICATION") return "warning";
+  return "neutral";
+}
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -64,38 +72,6 @@ const editSchema = z.object({
   status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED", "PENDING_VERIFICATION"] as const),
 });
 type EditForm = z.infer<typeof editSchema>;
-
-// ─── Modal ────────────────────────────────────────────────────────────────────
-
-function Modal({
-  open,
-  onClose,
-  title,
-  children,
-}: {
-  open: boolean;
-  onClose: () => void;
-  title: string;
-  children: React.ReactNode;
-}) {
-  if (!open) return null;
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
-      <div className="w-full max-w-md rounded-2xl border border-border bg-card shadow-xl">
-        <div className="flex items-center justify-between border-b border-border px-5 py-4">
-          <h2 className="font-semibold text-foreground">{title}</h2>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-            <X size={18} />
-          </button>
-        </div>
-        <div className="p-5">{children}</div>
-      </div>
-    </div>
-  );
-}
 
 // ─── Create Modal ─────────────────────────────────────────────────────────────
 
@@ -123,77 +99,79 @@ function CreateUserModal({ open, onClose }: { open: boolean; onClose: () => void
   });
 
   return (
-    <Modal open={open} onClose={onClose} title="Novo usuário">
-      <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
-        <div>
-          <label className="mb-1 block text-sm font-medium">Nome completo</label>
-          <input
-            {...register("fullName")}
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            placeholder="Ex: João da Silva"
-          />
-          {errors.fullName && (
-            <p className="mt-1 text-xs text-destructive">{errors.fullName.message}</p>
-          )}
-        </div>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent title="Novo usuário" className="max-w-md">
+        <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="mt-4 space-y-4">
+          <div>
+            <label className="mb-1 block text-sm font-medium">Nome completo</label>
+            <input
+              {...register("fullName")}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              placeholder="Ex: João da Silva"
+            />
+            {errors.fullName && (
+              <p className="mt-1 text-xs text-destructive">{errors.fullName.message}</p>
+            )}
+          </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">E-mail</label>
-          <input
-            {...register("email")}
-            type="email"
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            placeholder="usuario@escola.com"
-          />
-          {errors.email && (
-            <p className="mt-1 text-xs text-destructive">{errors.email.message}</p>
-          )}
-        </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">E-mail</label>
+            <input
+              {...register("email")}
+              type="email"
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              placeholder="usuario@escola.com"
+            />
+            {errors.email && (
+              <p className="mt-1 text-xs text-destructive">{errors.email.message}</p>
+            )}
+          </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Senha inicial</label>
-          <input
-            {...register("password")}
-            type="password"
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            placeholder="Mínimo 6 caracteres"
-          />
-          {errors.password && (
-            <p className="mt-1 text-xs text-destructive">{errors.password.message}</p>
-          )}
-        </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">Senha inicial</label>
+            <input
+              {...register("password")}
+              type="password"
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              placeholder="Mínimo 6 caracteres"
+            />
+            {errors.password && (
+              <p className="mt-1 text-xs text-destructive">{errors.password.message}</p>
+            )}
+          </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Papel</label>
-          <select
-            {...register("role")}
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="STUDENT">Aluno</option>
-            <option value="TEACHER">Professor</option>
-            <option value="COORDINATOR">Coordenador</option>
-            <option value="ADMIN">Admin</option>
-          </select>
-        </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">Papel</label>
+            <select
+              {...register("role")}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="STUDENT">Aluno</option>
+              <option value="TEACHER">Professor</option>
+              <option value="COORDINATOR">Coordenador</option>
+              <option value="ADMIN">Admin</option>
+            </select>
+          </div>
 
-        <div className="flex justify-end gap-2 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={mutation.isPending}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity"
-          >
-            {mutation.isPending ? "Criando..." : "Criar usuário"}
-          </button>
-        </div>
-      </form>
-    </Modal>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onClose}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={mutation.isPending}
+            >
+              {mutation.isPending ? "Criando..." : "Criar usuário"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -223,72 +201,74 @@ function EditUserModal({ user, onClose }: { user: AdminUser | null; onClose: () 
   });
 
   return (
-    <Modal open={!!user} onClose={onClose} title="Editar usuário">
-      <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
-        <div>
-          <label className="mb-1 block text-sm font-medium">Nome completo</label>
-          <input
-            {...register("fullName")}
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-          {errors.fullName && (
-            <p className="mt-1 text-xs text-destructive">{errors.fullName.message}</p>
-          )}
-        </div>
+    <Dialog open={!!user} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent title="Editar usuário" className="max-w-md">
+        <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="mt-4 space-y-4">
+          <div>
+            <label className="mb-1 block text-sm font-medium">Nome completo</label>
+            <input
+              {...register("fullName")}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            {errors.fullName && (
+              <p className="mt-1 text-xs text-destructive">{errors.fullName.message}</p>
+            )}
+          </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">E-mail</label>
-          <input
-            value={user?.email ?? ""}
-            readOnly
-            className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-sm text-muted-foreground"
-          />
-        </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">E-mail</label>
+            <input
+              value={user?.email ?? ""}
+              readOnly
+              className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-sm text-muted-foreground"
+            />
+          </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Papel</label>
-          <select
-            {...register("role")}
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="STUDENT">Aluno</option>
-            <option value="TEACHER">Professor</option>
-            <option value="COORDINATOR">Coordenador</option>
-            <option value="ADMIN">Admin</option>
-          </select>
-        </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">Papel</label>
+            <select
+              {...register("role")}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="STUDENT">Aluno</option>
+              <option value="TEACHER">Professor</option>
+              <option value="COORDINATOR">Coordenador</option>
+              <option value="ADMIN">Admin</option>
+            </select>
+          </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium">Status</label>
-          <select
-            {...register("status")}
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="ACTIVE">Ativo</option>
-            <option value="INACTIVE">Inativo</option>
-            <option value="SUSPENDED">Suspenso</option>
-            <option value="PENDING_VERIFICATION">Pendente</option>
-          </select>
-        </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">Status</label>
+            <select
+              {...register("status")}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="ACTIVE">Ativo</option>
+              <option value="INACTIVE">Inativo</option>
+              <option value="SUSPENDED">Suspenso</option>
+              <option value="PENDING_VERIFICATION">Pendente</option>
+            </select>
+          </div>
 
-        <div className="flex justify-end gap-2 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={mutation.isPending}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity"
-          >
-            {mutation.isPending ? "Salvando..." : "Salvar"}
-          </button>
-        </div>
-      </form>
-    </Modal>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onClose}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={mutation.isPending}
+            >
+              {mutation.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -353,8 +333,8 @@ export default function AdminPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <div className="rounded-xl bg-indigo-100 p-3 dark:bg-indigo-900/30">
-          <ShieldCheck className="text-indigo-600 dark:text-indigo-400" size={24} />
+        <div className="rounded-xl bg-surface-container p-3">
+          <ShieldCheck className="text-primary" size={24} />
         </div>
         <div>
           <h1 className="text-2xl font-bold">Gestão de usuários</h1>
@@ -362,28 +342,22 @@ export default function AdminPage() {
             Crie, edite e gerencie os usuários da instituição
           </p>
         </div>
-        <button
+        <Button
+          variant="primary"
+          className="ml-auto"
           onClick={() => setShowCreate(true)}
-          className="ml-auto flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
         >
           <Plus size={16} />
           Novo usuário
-        </button>
+        </Button>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {[
-          { label: "Total", value: total, color: "text-foreground" },
-          { label: "Ativos (pág.)", value: counts.active, color: "text-emerald-600" },
-          { label: "Alunos (pág.)", value: counts.students, color: "text-blue-600" },
-          { label: "Professores (pág.)", value: counts.teachers, color: "text-green-600" },
-        ].map(({ label, value, color }) => (
-          <div key={label} className="stat-card animate-slide-up rounded-lg border border-border bg-white p-4 shadow-sm">
-            <p className="text-xs text-muted-foreground">{label}</p>
-            <p className={`mt-1 text-2xl font-bold ${color}`}>{value}</p>
-          </div>
-        ))}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <StatCard icon={<Users size={20} />} label="Total de usuários" value={`${counts.total}`} />
+        <StatCard icon={<UserCheck size={20} />} label="Usuários ativos" value={`${counts.active}`} />
+        <StatCard icon={<GraduationCap size={20} />} label="Alunos" value={`${counts.students}`} />
+        <StatCard icon={<BookOpen size={20} />} label="Professores" value={`${counts.teachers}`} />
       </div>
 
       {/* Filters */}
@@ -414,7 +388,7 @@ export default function AdminPage() {
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <Card noPadding>
         {isLoading ? (
           <div className="p-8 text-center text-sm text-muted-foreground">Carregando...</div>
         ) : users.length === 0 ? (
@@ -442,43 +416,37 @@ export default function AdminPage() {
                     <p className="text-xs text-muted-foreground">{user.email}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${roleColors[user.role]}`}
-                    >
+                    <Chip variant={roleChipVariant(user.role)}>
                       {roleLabels[user.role]}
-                    </span>
+                    </Chip>
                   </td>
                   <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[user.status]}`}
-                    >
+                    <Chip variant={statusChipVariant(user.status)}>
                       {statusLabels[user.status]}
-                    </span>
+                    </Chip>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">
                     {new Date(user.createdAt).toLocaleDateString("pt-BR")}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => setEditUser(user)}
-                        className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                         title="Editar"
                       >
                         <Pencil size={14} />
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => toggleStatus.mutate(user.id)}
                         disabled={toggleStatus.isPending}
-                        className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors disabled:opacity-50 ${
-                          user.status === "ACTIVE"
-                            ? "text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                            : "text-muted-foreground hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20"
-                        }`}
                         title={user.status === "ACTIVE" ? "Desativar" : "Ativar"}
                       >
                         {user.status === "ACTIVE" ? <PowerOff size={14} /> : <Power size={14} />}
-                      </button>
+                      </Button>
                     </div>
                   </td>
                 </tr>
@@ -486,7 +454,7 @@ export default function AdminPage() {
             </tbody>
           </table>
         )}
-      </div>
+      </Card>
 
       {/* Pagination */}
       <PaginationControls

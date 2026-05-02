@@ -1,203 +1,222 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { analyticsApi } from "@/lib/api/analytics";
 import { useAuthStore } from "@/store/auth.store";
-import { cn } from "@/lib/cn";
+import { analyticsApi } from "@/lib/api/analytics";
+import { StatCard } from "@/components/ui/stat-card";
+import { InsightCard } from "@/components/ui/insight-card";
+import { Card } from "@/components/ui/card";
+import { ProgressBar } from "@/components/ui/progress-bar";
+import { Chip } from "@/components/ui/chip";
+import { TrendingUp, BookOpen, Target, Sparkles } from "lucide-react";
 
-function ScoreBar({ label, score }: { label: string; score: number }) {
-  const pct = Math.min(score, 100);
-  const fillColor =
-    score < 50 ? "bg-destructive" : score < 70 ? "bg-[oklch(0.72_0.14_75)]" : "bg-teal";
-  return (
-    <div>
-      <div className="flex justify-between text-sm mb-1.5">
-        <span className="text-muted-foreground capitalize font-medium">
-          {label.replace(/_/g, " ")}
-        </span>
-        <span className="font-bold text-foreground tabular-nums">{score.toFixed(0)}</span>
-      </div>
-      <div className="h-1.5 rounded-full bg-teal-soft overflow-hidden">
-        <div
-          className={cn("h-full rounded-full transition-all duration-700", fillColor)}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
-  );
+function scoreVariant(score: number): "success" | "warning" | "danger" {
+  if (score >= 70) return "success";
+  if (score >= 50) return "warning";
+  return "danger";
 }
 
-interface StatCardProps {
-  label: string;
-  value: React.ReactNode;
-  delta?: string;
-  deltaVariant?: "positive" | "warning";
-  delayClass?: string;
-}
+export default function StudentDashboardPage() {
+  const { user } = useAuthStore();
+  const firstName = user?.fullName?.split(" ")[0] ?? "Aluno";
 
-function StatCard({ label, value, delta, deltaVariant = "positive", delayClass }: StatCardProps) {
-  return (
-    <div
-      className={cn(
-        "rounded-xl border border-border bg-card p-5 shadow-sm",
-        "animate-slide-up",
-        "transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md",
-        delayClass,
-      )}
-    >
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">
-        {label}
-      </p>
-      <p className="text-[28px] font-extrabold text-foreground leading-none tracking-tight">
-        {value}
-      </p>
-      {delta && (
-        <p
-          className={cn(
-            "mt-1.5 text-[11px] font-semibold",
-            deltaVariant === "positive"
-              ? "text-[oklch(0.62_0.13_150)]"
-              : "text-[oklch(0.72_0.14_75)]",
-          )}
-        >
-          {delta}
-        </p>
-      )}
-    </div>
-  );
-}
-
-export default function StudentHomePage() {
-  const user = useAuthStore((s) => s.user);
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["student-dashboard"],
     queryFn: () => analyticsApi.studentDashboard(),
     enabled: !!user,
   });
 
-  const firstName = user?.fullName?.split(" ")[0] ?? "aluno(a)";
-  const avgScore =
-    data?.scores.length
-      ? Math.round(data.scores.reduce((a, s) => a + s.score, 0) / data.scores.length)
-      : null;
-  const plan = data?.plan?.aiOutputJson;
-
   if (isLoading) {
     return (
-      <div className="space-y-4 animate-pulse">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-24 rounded-xl bg-muted" />
-        ))}
+      <div className="p-6 space-y-6">
+        <div className="h-8 w-48 rounded-lg bg-surface-container animate-pulse" />
+        <div className="grid grid-cols-3 gap-4">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-28 rounded-xl bg-surface-container animate-pulse" />
+          ))}
+        </div>
+        <div className="grid grid-cols-2 gap-6">
+          <div className="h-48 rounded-xl bg-surface-container animate-pulse" />
+          <div className="h-48 rounded-xl bg-surface-container animate-pulse" />
+        </div>
       </div>
     );
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="animate-slide-up">
-        <h1 className="text-[22px] font-extrabold text-foreground tracking-tight">
-          Olá, {firstName}!
+  if (!data || !data.cycle) {
+    return (
+      <div className="p-6">
+        <h1 className="text-2xl font-semibold text-foreground mb-2">
+          Bem-vindo, {firstName}.
         </h1>
-        <p className="text-[13px] text-muted-foreground mt-1">
-          {data?.cycle ? `Ciclo: ${data.cycle.title}` : "Nenhum ciclo ativo no momento."}
+        <p className="text-muted-foreground">
+          Nenhum ciclo ativo. Aguarde seu coordenador abrir um ciclo.
+        </p>
+      </div>
+    );
+  }
+
+  const scores = data.scores ?? [];
+  const avgScore = scores.length
+    ? Math.round(scores.reduce((sum, s) => sum + s.score, 0) / scores.length)
+    : 0;
+
+  const plan = data.plan;
+  const aiPlan = plan?.aiOutputJson ?? null;
+
+  // InsightCard subItems shape: { label: string; text: string }[]
+  const insightSubItems = [
+    ...(aiPlan?.strengths?.slice(0, 2).map((s: string) => ({
+      label: "Ponto forte",
+      text: s,
+    })) ?? []),
+    ...(aiPlan?.attention_points?.slice(0, 1).map((a: string) => ({
+      label: "Atenção",
+      text: a,
+    })) ?? []),
+  ];
+
+  const avgVariant = scoreVariant(avgScore);
+
+  return (
+    <div className="p-6 space-y-6 max-w-[1280px]">
+      {/* Hero */}
+      <div>
+        <h1 className="text-2xl font-semibold text-foreground">
+          Bem-vindo, {firstName}.
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Acompanhe sua evolução acadêmica — {data.cycle.title}.
         </p>
       </div>
 
-      {/* Stat cards */}
-      {avgScore !== null && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <StatCard
-            label="Nota de evolução"
-            value={<span className="text-teal-fg">{avgScore}</span>}
-            delta="↑ média geral do ciclo"
-            delayClass="animate-delay-75"
-          />
-          <StatCard
-            label="Dimensões avaliadas"
-            value={data?.scores.length ?? 0}
-            delayClass="animate-delay-150"
-          />
-          <StatCard
-            label="Status do plano"
-            value={
-              data?.plan?.status === "READY"
-                ? "Pronto"
-                : data?.plan
-                ? "Gerando..."
-                : "—"
-            }
-            delta={data?.plan?.status === "READY" ? "↑ Disponível" : undefined}
-            delayClass="animate-delay-200"
-          />
-        </div>
-      )}
+      {/* Stat cards row */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatCard
+          icon={<TrendingUp size={20} />}
+          label="Score geral"
+          value={`${avgScore}`}
+          trend={
+            scores.length > 0
+              ? {
+                  value:
+                    avgVariant === "success"
+                      ? "Acima da meta"
+                      : avgVariant === "warning"
+                        ? "Em desenvolvimento"
+                        : "Precisa de atenção",
+                  direction:
+                    avgVariant === "success"
+                      ? "up"
+                      : avgVariant === "warning"
+                        ? "neutral"
+                        : "down",
+                }
+              : undefined
+          }
+        />
+        <StatCard
+          icon={<BookOpen size={20} />}
+          label="Dimensões avaliadas"
+          value={`${scores.length}`}
+        />
+        <StatCard
+          icon={<Target size={20} />}
+          label="Plano IA"
+          value={plan ? (plan.status === "READY" ? "Ativo" : "Gerando...") : "Pendente"}
+          badge={
+            plan?.status === "READY"
+              ? { text: "Disponível", variant: "success" }
+              : plan
+                ? { text: "Processando", variant: "warning" }
+                : undefined
+          }
+        />
+      </div>
 
-      {/* Desempenho por dimensão */}
-      {data?.scores.length ? (
-        <div className="rounded-xl border border-border bg-card p-5 shadow-sm animate-slide-up animate-delay-250">
-          <h2 className="text-[14px] font-bold text-foreground mb-4">Desempenho por dimensão</h2>
-          <div className="space-y-3.5">
-            {data.scores.map((s) => (
-              <ScoreBar key={s.dimension} label={s.dimension} score={s.score} />
-            ))}
-          </div>
-        </div>
-      ) : null}
+      {/* 2-column grid: InsightCard + Mapa de Habilidades */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {aiPlan && insightSubItems.length > 0 ? (
+          <InsightCard
+            variant="primary"
+            label="DESTAQUES DA SEMANA"
+            icon={<Sparkles size={16} />}
+            title="Seu progresso em foco"
+            description="Baseado no seu plano de desenvolvimento IA."
+            subItems={insightSubItems}
+          />
+        ) : (
+          <Card className="flex items-center justify-center min-h-[160px]">
+            <p className="text-sm text-muted-foreground text-center">
+              {plan ? "Plano IA sendo gerado. Volte em breve." : "Plano IA ainda não disponível."}
+            </p>
+          </Card>
+        )}
 
-      {/* Plano de IA */}
-      {plan && (
-        <div className="grid gap-4 lg:grid-cols-2 animate-slide-up animate-delay-300">
-          <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-            <h2 className="text-[14px] font-bold text-foreground mb-3">Pontos fortes</h2>
-            <ul className="space-y-2">
-              {plan.strengths.map((s, i) => (
-                <li key={i} className="flex gap-2.5 text-[13px] text-muted-foreground">
-                  <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-[oklch(0.62_0.13_150)]" />
-                  {s}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-            <h2 className="text-[14px] font-bold text-foreground mb-3">Pontos de atenção</h2>
-            <ul className="space-y-2">
-              {plan.attention_points.map((s, i) => (
-                <li key={i} className="flex gap-2.5 text-[13px] text-muted-foreground">
-                  <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-amber" />
-                  {s}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
+        <Card>
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
+            Mapa de Habilidades
+          </h2>
+          {scores.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhuma avaliação registrada.</p>
+          ) : (
+            <div className="space-y-3">
+              {scores.map((s) => {
+                const variant = scoreVariant(s.score);
+                return (
+                  <div key={s.dimension}>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-sm text-foreground capitalize">
+                        {s.dimension.replace(/_/g, " ")}
+                      </span>
+                      <Chip variant={variant}>{s.score.toFixed(1)}</Chip>
+                    </div>
+                    <ProgressBar value={s.score} max={100} variant={variant} />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+      </div>
 
-      {/* Plano da semana */}
-      {plan?.seven_day_plan && (
-        <div className="rounded-xl border border-border bg-card p-5 shadow-sm animate-slide-up animate-delay-300">
-          <h2 className="text-[14px] font-bold text-foreground mb-3">Plano desta semana</h2>
+      {/* Plano 7 Dias */}
+      {aiPlan?.seven_day_plan && aiPlan.seven_day_plan.length > 0 && (
+        <Card>
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
+            Plano 7 Dias
+          </h2>
           <ul className="space-y-2">
-            {plan.seven_day_plan.map((item) => (
-              <li key={item} className="flex items-start gap-3 text-[13px] text-muted-foreground">
-                <input type="checkbox" className="mt-0.5 rounded accent-teal" readOnly />
-                {item}
+            {aiPlan.seven_day_plan.map((item: string, i: number) => (
+              <li key={i} className="flex gap-3 text-sm text-foreground">
+                <span className="text-primary font-semibold shrink-0">{i + 1}.</span>
+                <span>{item}</span>
               </li>
             ))}
           </ul>
-          {plan.motivation_message && (
-            <p className="mt-4 text-[13px] italic text-muted-foreground border-t border-border pt-3">
-              {plan.motivation_message}
+          {aiPlan.motivation_message && (
+            <p className="mt-4 text-sm italic text-muted-foreground border-t border-outline-variant pt-3">
+              {aiPlan.motivation_message}
             </p>
           )}
-        </div>
+        </Card>
       )}
 
-      {/* Empty state */}
-      {!isLoading && !isError && data && !data.cycle && (
-        <div className="rounded-xl border border-border bg-card p-8 text-center text-[13px] text-muted-foreground">
-          Nenhum ciclo de avaliação ativo. Aguarde a abertura do próximo ciclo.
-        </div>
+      {/* Pontos de Atenção */}
+      {aiPlan?.attention_points && aiPlan.attention_points.length > 0 && (
+        <Card>
+          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
+            Pontos de Atenção
+          </h2>
+          <ul className="space-y-2">
+            {aiPlan.attention_points.map((item: string, i: number) => (
+              <li key={i} className="flex gap-2 text-sm text-foreground">
+                <span className="text-error shrink-0">•</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
       )}
     </div>
   );
