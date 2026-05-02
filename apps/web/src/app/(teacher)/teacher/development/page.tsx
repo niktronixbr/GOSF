@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { analyticsApi, TeacherPlanOutput } from "@/lib/api/analytics";
 import { Sparkles, CheckCircle2, Star, TrendingUp, Lightbulb, Target, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 function PlanSection({
   title,
@@ -138,14 +139,16 @@ export default function TeacherDevelopmentPage() {
         </div>
 
         {dashboard?.cycle && (
-          <button
+          <Button
+            variant="primary"
+            size="md"
             onClick={() => generateMutation.mutate()}
             disabled={generateMutation.isPending || plan?.status === "GENERATING"}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity shrink-0"
+            className="shrink-0"
           >
             <Sparkles size={15} />
             {plan ? "Regenerar" : "Gerar plano"}
-          </button>
+          </Button>
         )}
       </div>
 

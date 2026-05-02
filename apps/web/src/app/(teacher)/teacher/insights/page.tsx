@@ -22,28 +22,19 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
+import { useChartColors } from "@/lib/chart-colors";
+import { ProgressBar } from "@/components/ui/progress-bar";
+import { scoreVariant } from "@/lib/score-color";
+import { Chip } from "@/components/ui/chip";
 
 type Filter = "all" | "atRisk" | "regular" | "noData";
-
-function ScoreBar({ score }: { score: number }) {
-  const color =
-    score >= 70 ? "bg-green-500" : score >= 50 ? "bg-yellow-500" : "bg-red-500";
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-        <div className={clsx("h-full rounded-full", color)} style={{ width: `${score}%` }} />
-      </div>
-      <span className="text-xs font-mono w-8 text-right text-muted-foreground">{score}</span>
-    </div>
-  );
-}
 
 function StudentCard({ student }: { student: StudentInsight }) {
   return (
     <div
       className={clsx(
         "rounded-xl border bg-card p-5 shadow-sm transition-colors",
-        student.atRisk ? "border-red-300 dark:border-red-800" : "border-border"
+        student.atRisk ? "border-error/40" : "border-border"
       )}
     >
       <div className="flex items-start justify-between gap-3 mb-4">
@@ -52,16 +43,7 @@ function StudentCard({ student }: { student: StudentInsight }) {
           {student.avgScore !== null ? (
             <p className="text-sm text-muted-foreground mt-0.5">
               Score médio:{" "}
-              <span
-                className={clsx(
-                  "font-semibold",
-                  student.avgScore >= 70
-                    ? "text-green-600"
-                    : student.avgScore >= 50
-                    ? "text-yellow-600"
-                    : "text-red-600"
-                )}
-              >
+              <span className="font-semibold">
                 {student.avgScore}
               </span>
             </p>
@@ -71,15 +53,15 @@ function StudentCard({ student }: { student: StudentInsight }) {
         </div>
 
         {student.atRisk ? (
-          <div className="flex items-center gap-1.5 rounded-full bg-red-100 dark:bg-red-900/30 px-2.5 py-1 text-xs font-medium text-red-700 dark:text-red-400 shrink-0">
+          <Chip variant="danger" className="shrink-0">
             <AlertTriangle size={12} />
             Risco
-          </div>
+          </Chip>
         ) : student.avgScore !== null ? (
-          <div className="flex items-center gap-1.5 rounded-full bg-green-100 dark:bg-green-900/30 px-2.5 py-1 text-xs font-medium text-green-700 dark:text-green-400 shrink-0">
+          <Chip variant="success" className="shrink-0">
             <CheckCircle2 size={12} />
             Regular
-          </div>
+          </Chip>
         ) : null}
       </div>
 
@@ -88,7 +70,7 @@ function StudentCard({ student }: { student: StudentInsight }) {
           {student.scores.map((s) => (
             <div key={s.dimension}>
               <p className="text-xs text-muted-foreground mb-1 capitalize">{s.dimension}</p>
-              <ScoreBar score={s.score} />
+              <ProgressBar value={s.score} max={100} variant={scoreVariant(s.score)} />
             </div>
           ))}
         </div>
@@ -97,15 +79,10 @@ function StudentCard({ student }: { student: StudentInsight }) {
   );
 }
 
-function barColor(score: number) {
-  if (score >= 70) return "#22c55e";
-  if (score >= 50) return "#eab308";
-  return "#ef4444";
-}
-
 export default function TeacherInsightsPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
+  const chartColors = useChartColors();
 
   const { data: students, isLoading } = useQuery({
     queryKey: ["teacher-student-insights"],
@@ -170,6 +147,12 @@ export default function TeacherInsightsPage() {
     { label: "Sem dados", value: "noData", count: noDataCount },
   ];
 
+  function barFill(score: number) {
+    if (score >= 70) return chartColors.success;
+    if (score >= 50) return chartColors.warning;
+    return chartColors.danger;
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -188,15 +171,15 @@ export default function TeacherInsightsPage() {
               <p className="text-2xl font-bold text-foreground">{students.length}</p>
               <p className="text-xs text-muted-foreground mt-0.5">Alunos avaliados</p>
             </div>
-            <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-4 text-center shadow-sm">
-              <AlertTriangle size={20} className="mx-auto text-red-500 mb-1" />
-              <p className="text-2xl font-bold text-red-600">{atRiskCount}</p>
-              <p className="text-xs text-red-500 mt-0.5">Em risco (score &lt; 50)</p>
+            <div className="rounded-xl border border-error/40 bg-error/5 p-4 text-center shadow-sm">
+              <AlertTriangle size={20} className="mx-auto text-error mb-1" />
+              <p className="text-2xl font-bold text-error">{atRiskCount}</p>
+              <p className="text-xs text-error mt-0.5">Em risco (score &lt; 50)</p>
             </div>
-            <div className="rounded-xl border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 p-4 text-center shadow-sm">
-              <TrendingUp size={20} className="mx-auto text-green-500 mb-1" />
-              <p className="text-2xl font-bold text-green-600">{regularCount}</p>
-              <p className="text-xs text-green-500 mt-0.5">Em dia</p>
+            <div className="rounded-xl border border-success/40 bg-success/5 p-4 text-center shadow-sm">
+              <TrendingUp size={20} className="mx-auto text-success mb-1" />
+              <p className="text-2xl font-bold text-success">{regularCount}</p>
+              <p className="text-xs text-success mt-0.5">Em dia</p>
             </div>
           </div>
 
@@ -211,14 +194,13 @@ export default function TeacherInsightsPage() {
               </div>
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart data={dimensionChart} margin={{ top: 0, right: 8, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartColors.gridLine} vertical={false} />
                   <XAxis
                     dataKey="dimension"
-                    tick={{ fontSize: 11 }}
+                    tick={{ fontSize: 11, fill: chartColors.muted }}
                     tickFormatter={(v: string) => v.charAt(0).toUpperCase() + v.slice(1)}
-                    className="text-muted-foreground"
                   />
-                  <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: chartColors.muted }} />
                   <Tooltip
                     formatter={(value: number) => [`${value}`, "Média"]}
                     labelFormatter={(label: string) =>
@@ -226,14 +208,15 @@ export default function TeacherInsightsPage() {
                     }
                     contentStyle={{
                       borderRadius: "8px",
-                      fontSize: "12px",
-                      border: "1px solid var(--border)",
-                      background: "var(--card)",
+                      border: `1px solid ${chartColors.gridLine}`,
+                      background: "var(--surface)",
+                      color: "var(--foreground)",
+                      fontSize: "13px",
                     }}
                   />
                   <Bar dataKey="avg" radius={[4, 4, 0, 0]}>
                     {dimensionChart.map((entry, i) => (
-                      <Cell key={i} fill={barColor(entry.avg)} />
+                      <Cell key={i} fill={barFill(entry.avg)} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -262,10 +245,10 @@ export default function TeacherInsightsPage() {
                   key={btn.value}
                   onClick={() => setFilter(btn.value)}
                   className={clsx(
-                    "rounded-full px-3 py-1 text-xs font-medium border transition-colors",
+                    "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
                     filter === btn.value
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "border-border hover:bg-muted"
+                      ? "bg-primary text-on-primary"
+                      : "text-muted-foreground hover:bg-surface-container"
                   )}
                 >
                   {btn.label}
@@ -299,7 +282,7 @@ export default function TeacherInsightsPage() {
             <>
               {atRiskCount > 0 && (
                 <section>
-                  <h2 className="text-sm font-semibold text-red-600 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <h2 className="text-sm font-semibold text-error uppercase tracking-wider mb-3 flex items-center gap-2">
                     <AlertTriangle size={14} />
                     Alunos em risco — precisam de atenção
                   </h2>
