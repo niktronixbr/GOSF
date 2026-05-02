@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { analyticsApi } from "@/lib/api/analytics";
 import { useAuthStore } from "@/store/auth.store";
 import { Stat } from "@/components/ui/stat";
-import { Badge } from "@/components/ui/badge";
+import { Chip } from "@/components/ui/chip";
 import { BarChart2, BookOpen } from "lucide-react";
 
 function ScoreBar({ label, score }: { label: string; score: number }) {
@@ -14,7 +14,7 @@ function ScoreBar({ label, score }: { label: string; score: number }) {
   return (
     <div>
       <div className="flex justify-between items-center mb-1 gap-2">
-        <Badge variant="amber" className="capitalize">{displayLabel}</Badge>
+        <Chip variant="warning" className="capitalize">{displayLabel}</Chip>
         <span className="text-sm font-medium tabular-nums">{score.toFixed(0)}</span>
       </div>
       <div className="h-2 rounded-full bg-muted overflow-hidden">
