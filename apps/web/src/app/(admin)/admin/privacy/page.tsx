@@ -22,6 +22,7 @@ import {
 import { Chip } from "@/components/ui/chip";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { SkeletonTable } from "@/components/ui/skeleton";
 
 const TYPE_LABELS: Record<DataRequestType, string> = {
   ACCESS: "Acesso",
@@ -200,9 +201,7 @@ export default function AdminPrivacyPage() {
 
       <Card noPadding>
         {isLoading ? (
-          <p className="p-8 text-center text-sm text-muted-foreground">
-            Carregando…
-          </p>
+          <SkeletonTable rows={3} />
         ) : requests.length === 0 ? (
           <p className="p-8 text-center text-sm text-muted-foreground">
             Nenhuma solicitação encontrada.

@@ -8,6 +8,8 @@ import { Target, Plus, CheckCircle2, Circle, Clock, Pencil, Trash2 } from "lucid
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Chip } from "@/components/ui/chip";
 import { Button } from "@/components/ui/button";
+import { SkeletonTable } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const STATUS_LABELS: Record<GoalStatus, string> = {
   PENDING: "Pendente",
@@ -330,30 +332,15 @@ export default function StudentGoalsPage() {
       )}
 
       {isLoading && (
-        <div className="flex justify-center py-12 text-muted-foreground text-sm">
-          Carregando metas...
-        </div>
+        <SkeletonTable rows={3} />
       )}
 
       {!isLoading && goals.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted">
-            <Target size={28} className="text-muted-foreground" />
-          </div>
-          <p className="font-medium text-foreground">Nenhuma meta ainda</p>
-          <p className="text-sm text-muted-foreground max-w-xs">
-            Crie sua primeira meta para acompanhar seus objetivos acadêmicos.
-          </p>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setCreateOpen(true)}
-            className="mt-1"
-          >
-            <Plus size={15} />
-            Criar primeira meta
-          </Button>
-        </div>
+        <EmptyState
+          title="Nenhuma meta cadastrada"
+          description="Crie sua primeira meta de aprendizagem."
+          action={{ label: "Nova meta", onClick: () => setCreateOpen(true) }}
+        />
       )}
 
       {inProgress.length > 0 && (

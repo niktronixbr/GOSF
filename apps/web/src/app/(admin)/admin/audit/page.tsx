@@ -7,6 +7,8 @@ import { auditApi, type AuditFilters } from "@/lib/api/audit";
 import { Chip } from "@/components/ui/chip";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { SkeletonTable } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 
 function methodVariant(method: string): "info" | "success" | "warning" | "danger" | "neutral" {
   if (method === "GET") return "info";
@@ -86,11 +88,9 @@ export default function AuditPage() {
       {/* Tabela */}
       <Card noPadding>
         {isLoading ? (
-          <p className="p-8 text-center text-sm text-muted-foreground">Carregando…</p>
+          <SkeletonTable rows={4} />
         ) : !logs || logs.length === 0 ? (
-          <p className="p-8 text-center text-sm text-muted-foreground">
-            Nenhum registro encontrado.
-          </p>
+          <EmptyState title="Nenhum registro de auditoria" description="As ações dos usuários aparecerão aqui." />
         ) : (
           <table className="w-full text-sm">
             <thead className="bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground">

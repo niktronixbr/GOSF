@@ -21,6 +21,7 @@ import {
 import { adminApi, type AdminUser, type UserRole, type UserStatus } from "@/lib/api/admin";
 import { PaginationControls } from "@/components/ui/pagination-controls";
 import { StatCard } from "@/components/ui/stat-card";
+import { SkeletonTable } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
 import { Button } from "@/components/ui/button";
@@ -390,7 +391,7 @@ export default function AdminPage() {
       {/* Table */}
       <Card noPadding>
         {isLoading ? (
-          <div className="p-8 text-center text-sm text-muted-foreground">Carregando...</div>
+          <SkeletonTable rows={5} />
         ) : users.length === 0 ? (
           <div className="p-8 text-center text-sm text-muted-foreground">
             Nenhum usuário encontrado

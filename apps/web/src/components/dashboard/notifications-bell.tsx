@@ -7,6 +7,8 @@ import { notificationsApi, type Notification } from "@/lib/api/notifications";
 import { getValidAccessToken } from "@/lib/auth/session";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { SkeletonTableRow } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
@@ -130,37 +132,41 @@ export function NotificationsBell() {
   return (
     <div ref={ref} className="relative">
       <button
+        type="button"
         onClick={() => setOpen((o) => !o)}
-        className="relative flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+        className="relative flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-surface-container hover:text-foreground transition-colors"
         aria-label="Notificações"
       >
         <Bell size={20} />
         {unread > 0 && (
-          <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground leading-none">
+          <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-on-primary leading-none">
             {unread > 99 ? "99+" : unread}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-11 z-50 w-80 rounded-xl border border-border bg-card shadow-lg">
-          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <div className="absolute right-0 top-11 z-50 w-80 rounded-xl border border-outline-variant bg-surface shadow-lg">
+          <div className="flex items-center justify-between border-b border-outline-variant px-4 py-3">
             <h3 className="text-sm font-semibold">Notificações</h3>
             <div className="flex items-center gap-2">
               {unread > 0 && (
                 <button
+                  type="button"
                   onClick={() => markAllRead.mutate()}
                   disabled={markAllRead.isPending}
-                  className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50"
-                  title="Marcar todas como lidas"
+                  className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-surface-container transition-colors disabled:opacity-50"
+                  aria-label="Marcar todas como lidas"
                 >
                   <CheckCheck size={13} />
                   Todas lidas
                 </button>
               )}
               <button
+                type="button"
                 onClick={() => setOpen(false)}
-                className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-muted transition-colors"
+                className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-surface-container transition-colors"
+                aria-label="Fechar notificações"
               >
                 <X size={14} />
               </button>
@@ -169,15 +175,15 @@ export function NotificationsBell() {
 
           <div className="max-h-[420px] overflow-y-auto">
             {isLoading && (
-              <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-                Carregando...
+              <div className="py-2">
+                <SkeletonTableRow />
+                <SkeletonTableRow />
+                <SkeletonTableRow />
               </div>
             )}
 
             {!isLoading && (!notifications || notifications.length === 0) && (
-              <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-                Nenhuma notificação
-              </div>
+              <EmptyState title="Sem notificações" description="Você está em dia!" />
             )}
 
             {notifications?.map((n: Notification) => (
@@ -205,14 +211,14 @@ function NotificationItem({
 
   return (
     <div
-      className={`flex gap-3 border-b border-border/60 px-4 py-3 last:border-b-0 ${
+      className={`flex gap-3 border-b border-outline-variant/60 px-4 py-3 last:border-b-0 ${
         isUnread ? "bg-primary/5" : ""
       }`}
     >
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <span className="inline-block rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground mb-1">
+            <span className="inline-block rounded-full bg-surface-container px-2 py-0.5 text-[10px] font-medium text-muted-foreground mb-1">
               {typeLabels[n.type] ?? n.type}
             </span>
             <p className={`text-sm ${isUnread ? "font-semibold" : "font-medium"} truncate`}>
@@ -222,9 +228,10 @@ function NotificationItem({
           </div>
           {isUnread && (
             <button
+              type="button"
               onClick={onMarkRead}
-              className="shrink-0 flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-primary transition-colors mt-0.5"
-              title="Marcar como lida"
+              className="shrink-0 flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-surface-container hover:text-primary transition-colors mt-0.5"
+              aria-label="Marcar como lida"
             >
               <Check size={13} />
             </button>
