@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { billingApi } from "@/lib/api/billing";
 import { ApiError } from "@/lib/api/client";
 import { toast } from "sonner";
-import { CreditCard } from "lucide-react";
+import { ArrowLeft, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { SkeletonStatCard } from "@/components/ui/skeleton";
@@ -57,6 +58,13 @@ export default function AdminBillingPage() {
   return (
     <div className="space-y-6 max-w-lg">
       <div>
+        <Link
+          href="/admin"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+        >
+          <ArrowLeft size={15} />
+          Voltar
+        </Link>
         <h1 className="text-2xl font-bold text-foreground">Assinatura</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Plano contratado e informações de cobrança.

@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { PricingCards } from "@/components/pricing/PricingCards";
 
 export const metadata = {
@@ -9,6 +11,16 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-5xl px-6 py-20">
+        <div className="mb-8">
+          <Link
+            href="/admin/billing"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft size={15} />
+            Voltar
+          </Link>
+        </div>
+
         <div className="text-center mb-14">
           <h1 className="text-4xl font-bold text-foreground tracking-tight">
             Planos simples e transparentes
