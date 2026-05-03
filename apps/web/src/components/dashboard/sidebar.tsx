@@ -46,6 +46,7 @@ const coordinatorNav: NavItem[] = [
 ];
 
 const adminNav: NavItem[] = [
+  { href: "/coordinator", label: "Visão geral", icon: Home },
   { href: "/admin", label: "Usuários", icon: Users },
   { href: "/admin/metrics", label: "Métricas", icon: BarChart2 },
   { href: "/admin/billing", label: "Assinatura", icon: CreditCard },
