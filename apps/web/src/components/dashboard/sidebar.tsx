@@ -105,7 +105,9 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
       {/* Nav items */}
       <nav className="flex-1 overflow-y-auto px-3 space-y-1">
         {items.map((item) => {
-          const active = pathname === item.href || pathname.startsWith(item.href + "/");
+          const active =
+            pathname === item.href ||
+            (item.href.includes("/", 1) && pathname.startsWith(item.href + "/"));
           const Icon = item.icon;
           return (
             <Link
@@ -120,7 +122,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
               )}
             >
               {active && (
-                <span className="absolute right-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-l-full bg-primary" />
+                <span className="absolute right-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-primary" />
               )}
               <Icon size={18} />
               {item.label}
