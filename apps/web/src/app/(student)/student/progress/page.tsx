@@ -100,13 +100,14 @@ function MultiCycleChart({ history, dimensions }: { history: CycleScores[]; dime
 
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={chartData} margin={{ top: 8, right: 16, bottom: 4, left: 0 }}>
+      <LineChart data={chartData} margin={{ top: 8, right: 32, bottom: 4, left: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke={chartColors.gridLine} />
         <XAxis
           dataKey="cycle"
           tick={{ fontSize: 12, fill: chartColors.muted }}
           tickLine={false}
           axisLine={false}
+          padding={{ left: 32, right: 32 }}
         />
         <YAxis
           domain={[0, 100]}
