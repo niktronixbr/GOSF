@@ -97,17 +97,18 @@ function MultiCycleChart({ history, dimensions }: { history: CycleScores[]; dime
     for (const s of c.scores) row[s.dimension] = s.score;
     return row;
   });
+  const lastIndex = chartData.length - 1;
 
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={chartData} margin={{ top: 8, right: 32, bottom: 4, left: 0 }}>
+      <LineChart data={chartData} margin={{ top: 8, right: 110, bottom: 4, left: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke={chartColors.gridLine} />
         <XAxis
           dataKey="cycle"
           tick={{ fontSize: 12, fill: chartColors.muted }}
           tickLine={false}
           axisLine={false}
-          padding={{ left: 32, right: 32 }}
+          padding={{ left: 32, right: 0 }}
         />
         <YAxis
           domain={[0, 100]}
@@ -126,26 +127,38 @@ function MultiCycleChart({ history, dimensions }: { history: CycleScores[]; dime
           }}
           formatter={(value: number, name: string) => [`${value}`, dimensionLabel(name)]}
         />
-        <Legend
-          iconType="circle"
-          iconSize={8}
-          formatter={(val: string) => (
-            <span style={{ fontSize: 12 }}>{dimensionLabel(val)}</span>
-          )}
-        />
-        {dimensions.map((dim, idx) => (
-          <Line
-            key={dim}
-            type="monotone"
-            dataKey={dim}
-            name={dim}
-            stroke={DIM_COLORS[dim] ?? FALLBACK_COLORS[idx % FALLBACK_COLORS.length]}
-            strokeWidth={2.5}
-            dot={{ r: 5 }}
-            activeDot={{ r: 7 }}
-            connectNulls
-          />
-        ))}
+        {dimensions.map((dim, idx) => {
+          const color = DIM_COLORS[dim] ?? FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
+          return (
+            <Line
+              key={dim}
+              type="monotone"
+              dataKey={dim}
+              name={dim}
+              stroke={color}
+              strokeWidth={2.5}
+              dot={{ r: 4 }}
+              activeDot={{ r: 7 }}
+              connectNulls
+              label={(props: { x: number; y: number; index: number }) => {
+                if (props.index !== lastIndex) return <g />;
+                return (
+                  <text
+                    key={`lbl-${dim}`}
+                    x={props.x + 10}
+                    y={props.y}
+                    dominantBaseline="middle"
+                    fill={color}
+                    fontSize={11}
+                    fontWeight={600}
+                  >
+                    {dimensionLabel(dim)}
+                  </text>
+                );
+              }}
+            />
+          );
+        })}
       </LineChart>
     </ResponsiveContainer>
   );
