@@ -9,6 +9,8 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer,
 } from "recharts";
+import { useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useChartColors } from "@/lib/chart-colors";
 import { Chip } from "@/components/ui/chip";
 import { scoreVariant } from "@/lib/score-color";
@@ -150,7 +152,18 @@ function MultiCycleChart({ history, dimensions }: { history: CycleScores[]; dime
 }
 
 function GradeHistorySection({ history }: { history: GradeHistoryCycle[] }) {
+  const lastId = history[history.length - 1]?.cycleId;
+  const [openIds, setOpenIds] = useState<Set<string>>(() => new Set(lastId ? [lastId] : []));
+
   if (history.length === 0) return null;
+
+  function toggle(id: string) {
+    setOpenIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
 
   return (
     <div className="space-y-4">
@@ -158,37 +171,50 @@ function GradeHistorySection({ history }: { history: GradeHistoryCycle[] }) {
         <h2 className="text-lg font-semibold text-foreground">Histórico de notas</h2>
         <p className="text-xs text-muted-foreground mt-0.5">Notas por disciplina em cada ciclo de avaliação</p>
       </div>
-      {history.map((cycle) => (
-        <div key={cycle.cycleId} className="rounded-2xl border border-outline-variant bg-surface p-5">
-          <p className="text-sm font-semibold text-foreground mb-3">{cycle.cycleTitle}</p>
-          <div className="space-y-3">
-            {cycle.subjects.map((subject) => (
-              <div key={subject.subjectId}>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-sm font-medium text-foreground">{subject.subjectName}</span>
-                  {subject.weightedAverage !== null && (
-                    <Chip variant={subject.weightedAverage >= 7 ? "success" : subject.weightedAverage >= 5 ? "warning" : "danger"}>
-                      Média {subject.weightedAverage.toFixed(1)}
-                    </Chip>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {subject.grades.map((g) => (
-                    <div
-                      key={g.id}
-                      className="flex flex-col items-center rounded-lg border border-outline-variant bg-surface-container px-3 py-1.5 min-w-[72px]"
-                    >
-                      <span className="text-xs text-muted-foreground truncate max-w-[80px]" title={g.title}>{g.title}</span>
-                      <span className="text-base font-bold text-foreground">{g.value.toFixed(1)}</span>
-                      <span className="text-[10px] text-muted-foreground">peso {g.weight}</span>
+      {history.map((cycle) => {
+        const open = openIds.has(cycle.cycleId);
+        return (
+          <div key={cycle.cycleId} className="rounded-2xl border border-outline-variant bg-surface overflow-hidden">
+            <button
+              type="button"
+              onClick={() => toggle(cycle.cycleId)}
+              className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-surface-container transition-colors"
+            >
+              <span className="text-sm font-semibold text-foreground">{cycle.cycleTitle}</span>
+              {open ? <ChevronUp size={16} className="text-muted-foreground shrink-0" /> : <ChevronDown size={16} className="text-muted-foreground shrink-0" />}
+            </button>
+            {open && (
+              <div className="px-5 pb-5 space-y-3 border-t border-outline-variant">
+                <div className="h-3" />
+                {cycle.subjects.map((subject) => (
+                  <div key={subject.subjectId}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-sm font-medium text-foreground">{subject.subjectName}</span>
+                      {subject.weightedAverage !== null && (
+                        <Chip variant={subject.weightedAverage >= 7 ? "success" : subject.weightedAverage >= 5 ? "warning" : "danger"}>
+                          Média {subject.weightedAverage.toFixed(1)}
+                        </Chip>
+                      )}
                     </div>
-                  ))}
-                </div>
+                    <div className="flex flex-wrap gap-2">
+                      {subject.grades.map((g) => (
+                        <div
+                          key={g.id}
+                          className="flex flex-col items-center rounded-lg border border-outline-variant bg-surface-container px-3 py-1.5 min-w-[72px]"
+                        >
+                          <span className="text-xs text-muted-foreground truncate max-w-[80px]" title={g.title}>{g.title}</span>
+                          <span className="text-base font-bold text-foreground">{g.value.toFixed(1)}</span>
+                          <span className="text-[10px] text-muted-foreground">peso {g.weight}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
