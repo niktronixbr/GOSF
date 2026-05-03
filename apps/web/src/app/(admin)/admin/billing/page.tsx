@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { billingApi } from "@/lib/api/billing";
 import { toast } from "sonner";
-import { CreditCard, ExternalLink } from "lucide-react";
+import { CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { SkeletonStatCard } from "@/components/ui/skeleton";
@@ -119,15 +119,6 @@ export default function AdminBillingPage() {
                 Ver planos
               </Button>
             )}
-            <a
-              href="https://dashboard.stripe.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-lg border border-outline-variant px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-surface-container transition-colors"
-            >
-              <ExternalLink size={14} />
-              Stripe Dashboard
-            </a>
           </div>
         </div>
       )}

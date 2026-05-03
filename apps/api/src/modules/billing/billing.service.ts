@@ -68,7 +68,7 @@ export class BillingService {
     const webUrl = this.config.getOrThrow("WEB_URL");
     const session = await this.stripe.client.billingPortal.sessions.create({
       customer: institution.stripeCustomerId,
-      return_url: `${webUrl}/coordinator/settings?tab=assinatura`,
+      return_url: `${webUrl}/admin/billing`,
     });
     return { url: session.url };
   }
