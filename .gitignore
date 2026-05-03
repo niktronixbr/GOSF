@@ -23,3 +23,14 @@ temp/
 
 # Visual brainstorming
 .superpowers/
+
+# Arquivos sensíveis na raiz
+*.txt
+*.md
+*.docx
+*.pdf
+*.pptx
+*.png
+.ssh/
+*API-KEY*
+*api-key*
