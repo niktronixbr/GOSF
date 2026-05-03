@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useSearchParams } from "next/navigation";
 import { z } from "zod";
-import { GraduationCap } from "lucide-react";
+import { GosfIcon } from "@/components/ui/GosfIcon";
 import { toast } from "sonner";
 import { api, ApiError } from "@/lib/api/client";
 import { institutionsApi } from "@/lib/api/institutions";
@@ -234,7 +234,7 @@ export default function RegisterPage() {
       <div className="relative hidden lg:flex flex-col justify-between bg-primary px-10 py-10 text-primary-foreground">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-foreground/25">
-            <GraduationCap size={20} />
+            <GosfIcon size={22} variant="outline" />
           </div>
           <div>
             <p className="font-bold text-lg">GOSF</p>
@@ -270,9 +270,7 @@ export default function RegisterPage() {
       <div className="flex items-center justify-center bg-background px-6 py-12">
         <div className="w-full max-w-sm space-y-8">
           <div className="flex items-center gap-2 lg:hidden">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <GraduationCap size={16} />
-            </div>
+            <GosfIcon size={34} variant="filled" />
             <span className="text-base font-bold">GOSF</span>
           </div>
 

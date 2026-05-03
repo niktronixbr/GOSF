@@ -6,8 +6,9 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Home, BookOpen, BookMarked, BarChart2, BarChart3, MessageSquare,
   Target, Users, Settings, LogOut, ShieldCheck, GitCompare, FileClock,
-  GraduationCap, X, CreditCard,
+  X, CreditCard,
 } from "lucide-react";
+import { GosfIcon } from "@/components/ui/GosfIcon";
 import { cn } from "@/lib/cn";
 import { useAuthStore } from "@/store/auth.store";
 import { useSidebarStore } from "@/store/sidebar.store";
@@ -82,7 +83,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
       <div className="p-6 flex items-start gap-2">
         <div className="flex items-start gap-3 rounded-2xl bg-surface-container p-3 flex-1">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <GraduationCap size={18} />
+            <GosfIcon size={22} variant="outline" />
           </div>
           <div>
             <p className="text-sm font-bold text-foreground">GOSF</p>
