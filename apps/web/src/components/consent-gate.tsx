@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
-import { privacyApi } from "@/lib/api/privacy";
+import { privacyApi, type ConsentRecord } from "@/lib/api/privacy";
 
 export const TERMS_PURPOSE = "terms-of-use";
 export const TERMS_VERSION = "2026.04";
@@ -43,7 +43,9 @@ export function ConsentGate({ children }: { children: React.ReactNode }) {
         accepted: true,
         userAgent: typeof navigator !== "undefined" ? navigator.userAgent : undefined,
       }),
-    onSuccess: () => {
+    onSuccess: (saved) => {
+      // Atualiza o cache imediatamente para o modal fechar sem aguardar o refetch
+      qc.setQueryData<ConsentRecord[]>(["my-consents"], (old = []) => [...old, saved]);
       qc.invalidateQueries({ queryKey: ["my-consents"] });
       toast.success("Termos aceitos");
     },
