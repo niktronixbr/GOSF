@@ -12,6 +12,7 @@ import {
   Play,
   Mail,
   User as UserIcon,
+  RefreshCw,
 } from "lucide-react";
 import {
   privacyApi,
@@ -127,18 +128,29 @@ export default function AdminPrivacyPage() {
     "ALL",
   );
 
-  const { data: requests = [], isLoading } = useQuery({
+  const { data: requests = [], isLoading, isFetching, refetch } = useQuery({
     queryKey: ["admin-data-requests", statusFilter],
     queryFn: () =>
       privacyApi.listDataRequests(
         statusFilter === "ALL" ? undefined : statusFilter,
       ),
+    staleTime: 0,
   });
 
   const updateMut = useMutation({
     mutationFn: ({ id, status }: { id: string; status: DataRequestStatus }) =>
       privacyApi.updateDataRequestStatus(id, status),
-    onSuccess: () => {
+    onSuccess: (updated) => {
+      // Atualiza o item no cache imediatamente sem aguardar o refetch
+      qc.setQueryData<DataRequestWithUser[]>(
+        ["admin-data-requests", statusFilter],
+        (old = []) =>
+          old.map((r) =>
+            r.id === updated.id
+              ? { ...r, status: updated.status, resolvedAt: updated.resolvedAt ?? null }
+              : r,
+          ),
+      );
       qc.invalidateQueries({ queryKey: ["admin-data-requests"] });
       toast.success("Status atualizado");
     },
@@ -155,16 +167,26 @@ export default function AdminPrivacyPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <ShieldCheck className="text-primary" />
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            Solicitações LGPD
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Gerencie pedidos de acesso, correção, exclusão e portabilidade.
-          </p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <ShieldCheck className="text-primary" />
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">
+              Solicitações LGPD
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Gerencie pedidos de acesso, correção, exclusão e portabilidade.
+            </p>
+          </div>
         </div>
+        <button
+          onClick={() => refetch()}
+          disabled={isFetching}
+          className="flex items-center gap-1.5 rounded-lg border border-outline-variant bg-surface px-3 py-1.5 text-sm text-muted-foreground hover:bg-surface-container transition-colors disabled:opacity-50"
+        >
+          <RefreshCw size={14} className={isFetching ? "animate-spin" : ""} />
+          Atualizar
+        </button>
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
