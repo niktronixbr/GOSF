@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Home, BookOpen, BookMarked, BarChart2, BarChart3, MessageSquare,
   Target, Users, Settings, LogOut, ShieldCheck, GitCompare, FileClock,
-  GraduationCap, X,
+  GraduationCap, X, CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useAuthStore } from "@/store/auth.store";
@@ -48,6 +48,7 @@ const coordinatorNav: NavItem[] = [
 const adminNav: NavItem[] = [
   { href: "/admin", label: "Usuários", icon: Users },
   { href: "/admin/metrics", label: "Métricas", icon: BarChart2 },
+  { href: "/admin/billing", label: "Assinatura", icon: CreditCard },
   { href: "/admin/privacy", label: "Privacidade", icon: ShieldCheck },
   { href: "/admin/audit", label: "Auditoria", icon: FileClock },
 ];
@@ -130,21 +131,6 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
 
       {/* Footer */}
       <div className="p-3 space-y-2 border-t border-outline-variant">
-        {user.role === "COORDINATOR" && (
-          <div className="rounded-xl bg-surface-container p-3 space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Plano
-            </p>
-            <p className="text-sm font-medium text-foreground">Veja seu plano atual</p>
-            <Link
-              href="/coordinator/settings"
-              onClick={onClose}
-              className="block rounded-lg bg-primary px-3 py-1.5 text-center text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
-            >
-              Gerenciar
-            </Link>
-          </div>
-        )}
         <div className="flex items-center justify-between">
           <ThemeToggle />
           <button
