@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { billingApi } from "@/lib/api/billing";
+import { ApiError } from "@/lib/api/client";
 import { toast } from "sonner";
 import { CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -42,10 +43,11 @@ export default function AdminBillingPage() {
     try {
       const { url } = await billingApi.createPortalSession();
       window.location.href = url;
-    } catch {
+    } catch (err) {
+      const detail = err instanceof ApiError ? err.message : null;
       toast.error(
-        "Não foi possível abrir o portal de assinatura. Verifique se o portal está habilitado no Stripe Dashboard.",
-        { duration: 6000 },
+        detail ?? "Não foi possível abrir o portal de assinatura.",
+        { duration: 8000 },
       );
     } finally {
       setPortalLoading(false);

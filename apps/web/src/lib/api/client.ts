@@ -22,14 +22,16 @@ async function handle402() {
     const { useAuthStore } = await import("@/store/auth.store");
     const role = useAuthStore.getState().user?.role;
 
-    if (role === "COORDINATOR" || role === "ADMIN") {
-      window.location.href = "/coordinator/settings?tab=assinatura";
+    if (role === "ADMIN") {
+      window.location.href = "/admin/billing";
+    } else if (role === "COORDINATOR") {
+      window.location.href = "/coordinator/settings";
     } else {
       alert("A assinatura da sua escola está suspensa. Contate o coordenador.");
       handling402 = false;
     }
   } catch {
-    window.location.href = "/coordinator/settings?tab=assinatura";
+    window.location.href = "/admin/billing";
   }
 }
 
