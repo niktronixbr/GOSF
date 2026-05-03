@@ -2,14 +2,21 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  Logger,
 } from "@nestjs/common";
 import { DatabaseService } from "../../common/database/database.service";
+import { AnalyticsService } from "../analytics/analytics.service";
 import { SubmitEvaluationDto } from "./dto/submit-evaluation.dto";
 import { TargetType, EvaluationCycleStatus } from "@gosf/database";
 
 @Injectable()
 export class SubmissionsService {
-  constructor(private db: DatabaseService) {}
+  private readonly logger = new Logger(SubmissionsService.name);
+
+  constructor(
+    private db: DatabaseService,
+    private analytics: AnalyticsService,
+  ) {}
 
   async submitTeacherEvaluation(
     studentUserId: string,
@@ -25,51 +32,29 @@ export class SubmissionsService {
     });
     if (!student) throw new NotFoundException("Student profile not found");
 
-    const teacher = await this.db.teacher.findUnique({
-      where: { userId: dto.targetId },
-    });
-    if (!teacher) {
-      const teacherById = await this.db.teacher.findUnique({ where: { id: dto.targetId } });
-      if (!teacherById) throw new NotFoundException("Teacher not found");
+    let teacherById = await this.db.teacher.findUnique({ where: { userId: dto.targetId } });
+    if (!teacherById) teacherById = await this.db.teacher.findUnique({ where: { id: dto.targetId } });
+    if (!teacherById) throw new NotFoundException("Teacher not found");
+    const teacherId = teacherById.id;
 
-      return this.db.teacherEvaluation.upsert({
-        where: {
-          cycleId_studentId_teacherId: {
-            cycleId: dto.cycleId,
-            studentId: student.id,
-            teacherId: teacherById.id,
-          },
-        },
-        update: { answersJson: dto.answers as any, comment: dto.comment },
-        create: {
-          cycleId: dto.cycleId,
-          formId: dto.formId,
-          studentId: student.id,
-          teacherId: teacherById.id,
-          answersJson: dto.answers as any,
-          comment: dto.comment,
-        },
-      });
-    }
-
-    return this.db.teacherEvaluation.upsert({
-      where: {
-        cycleId_studentId_teacherId: {
-          cycleId: dto.cycleId,
-          studentId: student.id,
-          teacherId: teacher.id,
-        },
-      },
+    const result = await this.db.teacherEvaluation.upsert({
+      where: { cycleId_studentId_teacherId: { cycleId: dto.cycleId, studentId: student.id, teacherId } },
       update: { answersJson: dto.answers as any, comment: dto.comment },
       create: {
         cycleId: dto.cycleId,
         formId: dto.formId,
         studentId: student.id,
-        teacherId: teacher.id,
+        teacherId,
         answersJson: dto.answers as any,
         comment: dto.comment,
       },
     });
+
+    // Recalcula scores do professor em background sem bloquear a resposta
+    this.analytics.computeTeacherScores(teacherId, dto.cycleId, cycle.institutionId)
+      .catch((err) => this.logger.error(`Auto-compute teacher scores failed: ${err}`));
+
+    return result;
   }
 
   async submitStudentEvaluation(
@@ -91,7 +76,7 @@ export class SubmissionsService {
     });
     if (!student) throw new NotFoundException("Student not found");
 
-    return this.db.studentEvaluation.upsert({
+    const result = await this.db.studentEvaluation.upsert({
       where: {
         cycleId_teacherId_studentId: {
           cycleId: dto.cycleId,
@@ -109,6 +94,12 @@ export class SubmissionsService {
         comment: dto.comment,
       },
     });
+
+    // Recalcula scores do aluno em background sem bloquear a resposta
+    this.analytics.computeStudentScores(student.id, dto.cycleId, cycle.institutionId)
+      .catch((err) => this.logger.error(`Auto-compute student scores failed: ${err}`));
+
+    return result;
   }
 
   async getMyTeacherEvaluations(studentUserId: string, cycleId: string) {

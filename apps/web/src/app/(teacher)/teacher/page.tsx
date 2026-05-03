@@ -95,7 +95,7 @@ export default function TeacherDashboardPage() {
         />
         <StatCard
           icon={<BookOpen size={20} />}
-          label="Dimensões avaliadas"
+          label="Critérios avaliados"
           value={`${scores.length}`}
         />
         <StatCard
@@ -109,7 +109,7 @@ export default function TeacherDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
-            Desempenho por Dimensão
+            Desempenho por Critério
           </h2>
           {scores.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nenhuma avaliação registrada.</p>
