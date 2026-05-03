@@ -75,7 +75,7 @@ export class FormsService {
   }
 
   async seedDefaults(institutionId: string) {
-    const existing = await this.db.evaluationForm.count({ where: { institutionId } });
+    const existing = await this.db.evaluationForm.count({ where: { institutionId, isActive: true } });
     if (existing > 0) return;
 
     await this.create(institutionId, {

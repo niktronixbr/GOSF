@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { coordinatorApi } from "@/lib/api/coordinator";
+import { ApiError } from "@/lib/api/client";
 import { EvaluationCycle } from "@/lib/api/evaluations";
 import { Plus, Play, Square, CalendarDays, ClipboardList, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -83,7 +84,7 @@ function FormsCard() {
       toast.success("Formulários padrão criados com sucesso.");
       qc.invalidateQueries({ queryKey: ["coordinator-forms"] });
     },
-    onError: () => toast.error("Erro ao criar formulários."),
+    onError: (err) => toast.error(err instanceof ApiError ? err.message : "Erro ao criar formulários."),
   });
 
   if (isLoading) return <div className="h-16 rounded-xl bg-muted animate-pulse" />;
