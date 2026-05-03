@@ -22,6 +22,7 @@ export class BillingService {
     const institution = await this.db.institution.findUnique({
       where: { id: institutionId },
       select: {
+        slug: true,
         status: true,
         planName: true,
         billingInterval: true,

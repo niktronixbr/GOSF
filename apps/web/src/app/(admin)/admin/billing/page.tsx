@@ -110,14 +110,28 @@ export default function AdminBillingPage() {
             </p>
           )}
 
+          {billing.slug?.includes("demo") && (
+            <p className="text-xs text-muted-foreground italic">
+              Gerenciamento de assinatura não disponível para conta demo.
+            </p>
+          )}
+
           <div className="flex flex-wrap gap-3 pt-2">
             {billing.stripeSubscriptionId ? (
-              <Button variant="secondary" onClick={handlePortal} disabled={portalLoading}>
+              <Button
+                variant="secondary"
+                onClick={handlePortal}
+                disabled={portalLoading || billing.slug?.includes("demo")}
+              >
                 <CreditCard size={15} />
                 {portalLoading ? "Abrindo..." : "Gerenciar assinatura"}
               </Button>
             ) : (
-              <Button variant="primary" onClick={() => (window.location.href = "/pricing")}>
+              <Button
+                variant="primary"
+                onClick={() => (window.location.href = "/pricing")}
+                disabled={billing.slug?.includes("demo")}
+              >
                 Ver planos
               </Button>
             )}

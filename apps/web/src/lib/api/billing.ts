@@ -1,6 +1,7 @@
 import { api } from "./client";
 
 export interface BillingStatus {
+  slug: string;
   status: "TRIAL" | "ACTIVE" | "SUSPENDED" | "INACTIVE";
   planName: string | null;
   billingInterval: string | null;
