@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { analyticsApi, CycleScores } from "@/lib/api/analytics";
+import { gradesApi, GradeHistoryCycle } from "@/lib/api/grades";
 import { dimensionLabel } from "@/lib/dimension-labels";
 import {
   LineChart, Line,
@@ -149,13 +150,62 @@ function MultiCycleChart({ history, dimensions }: { history: CycleScores[]; dime
   );
 }
 
+function GradeHistorySection({ history }: { history: GradeHistoryCycle[] }) {
+  if (history.length === 0) return null;
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-semibold text-foreground">Histórico de notas</h2>
+        <p className="text-xs text-muted-foreground mt-0.5">Notas por disciplina em cada ciclo de avaliação</p>
+      </div>
+      {history.map((cycle) => (
+        <div key={cycle.cycleId} className="rounded-2xl border border-outline-variant bg-surface p-5">
+          <p className="text-sm font-semibold text-foreground mb-3">{cycle.cycleTitle}</p>
+          <div className="space-y-3">
+            {cycle.subjects.map((subject) => (
+              <div key={subject.subjectId}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-sm font-medium text-foreground">{subject.subjectName}</span>
+                  {subject.weightedAverage !== null && (
+                    <Chip variant={subject.weightedAverage >= 7 ? "success" : subject.weightedAverage >= 5 ? "warning" : "danger"}>
+                      Média {subject.weightedAverage.toFixed(1)}
+                    </Chip>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {subject.grades.map((g) => (
+                    <div
+                      key={g.id}
+                      className="flex flex-col items-center rounded-lg border border-outline-variant bg-surface-container px-3 py-1.5 min-w-[72px]"
+                    >
+                      <span className="text-xs text-muted-foreground truncate max-w-[80px]" title={g.title}>{g.title}</span>
+                      <span className="text-base font-bold text-foreground">{g.value.toFixed(1)}</span>
+                      <span className="text-[10px] text-muted-foreground">peso {g.weight}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function StudentProgressPage() {
   const { data: history, isLoading } = useQuery({
     queryKey: ["student-history"],
     queryFn: () => analyticsApi.studentHistory(),
   });
 
-  if (isLoading) return <SkeletonTable rows={5} />;
+  const { data: gradeHistory, isLoading: gradesLoading } = useQuery({
+    queryKey: ["student-grades-history"],
+    queryFn: () => gradesApi.getMyGradesHistory(),
+  });
+
+  if (isLoading || gradesLoading) return <SkeletonTable rows={5} />;
 
   if (!history || history.length === 0) {
     return (
@@ -278,6 +328,10 @@ export default function StudentProgressPage() {
           </table>
         </div>
       </div>
+
+      {gradeHistory && gradeHistory.length > 0 && (
+        <GradeHistorySection history={gradeHistory} />
+      )}
     </div>
   );
 }

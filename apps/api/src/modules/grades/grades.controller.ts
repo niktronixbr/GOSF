@@ -40,6 +40,12 @@ export class GradesController {
     return this.grades.getStudentsForTeacher(user.id);
   }
 
+  @Get("my/history")
+  @Roles(UserRole.STUDENT)
+  getMyGradesHistory(@CurrentUser() user: any) {
+    return this.grades.getMyGradesHistory(user.id);
+  }
+
   @Get("my")
   @Roles(UserRole.STUDENT)
   getMyGrades(@CurrentUser() user: any) {

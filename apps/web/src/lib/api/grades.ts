@@ -55,6 +55,19 @@ export interface GradesOverview {
   bySubject: SubjectOverview[];
 }
 
+export interface GradeHistorySubject {
+  subjectId: string;
+  subjectName: string;
+  weightedAverage: number | null;
+  grades: GradeItem[];
+}
+
+export interface GradeHistoryCycle {
+  cycleId: string;
+  cycleTitle: string;
+  subjects: GradeHistorySubject[];
+}
+
 export interface CreateGradePayload {
   studentId: string;
   subjectId: string;
@@ -67,6 +80,7 @@ export interface CreateGradePayload {
 export const gradesApi = {
   getStudentsForTeacher: () => api.get<ClassSubjectGroup[]>("/grades/students"),
   getMyGrades: () => api.get<MyGradesResponse>("/grades/my"),
+  getMyGradesHistory: () => api.get<GradeHistoryCycle[]>("/grades/my/history"),
   getOverview: () => api.get<GradesOverview>("/grades/overview"),
   upsertGrade: (payload: CreateGradePayload) => api.post<GradeItem>("/grades", payload),
   deleteGrade: (id: string) => api.delete<{ deleted: boolean }>(`/grades/${id}`),

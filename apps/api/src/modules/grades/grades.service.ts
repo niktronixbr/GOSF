@@ -192,6 +192,59 @@ export class GradesService {
     return { cycleId: cycle.id, cycleTitle: cycle.title, subjects };
   }
 
+  async getMyGradesHistory(studentUserId: string) {
+    const student = await this.db.student.findUnique({
+      where: { userId: studentUserId },
+      include: { user: { select: { institutionId: true } } },
+    });
+    if (!student) throw new ForbiddenException();
+
+    const grades = await this.db.grade.findMany({
+      where: { studentId: student.id },
+      include: {
+        subject: { select: { id: true, name: true } },
+        cycle: { select: { id: true, title: true, startsAt: true } },
+      },
+      orderBy: { cycle: { startsAt: "asc" } },
+    });
+
+    const cycleMap = new Map<string, {
+      cycleId: string;
+      cycleTitle: string;
+      subjects: Map<string, { subjectId: string; subjectName: string; grades: typeof grades }>;
+    }>();
+
+    for (const grade of grades) {
+      if (!cycleMap.has(grade.cycleId)) {
+        cycleMap.set(grade.cycleId, {
+          cycleId: grade.cycleId,
+          cycleTitle: grade.cycle.title,
+          subjects: new Map(),
+        });
+      }
+      const cycleEntry = cycleMap.get(grade.cycleId)!;
+      if (!cycleEntry.subjects.has(grade.subjectId)) {
+        cycleEntry.subjects.set(grade.subjectId, {
+          subjectId: grade.subjectId,
+          subjectName: grade.subject.name,
+          grades: [],
+        });
+      }
+      cycleEntry.subjects.get(grade.subjectId)!.grades.push(grade);
+    }
+
+    return Array.from(cycleMap.values()).map((c) => ({
+      cycleId: c.cycleId,
+      cycleTitle: c.cycleTitle,
+      subjects: Array.from(c.subjects.values()).map(({ subjectId, subjectName, grades }) => ({
+        subjectId,
+        subjectName,
+        weightedAverage: this.weightedAverage(grades),
+        grades: grades.map((g) => ({ id: g.id, title: g.title, weight: g.weight, value: g.value })),
+      })),
+    }));
+  }
+
   async getOverview(institutionId: string) {
     const cycle = await this.db.evaluationCycle.findFirst({
       where: { institutionId, status: "OPEN" },
