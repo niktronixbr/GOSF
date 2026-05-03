@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { analyticsApi, FeedbackEntry } from "@/lib/api/analytics";
-import { MessageSquare, ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { scoreVariant } from "@/lib/score-color";
 import { Chip } from "@/components/ui/chip";
 import { SkeletonTable } from "@/components/ui/skeleton";
