@@ -60,14 +60,39 @@ export class BillingService {
   async createPortalSession(institutionId: string) {
     const institution = await this.db.institution.findUnique({
       where: { id: institutionId },
-      select: { stripeCustomerId: true },
+      select: { stripeCustomerId: true, stripeSubscriptionId: true },
     });
-    if (!institution?.stripeCustomerId) {
+    if (!institution?.stripeCustomerId && !institution?.stripeSubscriptionId) {
       throw new BadRequestException("Instituição não possui assinatura ativa.");
     }
+
     const webUrl = this.config.getOrThrow("WEB_URL");
+    let customerId = institution.stripeCustomerId;
+
+    // Se o customerId estiver desatualizado (ex: migração test→live), recupera via subscription
+    if (customerId && institution.stripeSubscriptionId) {
+      try {
+        await this.stripe.client.customers.retrieve(customerId);
+      } catch {
+        customerId = null;
+      }
+    }
+
+    if (!customerId && institution.stripeSubscriptionId) {
+      const sub = await this.stripe.client.subscriptions.retrieve(institution.stripeSubscriptionId);
+      customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
+      await this.db.institution.update({
+        where: { id: institutionId },
+        data: { stripeCustomerId: customerId },
+      });
+    }
+
+    if (!customerId) {
+      throw new BadRequestException("Não foi possível localizar o cliente no Stripe.");
+    }
+
     const session = await this.stripe.client.billingPortal.sessions.create({
-      customer: institution.stripeCustomerId,
+      customer: customerId,
       return_url: `${webUrl}/admin/billing`,
     });
     return { url: session.url };
