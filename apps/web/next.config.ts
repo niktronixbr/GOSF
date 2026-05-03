@@ -22,4 +22,7 @@ export default withSentryConfig(nextConfig, {
   authToken: process.env.SENTRY_AUTH_TOKEN,
   sourcemaps: { disable: true },
   telemetry: false,
+  // Desabilita transformações pesadas quando não há token (builds Docker sem Sentry configurado)
+  disableLogger: true,
+  automaticVercelMonitors: false,
 });

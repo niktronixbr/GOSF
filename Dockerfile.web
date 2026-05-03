@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.4
 # ─── Stage 1: base ────────────────────────────────────────────────────────────
 FROM node:20-alpine AS base
 ENV PNPM_HOME="/pnpm"
@@ -16,7 +17,9 @@ COPY packages/shared/package.json         ./packages/shared/
 COPY packages/database/prisma             ./packages/database/prisma/
 
 ENV PRISMA_CLI_BINARY_TARGETS="linux-musl-openssl-3.0.x"
-RUN pnpm install --frozen-lockfile
+# Cache do pnpm store entre builds — evita redownload de pacotes já baixados
+RUN --mount=type=cache,target=/pnpm/store \
+    pnpm install --frozen-lockfile
 
 # ─── Stage 3: builder — build Next.js standalone ──────────────────────────────
 FROM base AS builder
@@ -40,8 +43,9 @@ COPY apps/web                             ./apps/web
 COPY packages/database                    ./packages/database
 COPY packages/shared                      ./packages/shared
 
-# Build Next.js (gera .next/standalone)
-RUN pnpm --filter @gosf/web build
+# Cache do .next/cache entre builds — Next.js só recompila páginas alteradas
+RUN --mount=type=cache,target=/app/apps/web/.next/cache \
+    pnpm --filter @gosf/web build
 
 # ─── Stage 4: runner — imagem mínima com output standalone ────────────────────
 FROM node:20-alpine AS runner
