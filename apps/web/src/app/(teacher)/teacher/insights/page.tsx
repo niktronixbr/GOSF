@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { analyticsApi, StudentInsight } from "@/lib/api/analytics";
+import { dimensionLabel } from "@/lib/dimension-labels";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -69,7 +70,7 @@ function StudentCard({ student }: { student: StudentInsight }) {
         <div className="space-y-2">
           {student.scores.map((s) => (
             <div key={s.dimension}>
-              <p className="text-xs text-muted-foreground mb-1 capitalize">{s.dimension}</p>
+              <p className="text-xs text-muted-foreground mb-1">{dimensionLabel(s.dimension)}</p>
               <ProgressBar value={s.score} max={100} variant={scoreVariant(s.score)} />
             </div>
           ))}
@@ -189,7 +190,7 @@ export default function TeacherInsightsPage() {
               <div className="flex items-center gap-2 mb-4">
                 <BarChart2 size={16} className="text-muted-foreground" />
                 <h2 className="text-sm font-semibold text-foreground">
-                  Score médio por dimensão — turma
+                  Score médio por critério — turma
                 </h2>
               </div>
               <ResponsiveContainer width="100%" height={180}>
@@ -198,14 +199,12 @@ export default function TeacherInsightsPage() {
                   <XAxis
                     dataKey="dimension"
                     tick={{ fontSize: 11, fill: chartColors.muted }}
-                    tickFormatter={(v: string) => v.charAt(0).toUpperCase() + v.slice(1)}
+                    tickFormatter={(v: string) => dimensionLabel(v)}
                   />
                   <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: chartColors.muted }} />
                   <Tooltip
                     formatter={(value: number) => [`${value}`, "Média"]}
-                    labelFormatter={(label: string) =>
-                      label.charAt(0).toUpperCase() + label.slice(1)
-                    }
+                    labelFormatter={(label: string) => dimensionLabel(label)}
                     contentStyle={{
                       borderRadius: "8px",
                       border: `1px solid ${chartColors.gridLine}`,
