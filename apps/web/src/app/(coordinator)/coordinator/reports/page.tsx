@@ -10,9 +10,89 @@ import { ExportPdfButton } from "@/components/reports/ExportPdfButton";
 import { Chip } from "@/components/ui/chip";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ProgressBar } from "@/components/ui/progress-bar";
 import { scoreVariant } from "@/lib/score-color";
+import { dimensionLabel } from "@/lib/dimension-labels";
 
 type FilterType = "ALL" | "STUDENT" | "TEACHER";
+
+function PersonCard({ row, dims }: { row: ReportEntry; dims: string[] }) {
+  const dimMap = Object.fromEntries(row.scores.map((s) => [s.dimension, s.score]));
+  return (
+    <Card className={clsx(row.atRisk && "border-error/40 bg-error/5")}>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="font-semibold text-foreground truncate">{row.fullName}</span>
+          {row.atRisk && (
+            <Chip variant="danger" className="shrink-0">
+              <AlertTriangle size={10} className="inline mr-1" />Em risco
+            </Chip>
+          )}
+        </div>
+        <div className="text-right shrink-0 ml-4">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-0.5">Score médio</p>
+          {row.avgScore !== null ? (
+            <Chip variant={scoreVariant(row.avgScore)}>{row.avgScore.toFixed(1)}</Chip>
+          ) : (
+            <span className="text-xs text-muted-foreground">—</span>
+          )}
+        </div>
+      </div>
+      {dims.length > 0 && (
+        <div className="space-y-2 pt-2 border-t border-outline-variant">
+          {dims.map((dim) => {
+            const score = dimMap[dim] ?? null;
+            return (
+              <div key={dim} className="flex items-center gap-3">
+                <span className="text-xs text-muted-foreground w-36 shrink-0 truncate">
+                  {dimensionLabel(dim)}
+                </span>
+                <div className="flex-1">
+                  {score !== null ? (
+                    <ProgressBar value={score} max={100} variant={scoreVariant(score)} />
+                  ) : (
+                    <div className="h-2 w-full rounded-full bg-surface-container" />
+                  )}
+                </div>
+                <span className="text-xs font-semibold w-8 text-right shrink-0 text-muted-foreground">
+                  {score !== null ? score.toFixed(0) : "—"}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function PersonGroup({
+  title,
+  icon,
+  rows,
+  dims,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  rows: ReportEntry[];
+  dims: string[];
+}) {
+  if (rows.length === 0) return null;
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <span className="text-muted-foreground">{icon}</span>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{title}</h2>
+        <span className="text-xs text-muted-foreground">({rows.length})</span>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {rows.map((row) => (
+          <PersonCard key={`${row.type}-${row.id}`} row={row} dims={dims} />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function exportCsv(rows: ReportEntry[], cycleTitle: string) {
   const allDimensions = Array.from(new Set(rows.flatMap((r) => r.scores.map((s) => s.dimension)))).sort();
@@ -78,12 +158,23 @@ export default function CoordinatorReportsPage() {
   const allDimensions = useMemo(
     () =>
       Array.from(new Set((report ?? []).flatMap((r) => r.scores.map((s) => s.dimension)))).sort(),
-    [report]
+    [report],
   );
 
   const atRiskCount = report?.filter((r) => r.atRisk).length ?? 0;
   const studentCount = report?.filter((r) => r.type === "STUDENT").length ?? 0;
   const teacherCount = report?.filter((r) => r.type === "TEACHER").length ?? 0;
+
+  const studentRows = useMemo(() => filtered.filter((r) => r.type === "STUDENT"), [filtered]);
+  const teacherRows = useMemo(() => filtered.filter((r) => r.type === "TEACHER"), [filtered]);
+  const studentDims = useMemo(
+    () => Array.from(new Set(studentRows.flatMap((r) => r.scores.map((s) => s.dimension)))).sort(),
+    [studentRows],
+  );
+  const teacherDims = useMemo(
+    () => Array.from(new Set(teacherRows.flatMap((r) => r.scores.map((s) => s.dimension)))).sort(),
+    [teacherRows],
+  );
 
   return (
     <div className="space-y-6">
@@ -228,83 +319,20 @@ export default function CoordinatorReportsPage() {
           Nenhum dado para o ciclo selecionado.
         </Card>
       ) : (
-        <Card noPadding className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/40">
-                <th className="text-left px-4 py-3 font-semibold text-muted-foreground whitespace-nowrap">
-                  Nome
-                </th>
-                <th className="text-left px-4 py-3 font-semibold text-muted-foreground whitespace-nowrap">
-                  Tipo
-                </th>
-                <th className="text-right px-4 py-3 font-semibold text-muted-foreground whitespace-nowrap">
-                  Score médio
-                </th>
-                {allDimensions.map((d) => (
-                  <th
-                    key={d}
-                    className="text-right px-4 py-3 font-semibold text-muted-foreground whitespace-nowrap capitalize"
-                  >
-                    {d}
-                  </th>
-                ))}
-                <th className="text-center px-4 py-3 font-semibold text-muted-foreground whitespace-nowrap">
-                  Risco
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((row) => {
-                const dimMap = Object.fromEntries(row.scores.map((s) => [s.dimension, s.score]));
-                return (
-                  <tr
-                    key={`${row.type}-${row.id}`}
-                    className={clsx(
-                      "border-b border-border last:border-0 hover:bg-muted/30 transition-colors",
-                      row.atRisk && "bg-red-50/50 dark:bg-red-900/10"
-                    )}
-                  >
-                    <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">
-                      {row.fullName}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Chip variant={row.type === "STUDENT" ? "info" : "neutral"}>
-                        {row.type === "STUDENT" ? "Aluno" : "Professor"}
-                      </Chip>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {row.avgScore === null ? (
-                        <span className="text-muted-foreground text-xs">—</span>
-                      ) : (
-                        <Chip variant={scoreVariant(row.avgScore)}>{row.avgScore.toFixed(1)}</Chip>
-                      )}
-                    </td>
-                    {allDimensions.map((d) => {
-                      const score = dimMap[d] ?? null;
-                      return (
-                        <td key={d} className="px-4 py-3 text-right">
-                          {score === null ? (
-                            <span className="text-muted-foreground text-xs">—</span>
-                          ) : (
-                            <Chip variant={scoreVariant(score)}>{score.toFixed(1)}</Chip>
-                          )}
-                        </td>
-                      );
-                    })}
-                    <td className="px-4 py-3 text-center">
-                      {row.atRisk ? (
-                        <AlertTriangle size={14} className="inline text-red-500" />
-                      ) : (
-                        <span className="text-muted-foreground text-xs">—</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </Card>
+        <div className="space-y-6">
+          <PersonGroup
+            title="Alunos"
+            icon={<GraduationCap size={16} />}
+            rows={studentRows}
+            dims={studentDims}
+          />
+          <PersonGroup
+            title="Professores"
+            icon={<Users size={16} />}
+            rows={teacherRows}
+            dims={teacherDims}
+          />
+        </div>
       ))}
       </>}
 
