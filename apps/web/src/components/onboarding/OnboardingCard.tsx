@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { coordinatorApi } from "@/lib/api/coordinator";
+import { useAuthStore } from "@/store/auth.store";
 import { OnboardingStepSubjects } from "./OnboardingStepSubjects";
 import { OnboardingStepClasses } from "./OnboardingStepClasses";
 import { OnboardingStepTeachers } from "./OnboardingStepTeachers";
@@ -19,9 +20,11 @@ const STEPS = [
 type StepKey = (typeof STEPS)[number]["key"];
 
 export function OnboardingCard() {
+  const user = useAuthStore((s) => s.user);
   const [dismissed, setDismissed] = useState(false);
-  const [done, setDone] = useState(false);
+  const [showBanner, setShowBanner] = useState(false);
   const [expanded, setExpanded] = useState<StepKey | null>(null);
+  const bannerShownRef = useRef(false);
 
   useEffect(() => {
     if (sessionStorage.getItem(DISMISS_KEY)) setDismissed(true);
@@ -46,12 +49,17 @@ export function OnboardingCard() {
   const allDone = completed.size === 4;
 
   useEffect(() => {
-    if (allDone && !done) {
-      setDone(true);
-      const t = setTimeout(() => setDone(false), 3500);
+    if (allDone && !bannerShownRef.current) {
+      bannerShownRef.current = true;
+      setShowBanner(true);
+      const t = setTimeout(() => {
+        sessionStorage.setItem(DISMISS_KEY, "1");
+        setDismissed(true);
+        setShowBanner(false);
+      }, 3500);
       return () => clearTimeout(t);
     }
-  }, [allDone, done]);
+  }, [allDone]);
 
   const hasAutoOpenedRef = useRef(false);
   useEffect(() => {
@@ -74,10 +82,11 @@ export function OnboardingCard() {
     setDismissed(true);
   }
 
+  if (user?.role !== "COORDINATOR") return null;
   if (dismissed) return null;
-  if (allDone && !done) return null;
+  if (allDone && !showBanner) return null;
 
-  if (allDone && done) {
+  if (allDone && showBanner) {
     return (
       <div className="mb-6 rounded-xl border border-green-200 bg-green-50 p-5 text-center">
         <p className="text-xl mb-1">🎉</p>
