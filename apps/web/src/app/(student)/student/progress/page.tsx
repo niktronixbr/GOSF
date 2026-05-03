@@ -5,7 +5,6 @@ import { analyticsApi, CycleScores } from "@/lib/api/analytics";
 import { gradesApi, GradeHistoryCycle } from "@/lib/api/grades";
 import { dimensionLabel } from "@/lib/dimension-labels";
 import {
-  LineChart, Line,
   BarChart, Bar, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer,
@@ -97,18 +96,21 @@ function MultiCycleChart({ history, dimensions }: { history: CycleScores[]; dime
     for (const s of c.scores) row[s.dimension] = s.score;
     return row;
   });
-  const lastIndex = chartData.length - 1;
 
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={chartData} margin={{ top: 8, right: 110, bottom: 4, left: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke={chartColors.gridLine} />
+    <ResponsiveContainer width="100%" height={320}>
+      <BarChart
+        data={chartData}
+        margin={{ top: 8, right: 16, bottom: 4, left: 0 }}
+        barCategoryGap="28%"
+        barGap={3}
+      >
+        <CartesianGrid strokeDasharray="3 3" stroke={chartColors.gridLine} vertical={false} />
         <XAxis
           dataKey="cycle"
           tick={{ fontSize: 12, fill: chartColors.muted }}
           tickLine={false}
           axisLine={false}
-          padding={{ left: 32, right: 0 }}
         />
         <YAxis
           domain={[0, 100]}
@@ -127,39 +129,22 @@ function MultiCycleChart({ history, dimensions }: { history: CycleScores[]; dime
           }}
           formatter={(value: number, name: string) => [`${value}`, dimensionLabel(name)]}
         />
-        {dimensions.map((dim, idx) => {
-          const color = DIM_COLORS[dim] ?? FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
-          return (
-            <Line
-              key={dim}
-              type="monotone"
-              dataKey={dim}
-              name={dim}
-              stroke={color}
-              strokeWidth={2.5}
-              dot={{ r: 4 }}
-              activeDot={{ r: 7 }}
-              connectNulls
-              label={(props: { x: number; y: number; index: number }) => {
-                if (props.index !== lastIndex) return <g />;
-                return (
-                  <text
-                    key={`lbl-${dim}`}
-                    x={props.x + 10}
-                    y={props.y}
-                    dominantBaseline="middle"
-                    fill={color}
-                    fontSize={11}
-                    fontWeight={600}
-                  >
-                    {dimensionLabel(dim)}
-                  </text>
-                );
-              }}
-            />
-          );
-        })}
-      </LineChart>
+        <Legend
+          iconType="square"
+          iconSize={10}
+          wrapperStyle={{ paddingTop: 12, fontSize: 12 }}
+          formatter={(val: string) => dimensionLabel(val)}
+        />
+        {dimensions.map((dim, idx) => (
+          <Bar
+            key={dim}
+            dataKey={dim}
+            name={dim}
+            fill={DIM_COLORS[dim] ?? FALLBACK_COLORS[idx % FALLBACK_COLORS.length]}
+            radius={[4, 4, 0, 0]}
+          />
+        ))}
+      </BarChart>
     </ResponsiveContainer>
   );
 }
