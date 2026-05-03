@@ -151,7 +151,7 @@ export default function ResetPasswordPage() {
       {/* Hero side - bg primary marrom */}
       <div className="relative hidden lg:flex flex-col justify-between bg-primary px-10 py-10 text-primary-foreground">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-foreground/25">
             <GraduationCap size={20} />
           </div>
           <div>
