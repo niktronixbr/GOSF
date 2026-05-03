@@ -246,7 +246,7 @@ export default function TeacherInsightsPage() {
                   className={clsx(
                     "px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
                     filter === btn.value
-                      ? "bg-primary text-on-primary"
+                      ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:bg-surface-container"
                   )}
                 >

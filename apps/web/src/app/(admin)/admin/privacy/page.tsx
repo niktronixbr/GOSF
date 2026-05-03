@@ -172,7 +172,7 @@ export default function AdminPrivacyPage() {
           onClick={() => setStatusFilter("ALL")}
           className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
             statusFilter === "ALL"
-              ? "bg-primary text-on-primary"
+              ? "bg-primary text-primary-foreground"
               : "text-muted-foreground hover:bg-surface-container"
           }`}
         >
@@ -184,7 +184,7 @@ export default function AdminPrivacyPage() {
             onClick={() => setStatusFilter(s)}
             className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               statusFilter === s
-                ? "bg-primary text-on-primary"
+                ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:bg-surface-container"
             }`}
           >

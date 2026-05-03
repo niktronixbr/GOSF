@@ -107,7 +107,7 @@ export default function StudentFeedbackPage() {
               onClick={() => setGroupBy("cycle")}
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                 groupBy === "cycle"
-                  ? "bg-primary text-on-primary"
+                  ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-surface-container"
               }`}
             >
@@ -118,7 +118,7 @@ export default function StudentFeedbackPage() {
               onClick={() => setGroupBy("all")}
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                 groupBy === "all"
-                  ? "bg-primary text-on-primary"
+                  ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-surface-container"
               }`}
             >

@@ -76,7 +76,7 @@ export default function TeacherDashboardPage() {
         </div>
         <button
           onClick={() => router.push("/teacher/evaluations")}
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary hover:bg-primary/90 transition-colors shrink-0"
+          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
         >
           Avaliar alunos
         </button>
