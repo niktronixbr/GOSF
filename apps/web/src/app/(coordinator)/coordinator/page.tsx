@@ -5,13 +5,14 @@ import { useQuery } from "@tanstack/react-query";
 import {
   BarChart,
   Bar,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
+import { dimensionLabel } from "@/lib/dimension-labels";
 import { evaluationsApi } from "@/lib/api/evaluations";
 import { coordinatorApi } from "@/lib/api/coordinator";
 import { gradesApi } from "@/lib/api/grades";
@@ -28,6 +29,20 @@ function scoreVariant(score: number): "success" | "warning" | "danger" {
   if (score >= 70) return "success";
   if (score >= 50) return "warning";
   return "danger";
+}
+
+function buildDimData(scores: { dimension: string; score: number }[]) {
+  const map: Record<string, number[]> = {};
+  for (const s of scores) {
+    if (!map[s.dimension]) map[s.dimension] = [];
+    map[s.dimension].push(s.score);
+  }
+  return Object.entries(map)
+    .map(([dim, vals]) => ({
+      name: dimensionLabel(dim),
+      score: Math.round(vals.reduce((a, v) => a + v, 0) / vals.length),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export default function CoordinatorHomePage() {
@@ -66,45 +81,14 @@ export default function CoordinatorHomePage() {
     queryFn: () => gradesApi.getOverview(),
   });
 
-  // Dimensão médias para o gráfico
-  const dimensionData = useMemo(() => {
-    if (!overview) return [];
-
-    const teacherDimMap: Record<string, number[]> = {};
-    for (const s of overview.teacherScores) {
-      if (!teacherDimMap[s.dimension]) teacherDimMap[s.dimension] = [];
-      teacherDimMap[s.dimension].push(s.score);
-    }
-
-    const studentDimMap: Record<string, number[]> = {};
-    for (const s of overview.studentScores) {
-      if (!studentDimMap[s.dimension]) studentDimMap[s.dimension] = [];
-      studentDimMap[s.dimension].push(s.score);
-    }
-
-    const allDims = new Set([
-      ...Object.keys(teacherDimMap),
-      ...Object.keys(studentDimMap),
-    ]);
-
-    return Array.from(allDims)
-      .map((dim) => {
-        const tVals = teacherDimMap[dim] ?? [];
-        const sVals = studentDimMap[dim] ?? [];
-        return {
-          dimension: dim.charAt(0).toUpperCase() + dim.slice(1),
-          professores:
-            tVals.length
-              ? Math.round((tVals.reduce((a, v) => a + v, 0) / tVals.length) * 10) / 10
-              : null,
-          alunos:
-            sVals.length
-              ? Math.round((sVals.reduce((a, v) => a + v, 0) / sVals.length) * 10) / 10
-              : null,
-        };
-      })
-      .sort((a, b) => a.dimension.localeCompare(b.dimension));
-  }, [overview]);
+  const teacherDimData = useMemo(
+    () => buildDimData(overview?.teacherScores ?? []),
+    [overview],
+  );
+  const studentDimData = useMemo(
+    () => buildDimData(overview?.studentScores ?? []),
+    [overview],
+  );
 
   // KPIs
   const uniqueTeacherIds = new Set(overview?.teacherScores.map((s) => s.targetId) ?? []);
@@ -176,70 +160,54 @@ export default function CoordinatorHomePage() {
         </div>
       )}
 
-      {/* Gráfico de dimensões */}
-      {hasCycleData && dimensionData.length > 0 && (
-        <Card>
-          <h2 className="font-semibold text-foreground mb-1">Score médio por dimensão</h2>
-          <p className="text-xs text-muted-foreground mb-4">
-            Média institucional no ciclo atual — escala 0–100
-          </p>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart
-              data={dimensionData}
-              layout="vertical"
-              margin={{ top: 0, right: 24, left: 8, bottom: 0 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={chartColors.gridLine} />
-              <XAxis
-                type="number"
-                domain={[0, 100]}
-                tick={{ fontSize: 11, fill: chartColors.muted }}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis
-                type="category"
-                dataKey="dimension"
-                tick={{ fontSize: 12, fill: chartColors.foreground }}
-                tickLine={false}
-                axisLine={false}
-                width={90}
-              />
-              <Tooltip
-                formatter={(value: number) => [`${value.toFixed(1)}`, ""]}
-                contentStyle={{
-                  borderRadius: "8px",
-                  border: `1px solid ${chartColors.gridLine}`,
-                  fontSize: "13px",
-                  background: "var(--surface)",
-                  color: "var(--foreground)",
-                }}
-              />
-              <Legend
-                iconType="circle"
-                iconSize={8}
-                formatter={(value) =>
-                  value === "professores" ? "Professores" : "Alunos"
-                }
-                wrapperStyle={{ fontSize: "12px", paddingTop: "8px" }}
-              />
-              <Bar
-                dataKey="professores"
-                name="professores"
-                fill={chartColors.primary}
-                radius={[0, 4, 4, 0]}
-                maxBarSize={18}
-              />
-              <Bar
-                dataKey="alunos"
-                name="alunos"
-                fill={chartColors.secondary}
-                radius={[0, 4, 4, 0]}
-                maxBarSize={18}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
+      {/* Gráfico de critérios — separado por grupo */}
+      {hasCycleData && (teacherDimData.length > 0 || studentDimData.length > 0) && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {teacherDimData.length > 0 && (
+            <Card>
+              <h2 className="font-semibold text-foreground mb-1">Critérios — Professores</h2>
+              <p className="text-xs text-muted-foreground mb-4">Score médio institucional por critério avaliativo</p>
+              <ResponsiveContainer width="100%" height={teacherDimData.length * 40 + 16}>
+                <BarChart data={teacherDimData} layout="vertical" margin={{ top: 0, right: 32, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={chartColors.gridLine} />
+                  <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: chartColors.muted }} tickLine={false} axisLine={false} />
+                  <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 12, fill: chartColors.foreground }} tickLine={false} axisLine={false} />
+                  <Tooltip
+                    formatter={(v: number) => [`${v}`, "Score"]}
+                    contentStyle={{ borderRadius: "8px", border: `1px solid ${chartColors.gridLine}`, fontSize: "13px", background: "var(--surface)", color: "var(--foreground)" }}
+                  />
+                  <Bar dataKey="score" radius={[0, 4, 4, 0]} maxBarSize={20}>
+                    {teacherDimData.map((entry, i) => (
+                      <Cell key={i} fill={entry.score >= 70 ? chartColors.success : entry.score >= 50 ? chartColors.warning : chartColors.danger} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
+          )}
+          {studentDimData.length > 0 && (
+            <Card>
+              <h2 className="font-semibold text-foreground mb-1">Critérios — Alunos</h2>
+              <p className="text-xs text-muted-foreground mb-4">Score médio institucional por critério avaliativo</p>
+              <ResponsiveContainer width="100%" height={studentDimData.length * 40 + 16}>
+                <BarChart data={studentDimData} layout="vertical" margin={{ top: 0, right: 32, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={chartColors.gridLine} />
+                  <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11, fill: chartColors.muted }} tickLine={false} axisLine={false} />
+                  <YAxis type="category" dataKey="name" width={130} tick={{ fontSize: 12, fill: chartColors.foreground }} tickLine={false} axisLine={false} />
+                  <Tooltip
+                    formatter={(v: number) => [`${v}`, "Score"]}
+                    contentStyle={{ borderRadius: "8px", border: `1px solid ${chartColors.gridLine}`, fontSize: "13px", background: "var(--surface)", color: "var(--foreground)" }}
+                  />
+                  <Bar dataKey="score" radius={[0, 4, 4, 0]} maxBarSize={20}>
+                    {studentDimData.map((entry, i) => (
+                      <Cell key={i} fill={entry.score >= 70 ? chartColors.success : entry.score >= 50 ? chartColors.warning : chartColors.danger} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
+          )}
+        </div>
       )}
 
       {cycle && !hasCycleData && (
