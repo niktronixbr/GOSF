@@ -47,8 +47,8 @@ export default function LoginPage() {
       {/* Form side */}
       <div className="flex items-center justify-center bg-background px-6 py-12">
         <div className="w-full max-w-sm space-y-8">
-          <div className="flex items-center gap-2 lg:hidden">
-            <GosfIcon size={34} variant="filled" />
+          <div className="flex items-center gap-2">
+            <GosfIcon size={40} variant="filled" />
             <span className="text-base font-bold">GOSF</span>
           </div>
 
